@@ -4,11 +4,13 @@ type Var = String
 
 data Type
     = TInt
+    | TBool
     deriving (Eq)
 
 data Value
     = VVar Var
     | VNum Integer
+    | VBool Bool
     deriving (Eq)
 
 data BinaryOp
@@ -33,10 +35,12 @@ data Term
 
 instance Show Type where
     showsPrec _ TInt = showString "int"
+    showsPrec _ TBool = showString "bool"
 
 instance Show Value where
     showsPrec _ (VVar x) = showString x
     showsPrec _ (VNum n) = shows n
+    showsPrec _ (VBool b) = shows b
 
 instance Show BinaryOp where
     show BAdd = "+"

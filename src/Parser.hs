@@ -16,6 +16,7 @@ binary_expr : expr op expr
 op : + | *
 
 value : number
+      | bool
       | var
 
 var : id
@@ -47,6 +48,8 @@ languageDef =
            , Token.reservedNames   = [ "in"
                                      , "let"
                                      , "return"
+                                     , "true"
+                                     , "false"
                                      ]
            , Token.reservedOpNames = ["+", "*", "<-"]
            }
@@ -107,6 +110,15 @@ valueExpr = liftM EVal value
 value :: Parser Value
 value =  liftM VVar identifier
      <|> liftM VNum integer
+     <|> boolTrue
+     <|> boolFalse
+
+boolTrue :: Parser Value
+boolTrue = reserved "true" >> return (VBool True)
+
+boolFalse :: Parser Value
+boolFalse = reserved "false" >> return (VBool False)
+
 
 -- Local debugging tools
 --
