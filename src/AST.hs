@@ -2,11 +2,6 @@ module AST where
 
 type Var = String
 
-data Type
-    = TInt
-    | TBool
-    deriving (Eq)
-
 data Value
     = VVar Var
     | VNum Integer
@@ -29,13 +24,9 @@ data Comp
     deriving (Eq)
 
 data Term
-    = TExpr Expr
-    | TComp Comp
+    = TermExpr Expr
+    | TermComp Comp
     deriving (Eq)
-
-instance Show Type where
-    showsPrec _ TInt = showString "int"
-    showsPrec _ TBool = showString "bool"
 
 instance Show Value where
     showsPrec _ (VVar x) = showString x
@@ -68,5 +59,5 @@ instance Show Comp where
     showsPrec _ (CRet e) = showString "return " . shows e
 
 instance Show Term where
-    showsPrec _ (TExpr e) = shows e
-    showsPrec _ (TComp c) = shows c
+    showsPrec _ (TermExpr e) = shows e
+    showsPrec _ (TermComp c) = shows c

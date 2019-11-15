@@ -73,11 +73,12 @@ program :: Parser Term
 program = whiteSpace >> term
 
 term :: Parser Term
-term =  liftM TComp computation
-    <|> liftM TExpr expr
+term =  liftM TermComp computation
+    <|> liftM TermExpr expr
 
 computation :: Parser Comp
-computation =  letComp
+computation =  parens computation
+           <|> letComp
            <|> retComp
 
 letComp :: Parser Comp
