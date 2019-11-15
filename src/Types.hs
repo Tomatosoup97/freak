@@ -3,6 +3,7 @@ module Types where
 data ValueType
     = TInt
     | TBool
+    | TLambda ValueType CompType
     deriving (Eq)
 
 data EffectType
@@ -21,6 +22,7 @@ data Type
 instance Show ValueType where
     showsPrec _ TInt = showString "int"
     showsPrec _ TBool = showString "bool"
+    showsPrec _ (TLambda varT compT) = shows varT . showString " -> " . shows compT
 
 instance Show Type where
     showsPrec _ (TVal tv) = shows tv

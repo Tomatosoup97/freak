@@ -1,11 +1,14 @@
 module AST where
 
+import Types
+
 type Var = String
 
 data Value
     = VVar Var
     | VNum Integer
     | VBool Bool
+    | VLambda Var ValueType Comp
     deriving (Eq)
 
 data BinaryOp
@@ -21,6 +24,7 @@ data Expr
 data Comp
     = CLet Var Comp Comp
     | CRet Expr
+    | CApp Value Value
     deriving (Eq)
 
 data Term
@@ -28,10 +32,16 @@ data Term
     | TermComp Comp
     deriving (Eq)
 
+
+addParens :: ShowS -> ShowS
+addParens s = showString "(" . s . showString ")"
+
 instance Show Value where
     showsPrec _ (VVar x) = showString x
     showsPrec _ (VNum n) = shows n
     showsPrec _ (VBool b) = shows b
+    showsPrec _ (VLambda var t c) =
+        showString "λ" . showString var . showString " -> " . shows c
 
 instance Show BinaryOp where
     show BAdd = "+"
@@ -57,6 +67,7 @@ instance Show Comp where
         . showString " in " . showsPrec 0 c2)
 
     showsPrec _ (CRet e) = showString "return " . shows e
+    showsPrec _ (CApp v1 v2) = addParens (shows v1) . showString " " . shows v2
 
 instance Show Term where
     showsPrec _ (TermExpr e) = shows e

@@ -6,6 +6,7 @@ program : computation
 
 computation : LET var <- computation in computation
             | RETURN expr
+            | value value
 
 expr : ( expr )
      | binary_expr
@@ -18,6 +19,9 @@ op : + | *
 value : number
       | bool
       | var
+      | lambda
+
+lambda : \ var -> computation
 
 var : id
 
@@ -35,6 +39,7 @@ import Text.ParserCombinators.Parsec.Language
 import qualified Text.ParserCombinators.Parsec.Token as Token
 
 import AST
+import Types
 
 -- Lexer
 --
@@ -50,10 +55,11 @@ languageDef =
                                      , "return"
                                      , "true"
                                      , "false"
+                                     , "int"
+                                     , "bool"
                                      ]
-           , Token.reservedOpNames = ["+", "*", "<-"]
+           , Token.reservedOpNames = ["+", "*", "<-", "->", "\\", ":"]
            }
-
 
 lexer = Token.makeTokenParser languageDef
 
@@ -70,16 +76,17 @@ whiteSpace = Token.whiteSpace lexer -- parses whitespace
 -- Parser
 --
 program :: Parser Term
-program = whiteSpace >> term
+program = term
 
 term :: Parser Term
-term =  liftM TermComp computation
-    <|> liftM TermExpr expr
+term =  liftM TermExpr expr
+    <|> liftM TermComp computation
 
 computation :: Parser Comp
 computation =  parens computation
            <|> letComp
            <|> retComp
+           <|> appComp
 
 letComp :: Parser Comp
 letComp = do
@@ -95,15 +102,23 @@ retComp :: Parser Comp
 retComp =  reserved "return"
         >> liftM CRet expr
 
+
+appComp :: Parser Comp
+appComp = do
+    v1 <- value
+    v2 <- value
+    return $ CApp v1 v2
+
+
 expr :: Parser Expr
-expr = buildExpressionParser binOps subexpr
+expr = buildExpressionParser binOps subExpr
 
 binOps = [ [Infix  (reservedOp "*"   >> return (EBinOp BMul )) AssocLeft]
          , [Infix  (reservedOp "+"   >> return (EBinOp BAdd )) AssocLeft]
          ]
 
-subexpr :: Parser Expr
-subexpr = parens expr <|> valueExpr
+subExpr :: Parser Expr
+subExpr = parens expr <|> valueExpr
 
 valueExpr :: Parser Expr
 valueExpr = liftM EVal value
@@ -111,8 +126,23 @@ valueExpr = liftM EVal value
 value :: Parser Value
 value =  liftM VVar identifier
      <|> liftM VNum integer
+     <|> lambdaExpr
      <|> boolTrue
      <|> boolFalse
+
+lambdaExpr :: Parser Value
+lambdaExpr = do
+    reservedOp "\\"
+    x <- identifier
+    reservedOp ":"
+    t <- typeAnnot
+    reservedOp "->"
+    c <- computation
+    return $ VLambda x t c
+
+typeAnnot :: Parser ValueType
+typeAnnot =  (reserved "int" >> return TInt)
+         <|> (reserved "bool" >> return TBool)
 
 boolTrue :: Parser Value
 boolTrue = reserved "true" >> return (VBool True)
