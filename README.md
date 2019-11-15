@@ -1,4 +1,4 @@
-Freeak
+Freak
 ======
 
 Algebraic effects are just free monads with handlers viewed as
