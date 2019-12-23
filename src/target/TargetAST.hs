@@ -1,16 +1,17 @@
 module TargetAST where
 
 type UVar = String
+type Label = String
 
 data UValue
     = UVar UVar
     | UNum Integer
     | UBool Bool
     | ULambda UVar UComp
-    -- TODO: rec
     | UUnit
-    | UPairr UValue UValue
-    -- TODO: labels
+    | UPair UValue UValue
+    | ULabel Label
+    | URec UVar UVar UComp
     deriving (Show, Eq)
 
 data UBinaryOp
@@ -25,8 +26,8 @@ data UExpr
 
 data UComp
     = USplit UVar UVar UValue UComp
-    | UApp UComp UValue
+    | UApp UComp UComp
     | UExpr UExpr
-    -- TODO: case
-    -- TODO: absurd
+    | UCase UValue Label UComp UVar UComp
+    | UAbsurd UExpr
     deriving (Show, Eq)
