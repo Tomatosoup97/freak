@@ -62,3 +62,6 @@ cps e c = case e of
         resBody <- c $ CVar resArg
         contExpr <- cps e1 (\f -> cps e2 (\v -> return $ CPSApp f [v, CVar resVar]))
         return $ CPSFix resVar [resArg] resBody contExpr
+
+runCPS :: Expr -> Either Error CExp
+runCPS e = evalState (runExceptT $ cps e initialCont) 0

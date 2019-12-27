@@ -12,7 +12,7 @@ main = do
     let plus = EBinOp BAdd (int 2) (EVal (VVar "x"))
     let lambda = EVal (VLambda "x" TInt plus)
     let app = EApp lambda (int 3)
-    let cpsterm = evalState (runExceptT (cps app initialCont)) 0
+    let cpsterm = runCPS app
     print $ app
     print $ cpsterm
     case cpsterm of
