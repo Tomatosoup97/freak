@@ -16,9 +16,6 @@ instance Show DValue where
     show (DNum n) = "DNum " ++ show n
     show (DLambda _ _) = "DLambda"
 
-data Error = EvalError String
-    deriving (Show)
-
 convOp :: BinaryOp -> Integer -> Integer -> Integer
 convOp BAdd n1 n2 = n1 + n2
 convOp BMul n1 n2 = n1 * n2

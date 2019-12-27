@@ -1,7 +1,15 @@
 module CPS where
 
+import Control.Monad.Except
+import Control.Monad.State
 import AST
 import Types
+
+
+data Error
+    = EvalError String
+    | CPSError String
+    deriving (Show)
 
 data CValue
     = CVar Var
@@ -16,30 +24,41 @@ data CExp
     -- | CPSLet Var CExp CExp
     deriving (Show)
 
-type Cont = CValue -> CExp
+type CPSMonad a = ExceptT Error (State Int) a
+
+type Cont = CValue -> CPSMonad CExp
 
 initialCont :: Cont
-initialCont = CPSValue
+initialCont = return . CPSValue
 
-cps :: Expr -> Cont -> CExp
+freshVar :: CPSMonad Var
+freshVar = do
+    n <- get
+    put (n+1)
+    return $ "__x" ++ (show n) -- todo: this should be unique!
+
+cps :: Expr -> Cont -> CPSMonad CExp
 cps e c = case e of
     EVal (VVar x) -> c $ CVar x
     EVal (VNum n) -> c $ CNum n
-    EVal (VLambda x _ body) -> CPSFix fnvar [x, contVar] convBody contExpr
-        where convBody = cps body (\v -> CPSApp (CVar contVar) [v])
-              fnvar = "f"
-              contVar = "k"
-              contExpr = c $ CVar fnvar
-    EVal (VFix g x body) -> CPSFix g [x, contVar] convBody contExpr
-        where convBody = cps body (\v -> CPSApp (CVar contVar) [v])
-              contVar = "k"
-              contExpr = c $ CVar g
-    EBinOp op e1 e2 -> cps e1 (\v1 -> cps e2 (\v2 -> CPSBinOp op v1 v2 opVar contExpr))
-        where opVar = "v"
-              contExpr = c $ CVar opVar
-    EApp e1 e2 ->
-        CPSFix resVar [resArg] resBody (cps e1 (\f -> cps e2 (\v -> CPSApp f [v, CVar resVar])))
-        where resVar = "r"
-              resArg = "x"
-              resBody = c $ CVar resArg
-    -- ELet x varExpr e -> CPSLet x (cps varExpr \)
+    EVal (VLambda x _ body) -> do
+        fnvar <- freshVar
+        contVar <- freshVar
+        convBody <- cps body (\v -> return $ CPSApp (CVar contVar) [v])
+        contExpr <- c $ CVar fnvar
+        return $ CPSFix fnvar [x, contVar] convBody contExpr
+    EVal (VFix g x body) -> do
+        contVar <- freshVar
+        convBody <- cps body (\v -> return $ CPSApp (CVar contVar) [v])
+        contExpr <- c $ CVar g
+        return $ CPSFix g [x, contVar] convBody contExpr
+    EBinOp op e1 e2 -> do
+        opVar <- freshVar
+        contExpr <- c $ CVar opVar
+        cps e1 (\v1 -> cps e2 (\v2 -> return $ CPSBinOp op v1 v2 opVar contExpr))
+    EApp e1 e2 -> do
+        resVar <- freshVar
+        resArg <- freshVar
+        resBody <- c $ CVar resArg
+        contExpr <- cps e1 (\f -> cps e2 (\v -> return $ CPSApp f [v, CVar resVar]))
+        return $ CPSFix resVar [resArg] resBody contExpr
