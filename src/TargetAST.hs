@@ -31,3 +31,8 @@ data UComp
     | UCase UValue Label UComp UVar UComp
     | UAbsurd UExpr
     deriving (Show, Eq)
+
+data TargetTerm
+    = TargetTermExpr UExpr
+    | TargetTermComp UComp
+    deriving (Show, Eq)
