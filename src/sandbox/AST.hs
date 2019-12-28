@@ -38,4 +38,5 @@ data Expr
     | EVal Value
     | ELet Var Expr Expr
     | EApp Expr Expr
+    | ESplit Label Var Var Value Expr
     deriving (Show, Eq)

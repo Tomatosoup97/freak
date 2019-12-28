@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 module CPS where
 
 import Control.Monad.Except
@@ -24,6 +25,7 @@ data CExp
     | CPSBinOp BinaryOp CValue CValue Var CExp
     | CPSValue CValue
     | CPSLet Var CValue CExp
+    | CPSSplit Label Var Var CValue CExp
     deriving (Show)
 
 type CPSMonad a = ExceptT Error (State Int) a
@@ -78,8 +80,12 @@ cps e c = case e of
         contExpr <- cps e1 (\f -> cps e2 (\v -> return $ CPSApp f [v, CVar resVar]))
         return $ CPSFix resVar [resArg] resBody contExpr
     ELet x varExpr e -> do
-        convE <- cps e c
+        convE <- cps e c -- is passing continuation c here correct?
         cps varExpr (\v -> return $ CPSLet x v convE)
+    ESplit l x y row expr -> do
+        cont <- cps expr c
+        cps (EVal row) (\convRow -> return $ CPSSplit l x y convRow cont)
+
 
 runCPS :: Expr -> Either Error CExp
 runCPS e = evalState (runExceptT $ cps e initialCont) 0

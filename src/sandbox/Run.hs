@@ -21,5 +21,8 @@ main = do
     let lambda = EVal (VLambda "x" TInt plus)
     let app = EApp lambda (int 3)
     let letTerm = ELet "x" (int 4) plus
+    let row = VRecordRow (RecordRowExtend "r" (VNum 1) (RecordRowExtend "l" (VNum 2) RecordRowUnit))
+    let split = ESplit "l" "x" "y" row plus
     outputRes app
     outputRes letTerm
+    outputRes split

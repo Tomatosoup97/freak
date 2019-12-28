@@ -17,6 +17,8 @@ type FuncRecord = [DValue] -> Either Error DValue
 instance Show DValue where
     show (DNum n) = "DNum " ++ show n
     show (DLambda _ _) = "DLambda"
+    show (DRecordRow r) = show r
+    show (DVariantRow r) = show r
 
 convOp :: BinaryOp -> Integer -> Integer -> Integer
 convOp BAdd n1 n2 = n1 + n2
@@ -26,7 +28,7 @@ val :: Env -> CValue -> Either Error DValue
 val env e = case e of
     CVar x -> case Map.lookup x env of
         Just v -> return v
-        Nothing -> Left $ EvalError $ "Unbound variable " ++ x
+        Nothing -> Left $ EvalError $ "Unbound variable " ++ x ++ show env
     CNum n -> return $ DNum n
     CRecordRow RecordRowUnit -> return $ DRecordRow RecordRowUnit
     CRecordRow (RecordRowExtend l cv r) -> do
@@ -40,6 +42,13 @@ val env e = case e of
 
 extendEnv :: Env -> Var -> DValue -> Env
 extendEnv env x v = Map.insert x v env
+
+decomposeRow :: forall a. RecordRow a -> Label -> (Maybe a, RecordRow a)
+decomposeRow r l' = aux (\x -> x) r where
+    aux cont RecordRowUnit = (Nothing, cont RecordRowUnit)
+    aux cont (RecordRowExtend l v r)
+      | l == l' = (Just v, cont r)
+      | otherwise = aux (cont . (\x -> RecordRowExtend l v x)) r
 
 eval :: Env -> CExp -> Either Error DValue
 eval env e = case e of
@@ -66,3 +75,11 @@ eval env e = case e of
         varDVal <- val env varVal
         let env' = extendEnv env x varDVal
         eval env' cont
+    CPSSplit l x y row cont -> do
+        (DRecordRow dRow) <- val env row
+        case decomposeRow dRow l of
+          (Nothing, _) -> Left $ EvalError "Splitting non-existing label"
+          (Just dv, rowRest) ->
+            let env' = extendEnv env x dv in
+            let env'' = extendEnv env' y (DRecordRow rowRest) in
+            eval env'' cont
