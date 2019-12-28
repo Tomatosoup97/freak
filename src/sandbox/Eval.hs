@@ -50,3 +50,7 @@ eval env e = case e of
                 let params = zip formalParams actualParams in
                 let extEnv = foldl (uncurry . extendEnv) env params in
                 eval extEnv body
+    CPSLet x varVal cont -> do
+        varDVal <- val env varVal
+        let env' = extendEnv env x varDVal
+        eval env' cont

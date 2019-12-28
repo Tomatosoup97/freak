@@ -21,7 +21,7 @@ data CExp
     | CPSFix Var [Var] CExp CExp
     | CPSBinOp BinaryOp CValue CValue Var CExp
     | CPSValue CValue
-    -- | CPSLet Var CExp CExp
+    | CPSLet Var CValue CExp
     deriving (Show)
 
 type CPSMonad a = ExceptT Error (State Int) a
@@ -62,6 +62,10 @@ cps e c = case e of
         resBody <- c $ CVar resArg
         contExpr <- cps e1 (\f -> cps e2 (\v -> return $ CPSApp f [v, CVar resVar]))
         return $ CPSFix resVar [resArg] resBody contExpr
+    ELet x varExpr e -> do
+        resVar <- freshVar
+        convE <- cps e c
+        cps varExpr (\v -> return $ CPSLet x v convE)
 
 runCPS :: Expr -> Either Error CExp
 runCPS e = evalState (runExceptT $ cps e initialCont) 0
