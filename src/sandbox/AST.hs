@@ -6,13 +6,26 @@ import Types
 type Var = String
 type Label = String
 
+data VariantRow a = VariantRow RowType Label a
+    deriving (Show, Eq)
+
+data RecordRow a
+    = RecordRowUnit
+    | RecordRowExtend Label a (RecordRow a)
+    deriving (Show, Eq)
+
+instance Functor RecordRow where
+    fmap _ RecordRowUnit = RecordRowUnit
+    fmap f (RecordRowExtend l a r) = RecordRowExtend l (f a) (fmap f r)
+
 data Value
     = VVar Var
     | VNum Integer
     | VBool Bool
     | VLambda Var ValueType Expr
     | VFix Var Var Expr
-    -- | VProductRow (Map.Map Label Value)
+    | VRecordRow (RecordRow Value)
+    | VVariantRow (VariantRow Value)
     deriving (Show, Eq)
 
 data BinaryOp

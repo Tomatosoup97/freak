@@ -7,6 +7,8 @@ import CPS
 data DValue
     = DNum Integer
     | DLambda Env FuncRecord
+    | DRecordRow (RecordRow DValue)
+    | DVariantRow (VariantRow DValue)
 
 type Env = Map.Map Var DValue
 
@@ -25,6 +27,15 @@ val env (CVar x) = case Map.lookup x env of
     Just v -> return v
     Nothing -> Left $ EvalError $ "Unbound variable " ++ x
 val _ (CNum n) = return $ DNum n
+val env (CRecordRow RecordRowUnit) = return $ DRecordRow RecordRowUnit
+val env (CRecordRow (RecordRowExtend l cv r)) = do
+    dv <- val env cv
+    dRow <- val env (CRecordRow r)
+    case dRow of
+      DRecordRow dRow -> return $ DRecordRow (RecordRowExtend l dv dRow)
+      _ -> Left $ EvalError $ "Row tail should also be row"
+val env (CVariantRow (VariantRow t l cv)) =
+    val env cv >>= (return . DVariantRow . (VariantRow t l))
 
 extendEnv :: Env -> Var -> DValue -> Env
 extendEnv env x v = Map.insert x v env

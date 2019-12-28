@@ -14,6 +14,8 @@ data Error
 data CValue
     = CVar Var
     | CNum Integer
+    | CRecordRow (RecordRow CValue)
+    | CVariantRow (VariantRow CValue)
     deriving (Show)
 
 data CExp
@@ -35,12 +37,25 @@ freshVar :: CPSMonad Var
 freshVar = do
     n <- get
     put (n+1)
-    return $ "__x" ++ (show n) -- todo: this should be unique!
+    return $ "__meta" ++ (show n) -- todo: this should be unique!
+
+
+cpsRecordrow :: RecordRow Value -> [(Label, CValue)] -> Cont -> CPSMonad CExp
+-- TODO: use Functor instance
+cpsRecordrow (RecordRowUnit) cvs c = c $ CRecordRow cexpRow
+    where cexpRow = foldl consRow RecordRowUnit cvs
+          consRow row (l, cv) = RecordRowExtend l cv row
+cpsRecordrow (RecordRowExtend l v r) cvs c = cps (EVal v) cont
+    where cont cexpV = cpsRecordrow r ((l, cexpV):cvs) c
+
 
 cps :: Expr -> Cont -> CPSMonad CExp
 cps e c = case e of
     EVal (VVar x) -> c $ CVar x
     EVal (VNum n) -> c $ CNum n
+    EVal (VRecordRow row) -> cpsRecordrow row [] c
+    EVal (VVariantRow (VariantRow t l v)) ->
+        cps (EVal v) (\cv -> c $ CVariantRow (VariantRow t l cv))
     EVal (VLambda x _ body) -> do
         fnvar <- freshVar
         contVar <- freshVar
@@ -63,7 +78,6 @@ cps e c = case e of
         contExpr <- cps e1 (\f -> cps e2 (\v -> return $ CPSApp f [v, CVar resVar]))
         return $ CPSFix resVar [resArg] resBody contExpr
     ELet x varExpr e -> do
-        resVar <- freshVar
         convE <- cps e c
         cps varExpr (\v -> return $ CPSLet x v convE)
 
