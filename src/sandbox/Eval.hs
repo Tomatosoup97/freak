@@ -23,19 +23,20 @@ convOp BAdd n1 n2 = n1 + n2
 convOp BMul n1 n2 = n1 * n2
 
 val :: Env -> CValue -> Either Error DValue
-val env (CVar x) = case Map.lookup x env of
-    Just v -> return v
-    Nothing -> Left $ EvalError $ "Unbound variable " ++ x
-val _ (CNum n) = return $ DNum n
-val env (CRecordRow RecordRowUnit) = return $ DRecordRow RecordRowUnit
-val env (CRecordRow (RecordRowExtend l cv r)) = do
-    dv <- val env cv
-    dRow <- val env (CRecordRow r)
-    case dRow of
-      DRecordRow dRow -> return $ DRecordRow (RecordRowExtend l dv dRow)
-      _ -> Left $ EvalError $ "Row tail should also be row"
-val env (CVariantRow (VariantRow t l cv)) =
-    val env cv >>= (return . DVariantRow . (VariantRow t l))
+val env e = case e of
+    CVar x -> case Map.lookup x env of
+        Just v -> return v
+        Nothing -> Left $ EvalError $ "Unbound variable " ++ x
+    CNum n -> return $ DNum n
+    CRecordRow RecordRowUnit -> return $ DRecordRow RecordRowUnit
+    CRecordRow (RecordRowExtend l cv r) -> do
+        dv <- val env cv
+        dRow <- val env (CRecordRow r)
+        case dRow of
+          DRecordRow dRow -> return $ DRecordRow (RecordRowExtend l dv dRow)
+          _ -> Left $ EvalError $ "Row tail should also be row"
+    CVariantRow (VariantRow t l cv) ->
+        val env cv >>= (return . DVariantRow . (VariantRow t l))
 
 extendEnv :: Env -> Var -> DValue -> Env
 extendEnv env x v = Map.insert x v env
