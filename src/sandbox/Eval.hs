@@ -89,3 +89,4 @@ eval env e = case e of
         let (DVariantRow (VariantRow _ l' v)) = dvariant
         if l == l' then eval (extendEnv env x v) tCont
         else eval (extendEnv env y dvariant) fCont
+    CPSAbsurd _ _ -> Left $ EvalError "Absurd; divergent term"

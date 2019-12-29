@@ -26,14 +26,23 @@ data ContComp
     | CPSLet Var CValue ContComp
     | CPSSplit Label Var Var CValue ContComp
     | CPSCase CValue Label Var ContComp Var ContComp
+    | CPSAbsurd Var CValue
     deriving (Show)
 
 type CPSMonad a = ExceptT Error (State Int) a
 
-type Cont = CValue -> CPSMonad ContComp
+type EffCont = CValue -> CPSMonad ContComp
+type PureCont = CValue -> EffCont -> CPSMonad ContComp
 
-initialCont :: Cont
-initialCont = return . CPSValue
+initialPureCont :: PureCont
+initialPureCont v h = (return . CPSValue) v -- todo: point-free?
+
+initialEffCont :: EffCont
+initialEffCont (CRecordRow (RecordRowExtend "1" z r)) =
+    return $ CPSAbsurd "x" z -- todo: syntactic sugar "1" -- todo "x"?
+
+initialState :: Int
+initialState = 0
 
 freshVar :: CPSMonad Var
 freshVar = do
@@ -42,57 +51,61 @@ freshVar = do
     return $ "__meta" ++ (show n) -- todo: this should be unique!
 
 
-cpsRecordRow :: RecordRow Value -> [(Label, CValue)] -> Cont -> CPSMonad ContComp
+-- todo: this function should be simplified
 -- TODO: use Functor instance
-cpsRecordRow (RecordRowUnit) cvs c = c $ CRecordRow contCompRow
+cpsRecordRow :: RecordRow Value -> [(Label, CValue)] -> PureCont -> EffCont -> CPSMonad ContComp
+cpsRecordRow (RecordRowUnit) cvs k = k $ CRecordRow contCompRow
     where contCompRow = foldl consRow RecordRowUnit cvs
           consRow row (l, cv) = RecordRowExtend l cv row
-cpsRecordRow (RecordRowExtend l v r) cvs c = cps (EVal v) cont
-    where cont cval = cpsRecordRow r ((l, cval):cvs) c
+cpsRecordRow (RecordRowExtend l v r) cvs k = cps (EVal v) cont
+    where cont cval = cpsRecordRow r ((l, cval):cvs) k
 
 
-cps :: Comp -> Cont -> CPSMonad ContComp
-cps e c = case e of
-    EVal (VVar x) -> c $ CVar x
-    EVal (VNum n) -> c $ CNum n
-    EVal (VRecordRow row) -> cpsRecordRow row [] c
+cps :: Comp -> PureCont -> EffCont -> CPSMonad ContComp
+cps e k h = case e of
+    EVal (VVar x) -> k (CVar x) h
+    EVal (VNum n) -> k (CNum n) h
+    EVal (VRecordRow row) -> cpsRecordRow row [] k h
     EVal (VVariantRow (VariantRow t l v)) ->
-        cps (EVal v) (\cv -> c $ CVariantRow (VariantRow t l cv))
+        cps (EVal v) (\cv -> \h -> k (CVariantRow (VariantRow t l cv)) h) h
     EVal (VLambda x _ body) -> do
         fnvar <- freshVar
         contVar <- freshVar
-        convBody <- cps body (\v -> return $ CPSApp (CVar contVar) [v])
-        contComp <- c $ CVar fnvar
+        convBody <- cps body (\v -> \h -> return $ CPSApp (CVar contVar) [v]) h
+        contComp <- k (CVar fnvar) h
         return $ CPSFix fnvar [x, contVar] convBody contComp
     EVal (VFix g x body) -> do
         contVar <- freshVar
-        convBody <- cps body (\v -> return $ CPSApp (CVar contVar) [v])
-        contComp <- c $ CVar g
+        convBody <- cps body (\v -> \h -> return $ CPSApp (CVar contVar) [v]) h
+        contComp <- k (CVar g) h
         return $ CPSFix g [x, contVar] convBody contComp
     EBinOp op e1 e2 -> do
         opVar <- freshVar
-        contComp <- c $ CVar opVar
-        cps e1 (\v1 -> cps e2 (\v2 -> return $ CPSBinOp op v1 v2 opVar contComp))
+        contComp <- k (CVar opVar) h
+        cps e1 (\v1 -> \h -> cps e2 (\v2 -> \h -> return $ CPSBinOp op v1 v2 opVar contComp) h) h
     EApp e1 e2 -> do
         resVar <- freshVar
         resArg <- freshVar
-        resBody <- c $ CVar resArg
-        contComp <- cps e1 (\f -> cps e2 (\v -> return $ CPSApp f [v, CVar resVar]))
+        resBody <- k (CVar resArg) h
+        contComp <- cps e1 (\f -> \h -> cps e2 (\v -> \h -> return $ CPSApp f [v, CVar resVar]) h) h
         return $ CPSFix resVar [resArg] resBody contComp
     ELet x varComp e -> do
-        convE <- cps e c -- is passing continuation c here correct?
-        cps varComp (\v -> return $ CPSLet x v convE)
+        convE <- cps e k h -- is passing continuation here correct?
+        cps varComp (\v -> \h -> return $ CPSLet x v convE) h
     ESplit l x y row comp -> do
-        cont <- cps comp c
-        cps (EVal row) (\convRow -> return $ CPSSplit l x y convRow cont)
+        cont <- cps comp k h
+        cps (EVal row) (\convRow -> \h -> return $ CPSSplit l x y convRow cont) h
     ECase variant l x tComp y fComp -> do
-        tCont <- cps tComp c
-        fCont <- cps fComp c
+        tCont <- cps tComp k h
+        fCont <- cps fComp k h
         cps (EVal variant) (
-            \convVariant -> return $ CPSCase convVariant l x tCont y fCont)
-    EReturn v -> cps (EVal v) c
-    EAbsurd v -> throwError $ CPSError "Absurd; divergent term"
-
+            \convVariant -> \h -> return $ CPSCase convVariant l x tCont y fCont) h
+    EReturn v -> cps (EVal v) k h
+    EAbsurd v -> do
+        var <- freshVar
+        cont <- k (CVar var) h
+        cps (EVal v) (\cv -> \h -> return $ CPSAbsurd var cv) h
 
 runCPS :: Comp -> Either Error ContComp
-runCPS e = evalState (runExceptT $ cps e initialCont) 0
+runCPS e = evalState (runExceptT cpsTerm) initialState
+    where cpsTerm = cps e initialPureCont initialEffCont
