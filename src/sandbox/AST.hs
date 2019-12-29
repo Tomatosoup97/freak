@@ -22,8 +22,8 @@ data Value
     = VVar Var
     | VNum Integer
     | VBool Bool
-    | VLambda Var ValueType Expr
-    | VFix Var Var Expr
+    | VLambda Var ValueType Comp
+    | VFix Var Var Comp
     | VRecordRow (RecordRow Value)
     | VVariantRow (VariantRow Value)
     deriving (Show, Eq)
@@ -33,11 +33,13 @@ data BinaryOp
     | BMul
     deriving (Show, Eq)
 
-data Expr
-    = EBinOp BinaryOp Expr Expr
+data Comp
+    = EBinOp BinaryOp Comp Comp
     | EVal Value
-    | ELet Var Expr Expr
-    | EApp Expr Expr
-    | ESplit Label Var Var Value Expr
-    | ECase Value Label Var Expr Var Expr
+    | ELet Var Comp Comp
+    | EApp Comp Comp
+    | ESplit Label Var Var Value Comp
+    | ECase Value Label Var Comp Var Comp
+    | EReturn Value
+    | EAbsurd Value
     deriving (Show, Eq)

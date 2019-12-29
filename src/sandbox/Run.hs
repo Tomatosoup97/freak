@@ -6,7 +6,7 @@ import AST
 import CPS
 import Types
 
-outputRes :: Show a => a -> Expr -> IO ()
+outputRes :: Show a => a -> Comp -> IO ()
 outputRes expected e' = do
     let msg = "Expected: " ++ show expected ++ ", actual: "
     let e = runCPS e'

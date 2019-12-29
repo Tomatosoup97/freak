@@ -51,7 +51,7 @@ decomposeRow r l' = aux (\x -> x) r where
       | l == l' = (Just v, cont r)
       | otherwise = aux (cont . (\x -> RecordRowExtend l v x)) r
 
-eval :: Env -> CExp -> Either Error DValue
+eval :: Env -> ContComp -> Either Error DValue
 eval env e = case e of
     CPSValue v -> val env v
     CPSApp fE args -> val env fE >>= \v -> case v of
