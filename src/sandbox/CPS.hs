@@ -1,4 +1,3 @@
-{-# LANGUAGE ExistentialQuantification #-}
 module CPS where
 
 import Control.Monad.Except
@@ -26,6 +25,7 @@ data CExp
     | CPSValue CValue
     | CPSLet Var CValue CExp
     | CPSSplit Label Var Var CValue CExp
+    | CPSCase CValue Label Var CExp Var CExp
     deriving (Show)
 
 type CPSMonad a = ExceptT Error (State Int) a
@@ -85,6 +85,11 @@ cps e c = case e of
     ESplit l x y row expr -> do
         cont <- cps expr c
         cps (EVal row) (\convRow -> return $ CPSSplit l x y convRow cont)
+    ECase variant l x tExpr y fExpr -> do
+        tCont <- cps tExpr c
+        fCont <- cps fExpr c
+        cps (EVal variant) (
+            \convVariant -> return $ CPSCase convVariant l x tCont y fCont)
 
 
 runCPS :: Expr -> Either Error CExp

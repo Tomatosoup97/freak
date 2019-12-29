@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 module Eval where
 
 import qualified Data.Map as Map
@@ -83,3 +84,8 @@ eval env e = case e of
             let env' = extendEnv env x dv in
             let env'' = extendEnv env' y (DRecordRow rowRest) in
             eval env'' cont
+    CPSCase variant l x tCont y fCont -> do
+        dvariant <- val env variant
+        let (DVariantRow (VariantRow _ l' v)) = dvariant
+        if l == l' then eval (extendEnv env x v) tCont
+        else eval (extendEnv env y dvariant) fCont
