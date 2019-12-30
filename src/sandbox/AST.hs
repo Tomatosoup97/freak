@@ -9,14 +9,7 @@ type Label = String
 data VariantRow a = VariantRow RowType Label a
     deriving (Show, Eq)
 
-data RecordRow a
-    = RecordRowUnit
-    | RecordRowExtend Label a (RecordRow a)
-    deriving (Show, Eq)
-
-instance Functor RecordRow where
-    fmap _ RecordRowUnit = RecordRowUnit
-    fmap f (RecordRowExtend l a r) = RecordRowExtend l (f a) (fmap f r)
+type RecordRow a = Map.Map Label a -- todo: presence variables?
 
 data Value
     = VVar Var
@@ -24,7 +17,9 @@ data Value
     | VBool Bool
     | VLambda Var ValueType Comp
     | VFix Var Var Comp
+    | VUnit
     | VRecordRow (RecordRow Value)
+    | VExtendRow Label Value Value
     | VVariantRow (VariantRow Value)
     deriving (Show, Eq)
 

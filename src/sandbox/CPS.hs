@@ -14,10 +14,9 @@ data Error
 data CValue
     = CVar Var
     | CNum Integer
-    | CRecordRow (RecordRow CValue)
-    | CVariantRow (VariantRow CValue)
-    | CPair CValue CValue -- todo
-    | CPSLabel Label -- todo
+    | CUnit
+    | CPair CValue CValue
+    | CLabel Label
     deriving (Show)
 
 data ContComp
@@ -40,8 +39,7 @@ initialPureCont :: PureCont
 initialPureCont v h = (return . CPSValue) v -- todo: point-free?
 
 initialEffCont :: EffCont
-initialEffCont (CRecordRow (RecordRowExtend "1" z r)) =
-    return $ CPSAbsurd "x" z -- todo: syntactic sugar "1" -- todo "x"?
+initialEffCont (CPair z _) = return $ CPSAbsurd "x" z -- todo: "x" shouldn't be necessary
 
 initialState :: Int
 initialState = 0
@@ -52,24 +50,23 @@ freshVar = do
     put (n+1)
     return $ "__meta" ++ (show n) -- todo: this should be unique!
 
+consRow :: (Label, CValue) -> CValue -> CValue
+consRow (l, v) rowV = CPair (CLabel l) (CPair v rowV)
 
--- todo: this function should be simplified
--- TODO: use Functor instance
-cpsRecordRow :: RecordRow Value -> [(Label, CValue)] -> PureCont -> EffCont -> CPSMonad ContComp
-cpsRecordRow (RecordRowUnit) cvs k = k $ CRecordRow contCompRow
-    where contCompRow = foldl consRow RecordRowUnit cvs
-          consRow row (l, cv) = RecordRowExtend l cv row
-cpsRecordRow (RecordRowExtend l v r) cvs k = cps (EVal v) cont
-    where cont cval = cpsRecordRow r ((l, cval):cvs) k
-
+jota :: Label -> CValue -> CValue
+jota l cv = CPair (CLabel l) cv
 
 cps :: Comp -> PureCont -> EffCont -> CPSMonad ContComp
 cps e k h = case e of
     EVal (VVar x) -> k (CVar x) h
     EVal (VNum n) -> k (CNum n) h
-    EVal (VRecordRow row) -> cpsRecordRow row [] k h
-    EVal (VVariantRow (VariantRow t l v)) ->
-        cps (EVal v) (\cv -> \h -> k (CVariantRow (VariantRow t l cv)) h) h
+    EVal (VRecordRow row) -> undefined -- todo: records are constructed using ExtendRow
+    EVal VUnit -> k CUnit h
+    EVal (VExtendRow l v row) -> cps (EVal v) valCont h
+        where valCont cv = cps (EVal row) (rowCont cv)
+              rowCont cv rowV = k ((l, cv) `consRow` rowV)
+    EVal (VVariantRow (VariantRow _ l v)) -> cps (EVal v) valCont h
+        where valCont cv = k (jota l cv)
     EVal (VLambda x _ body) -> do
         fnvar <- freshVar
         contVar <- freshVar
@@ -114,7 +111,7 @@ cps e k h = case e of
         lambdaComp <- k (CVar x) h
         let exponential cv = CPair cv (CVar fnvar)
         contComp <- cps (EVal v) (\cv -> \_ ->
-            h $ CPair (CPSLabel l) (exponential cv)) h
+            h $ CPair (CLabel l) (exponential cv)) h
         return $ CPSFix fnvar [x] lambdaComp contComp
     EHandle body handler ->
         cps body (cpsHRet k h (hret handler)) (cpsHOps k h (hops handler))

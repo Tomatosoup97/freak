@@ -8,8 +8,9 @@ import CPS
 data DValue
     = DNum Integer
     | DLambda Env FuncRecord
-    | DRecordRow (RecordRow DValue)
-    | DVariantRow (VariantRow DValue)
+    | DUnit
+    | DPair DValue DValue
+    | DLabel Label
 
 type Env = Map.Map Var DValue
 
@@ -18,8 +19,9 @@ type FuncRecord = [DValue] -> Either Error DValue
 instance Show DValue where
     show (DNum n) = "DNum " ++ show n
     show (DLambda _ _) = "DLambda"
-    show (DRecordRow r) = show r
-    show (DVariantRow r) = show r
+    show (DUnit) = "<>"
+    show (DPair l r) = "(" ++ show l ++ ", " ++ show r ++ ")"
+    show (DLabel l) = "L: " ++ show l
 
 convOp :: BinaryOp -> Integer -> Integer -> Integer
 convOp BAdd n1 n2 = n1 + n2
@@ -31,25 +33,35 @@ val env e = case e of
         Just v -> return v
         Nothing -> Left $ EvalError $ "Unbound variable " ++ x ++ show env
     CNum n -> return $ DNum n
-    CRecordRow RecordRowUnit -> return $ DRecordRow RecordRowUnit
-    CRecordRow (RecordRowExtend l cv r) -> do
-        dv <- val env cv
-        dRow <- val env (CRecordRow r)
-        case dRow of
-          DRecordRow dRow -> return $ DRecordRow (RecordRowExtend l dv dRow)
-          _ -> Left $ EvalError $ "Row tail should also be row"
-    CVariantRow (VariantRow t l cv) ->
-        val env cv >>= (return . DVariantRow . (VariantRow t l))
+    CLabel l -> return $ DLabel l
+    CUnit -> return DUnit
+    CPair cL cR -> do
+        dL <- val env cL
+        dR <- val env cR
+        return $ DPair dL dR
 
 extendEnv :: Env -> Var -> DValue -> Env
 extendEnv env x v = Map.insert x v env
 
-decomposeRow :: forall a. RecordRow a -> Label -> (Maybe a, RecordRow a)
-decomposeRow r l' = aux (\x -> x) r where
-    aux cont RecordRowUnit = (Nothing, cont RecordRowUnit)
-    aux cont (RecordRowExtend l v r)
-      | l == l' = (Just v, cont r)
-      | otherwise = aux (cont . (\x -> RecordRowExtend l v x)) r
+
+deconsRow :: DValue -> Maybe (Label, DValue, DValue)
+deconsRow (DPair (DLabel l) (DPair v row')) = return (l, v, row')
+deconsRow DUnit = Nothing
+
+
+-- todo: unify with consRow !!
+consRow' :: (Label, DValue) -> DValue -> DValue
+consRow' (l, v) rowV = DPair (DLabel l) (DPair v rowV)
+
+
+decomposeRow :: DValue -> Label -> (Maybe DValue, DValue)
+decomposeRow row l = aux id row where
+    aux k row = case deconsRow row of
+        Just (l', v, row') ->
+            if l == l' then (return v, k row')
+                       else aux (k . (consRow' (l', v))) row'
+        Nothing -> (Nothing, k row)
+
 
 eval :: Env -> ContComp -> Either Error DValue
 eval env e = case e of
@@ -77,16 +89,16 @@ eval env e = case e of
         let env' = extendEnv env x varDVal
         eval env' cont
     CPSSplit l x y row cont -> do
-        (DRecordRow dRow) <- val env row
+        dRow <- val env row
         case decomposeRow dRow l of
           (Nothing, _) -> Left $ EvalError "Splitting non-existing label"
           (Just dv, rowRest) ->
             let env' = extendEnv env x dv in
-            let env'' = extendEnv env' y (DRecordRow rowRest) in
+            let env'' = extendEnv env' y rowRest in
             eval env'' cont
     CPSCase variant l x tCont y fCont -> do
         dvariant <- val env variant
-        let (DVariantRow (VariantRow _ l' v)) = dvariant
-        if l == l' then eval (extendEnv env x v) tCont
+        let (DPair (DLabel l') dv) = dvariant
+        if l == l' then eval (extendEnv env x dv) tCont
         else eval (extendEnv env y dvariant) fCont
     CPSAbsurd _ _ -> Left $ EvalError "Absurd; divergent term"
