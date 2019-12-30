@@ -42,4 +42,32 @@ data Comp
     | ECase Value Label Var Comp Var Comp
     | EReturn Value
     | EAbsurd Value
+    | EDo Label Value
+    | EHandle Comp Handler
     deriving (Show, Eq)
+
+data Handler
+    = HRet Var Comp
+    | HOps AlgebraicOp Handler
+    deriving (Show, Eq)
+
+data AlgebraicOp = AlgOp Label Var Var Comp
+    deriving (Show, Eq)
+
+-- todo: generalize these with Functor and catamorhpism
+
+hret :: Handler -> Handler
+hret h@(HRet _ _) = h
+hret (HOps _ h) = hret h
+
+-- todo: these should be rows
+hops :: Handler -> [AlgebraicOp] -- todo: make it a set
+hops = aux []
+    where aux acc (HRet _ _) = acc
+          aux acc (HOps op h) = aux (op:acc) h
+
+hop :: Label -> Handler -> Maybe AlgebraicOp
+hop _ (HRet _ _) = Nothing
+hop l (HOps op@(AlgOp l' _ _ _) h)
+    | l == l' = return op
+    | otherwise = hop l h

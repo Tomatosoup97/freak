@@ -16,6 +16,8 @@ data CValue
     | CNum Integer
     | CRecordRow (RecordRow CValue)
     | CVariantRow (VariantRow CValue)
+    | CPair CValue CValue -- todo
+    | CPSLabel Label -- todo
     deriving (Show)
 
 data ContComp
@@ -101,10 +103,33 @@ cps e k h = case e of
         cps (EVal variant) (
             \convVariant -> \h -> return $ CPSCase convVariant l x tCont y fCont) h
     EReturn v -> cps (EVal v) k h
-    EAbsurd v -> do
+    EAbsurd v -> do -- todo: not sure if that's desired translation
         var <- freshVar
         cont <- k (CVar var) h
         cps (EVal v) (\cv -> \h -> return $ CPSAbsurd var cv) h
+    -- Algebraic effects
+    EDo l v -> do
+        fnvar <- freshVar
+        x <- freshVar
+        lambdaComp <- k (CVar x) h
+        let exponential cv = CPair cv (CVar fnvar)
+        contComp <- cps (EVal v) (\cv -> \_ ->
+            h $ CPair (CPSLabel l) (exponential cv)) h
+        return $ CPSFix fnvar [x] lambdaComp contComp
+    EHandle body handler ->
+        cps body (cpsHRet k h (hret handler)) (cpsHOps k h (hops handler))
+
+
+cpsHRet :: PureCont -> EffCont -> Handler -> PureCont
+cpsHRet k h (HRet x comp) = \x -> \h' -> do
+    xVar <- freshVar
+    convComp <- cps comp k h
+    return $ CPSLet xVar x convComp
+
+
+cpsHOps :: PureCont -> EffCont -> [AlgebraicOp] -> EffCont
+cpsHOps k h ops = \(CPair l (CPair p r)) -> undefined
+
 
 runCPS :: Comp -> Either Error ContComp
 runCPS e = evalState (runExceptT cpsTerm) initialState
