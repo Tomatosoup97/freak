@@ -1,32 +1,3 @@
-{-| BNF Grammar
-
-program : computation
-        | empty
-
-computation : LET var <- computation in computation
-            | RETURN expr
-            | value value
-
-expr : ( expr )
-     | binary_expr
-     | value
-
-binary_expr : expr op expr
-
-op : + | *
-
-value : number
-      | bool
-      | var
-      | lambda
-
-lambda : \ var -> computation
-
-var : id
-
-empty :
-
--}
 module Parser where
 
 
@@ -57,10 +28,13 @@ languageDef =
                                      , "int"
                                      , "bool"
                                      , "absurd"
+                                     , "inj"
+                                     , "row"
+                                     , "rec"
                                      , "do"
                                      , "handle"
                                      ]
-           , Token.reservedOpNames = ["+", "*", "<-", "->", "\\", ":", "(", ")"]
+           , Token.reservedOpNames = ["+", "*", "<-", "->", "\\", ":", "(", ")", "|"]
            }
 
 lexer = Token.makeTokenParser languageDef
@@ -88,6 +62,7 @@ computation =  parens computation
            <|> caseComp
            <|> absurdComp
            <|> retComp
+           <|> doComp
 
 letComp :: Parser Comp
 letComp = do
@@ -152,25 +127,71 @@ retComp :: Parser Comp
 retComp =  reserved "return"
         >> liftM EReturn value
 
--- expr :: Parser Comp
--- expr = buildExpressionParser binOps subExpr
 
--- binOps = [ [Infix  (reservedOp "*"   >> return (EBinOp BMul )) AssocLeft]
---          , [Infix  (reservedOp "+"   >> return (EBinOp BAdd )) AssocLeft]
---          ]
+doComp :: Parser Comp
+doComp = do
+    reserved "do"
+    l <- identifier
+    v <- value
+    return $ EDo l v
 
--- subExpr :: Parser Expr
--- subExpr = parens expr <|> valueExpr
 
--- valueExpr :: Parser Expr
--- valueExpr = liftM EVal value
+handleComp :: Parser Comp
+handleComp = do
+    c <- computation
+    h <- handler
+    return $ EHandle c h
+
+
+handler :: Parser Handler
+handler = do
+    reservedOp "{"
+    h <- handlerBody
+    reservedOp "}"
+    return h
+
+
+handlerBody :: Parser Handler
+handlerBody =  parseHret
+           <|> parseHops
+
+
+parseHops :: Parser Handler
+parseHops = do
+    op <- parseAlgOp
+    reservedOp "|"
+    h <- handlerBody
+    return $ HOps op h
+
+
+parseAlgOp :: Parser AlgebraicOp
+parseAlgOp = do
+    l <- identifier
+    p <- identifier
+    r <- identifier
+    reservedOp "->"
+    c <- computation
+    return $ AlgOp l p r c
+
+
+parseHret :: Parser Handler
+parseHret = do
+    reserved "return"
+    x <- identifier
+    reservedOp "->"
+    c <- computation
+    return $ HRet x c
+
 
 value :: Parser Value
 value =  liftM VVar identifier
      <|> liftM VNum integer
      <|> lambdaExpr
-     <|> boolTrue
-     <|> boolFalse
+     <|> fixOp
+     <|> unit
+     <|> extendRow
+     <|> variantRow
+     <|> expr
 
 lambdaExpr :: Parser Value
 lambdaExpr = do
@@ -186,12 +207,50 @@ typeAnnot :: Parser ValueType
 typeAnnot =  (reserved "int" >> return TInt)
          <|> (reserved "bool" >> return TBool)
 
-boolTrue :: Parser Value
-boolTrue = reserved "true" >> return (VBool True)
+fixOp :: Parser Value
+fixOp = do
+    reserved "rec"
+    g <- identifier
+    x <- identifier
+    reservedOp "->" -- todo: other syntax?
+    c <- computation
+    return $ VFix g x c
 
-boolFalse :: Parser Value
-boolFalse = reserved "false" >> return (VBool False)
+unit :: Parser Value
+unit = reservedOp "(" >> reservedOp ")" >> return VUnit
 
+extendRow :: Parser Value
+extendRow = do
+    reservedOp "("
+    label <- identifier
+    reservedOp "="
+    v <- value
+    reservedOp ";"
+    vs <- value
+    reservedOp ")"
+    return $ VExtendRow label v vs
+
+variantRow :: Parser Value
+variantRow = do
+    reserved "inj"
+    label <- identifier
+    v <- value
+    reservedOp ":"
+    t <- rowTypeAnnot
+    return $ VVariantRow (VariantRow t label v)
+
+rowTypeAnnot :: Parser RowType
+rowTypeAnnot = reserved "row" >> return RowType -- todo
+
+expr :: Parser Value
+expr = buildExpressionParser binOps subExpr
+
+binOps = [ [Infix  (reservedOp "*"   >> return (VBinOp BMul )) AssocLeft]
+         , [Infix  (reservedOp "+"   >> return (VBinOp BAdd )) AssocLeft]
+         ]
+
+subExpr :: Parser Value
+subExpr = parens expr <|> value
 
 -- Local debugging tools
 --
