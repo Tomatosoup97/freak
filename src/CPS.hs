@@ -48,13 +48,13 @@ freshVar :: CPSMonad Var
 freshVar = do
     n <- get
     put (n+1)
-    return $ "__meta" ++ (show n) -- todo: this should be unique!
+    return $ "__meta" ++ show n -- todo: this should be unique!
 
 consRow :: (Label, CValue) -> CValue -> CValue
 consRow (l, v) rowV = CPair (CLabel l) (CPair v rowV)
 
 jota :: Label -> CValue -> CValue
-jota l cv = CPair (CLabel l) cv
+jota l = CPair (CLabel l)
 
 cps :: Comp -> PureCont -> EffCont -> CPSMonad ContComp
 cps e k h = case e of
@@ -70,12 +70,12 @@ cps e k h = case e of
     EVal (VLambda x _ body) -> do
         fnvar <- freshVar
         contVar <- freshVar
-        convBody <- cps body (\v -> \h -> return $ CPSApp (CVar contVar) [v]) h
+        convBody <- cps body (\v h -> return $ CPSApp (CVar contVar) [v]) h
         contComp <- k (CVar fnvar) h
         return $ CPSFix fnvar [x, contVar] convBody contComp
     EVal (VFix g x body) -> do
         contVar <- freshVar
-        convBody <- cps body (\v -> \h -> return $ CPSApp (CVar contVar) [v]) h
+        convBody <- cps body (\v h -> return $ CPSApp (CVar contVar) [v]) h
         contComp <- k (CVar g) h
         return $ CPSFix g [x, contVar] convBody contComp
     EVal (VBinOp op e1 e2) -> do
@@ -88,31 +88,33 @@ cps e k h = case e of
         resVar <- freshVar
         resArg <- freshVar
         resBody <- k (CVar resArg) h
-        contComp <- cps e1 (\f -> \h -> cps e2 (\v -> \h -> return $ CPSApp f [v, CVar resVar]) h) h
+        let cont' f v h = return $ CPSApp f [v, CVar resVar]
+        let cont = cps e2 . cont'
+        contComp <- cps e1 cont h
         return $ CPSFix resVar [resArg] resBody contComp
     ELet x varComp e -> do
         convE <- cps e k h -- is passing continuation here correct?
-        cps varComp (\v -> \h -> return $ CPSLet x v convE) h
+        cps varComp (\v h -> return $ CPSLet x v convE) h
     ESplit l x y row comp -> do
         cont <- cps comp k h
-        cps (EVal row) (\convRow -> \h -> return $ CPSSplit l x y convRow cont) h
+        cps (EVal row) (\convRow h -> return $ CPSSplit l x y convRow cont) h
     ECase variant l x tComp y fComp -> do
         tCont <- cps tComp k h
         fCont <- cps fComp k h
         cps (EVal variant) (
-            \convVariant -> \h -> return $ CPSCase convVariant l x tCont y fCont) h
+            \convVariant h -> return $ CPSCase convVariant l x tCont y fCont) h
     EReturn v -> cps (EVal v) k h
     EAbsurd v -> do -- todo: not sure if that's desired translation
         var <- freshVar
         cont <- k (CVar var) h
-        cps (EVal v) (\cv -> \h -> return $ CPSAbsurd var cv) h
+        cps (EVal v) (\cv h -> return $ CPSAbsurd var cv) h
     -- Algebraic effects
     EDo l v -> do
         fnvar <- freshVar
         x <- freshVar
         lambdaComp <- k (CVar x) h
         let exponential cv = CPair cv (CVar fnvar)
-        contComp <- cps (EVal v) (\cv -> \_ ->
+        contComp <- cps (EVal v) (\cv _ ->
             h $ CPair (CLabel l) (exponential cv)) h
         return $ CPSFix fnvar [x] lambdaComp contComp
     EHandle body handler ->
@@ -120,14 +122,13 @@ cps e k h = case e of
 
 
 cpsHRet :: PureCont -> EffCont -> Handler -> PureCont
-cpsHRet k h (HRet x comp) = \x -> \h' -> do
-    xVar <- freshVar
+cpsHRet k h (HRet xVar comp) x h' = do
     convComp <- cps comp k h -- h'?
     return $ CPSLet xVar x convComp
 
 
 cpsHOps :: PureCont -> EffCont -> Handler -> EffCont
-cpsHOps k h ops = \(CPair (CLabel l) (CPair p r)) ->
+cpsHOps k h ops (CPair (CLabel l) (CPair p r)) =
     case hop l ops of
         Just (AlgOp _ pvar rvar comp) -> do
             contComp <- cps comp k h

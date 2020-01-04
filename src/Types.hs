@@ -9,8 +9,7 @@ data ValueType
 data RowType = RowType -- TODO
     deriving (Eq)
 
-data EffectType
-    = ERowType RowType
+newtype EffectType = ERowType RowType
     deriving (Eq)
 
 data CompType

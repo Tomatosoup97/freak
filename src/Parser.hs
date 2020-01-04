@@ -71,15 +71,13 @@ letComp = do
     reservedOp "<-"
     c1 <- computation
     reserved "in"
-    c2 <- computation
-    return $ ELet x c1 c2
+    ELet x c1 <$> computation
 
 
 appComp :: Parser Comp
 appComp = do
     v1 <- computation
-    v2 <- computation
-    return $ EApp v1 v2
+    EApp v1 <$> computation
 
 
 splitComp :: Parser Comp
@@ -95,8 +93,7 @@ splitComp = do
     reservedOp "="
     v <- value
     reserved "in"
-    comp <- computation
-    return $ ESplit label x y v comp
+    ESplit label x y v <$> computation
 
 
 caseComp :: Parser Comp
@@ -119,28 +116,22 @@ caseComp = do
 absurdComp :: Parser Comp
 absurdComp = do
     reserved "absurd"
-    v <- value
-    return $ EAbsurd v
+    EAbsurd <$> value
 
 
 retComp :: Parser Comp
-retComp =  reserved "return"
-        >> liftM EReturn value
+retComp = reserved "return"
+        >> EReturn <$> value
 
 
 doComp :: Parser Comp
 doComp = do
     reserved "do"
-    l <- identifier
-    v <- value
-    return $ EDo l v
+    EDo <$> identifier <*> value
 
 
 handleComp :: Parser Comp
-handleComp = do
-    c <- computation
-    h <- handler
-    return $ EHandle c h
+handleComp = EHandle <$> computation <*> handler
 
 
 handler :: Parser Handler
@@ -160,8 +151,7 @@ parseHops :: Parser Handler
 parseHops = do
     op <- parseAlgOp
     reservedOp "|"
-    h <- handlerBody
-    return $ HOps op h
+    HOps op <$> handlerBody
 
 
 parseAlgOp :: Parser AlgebraicOp
@@ -170,8 +160,7 @@ parseAlgOp = do
     p <- identifier
     r <- identifier
     reservedOp "->"
-    c <- computation
-    return $ AlgOp l p r c
+    AlgOp l p r <$> computation
 
 
 parseHret :: Parser Handler
@@ -179,13 +168,12 @@ parseHret = do
     reserved "return"
     x <- identifier
     reservedOp "->"
-    c <- computation
-    return $ HRet x c
+    HRet x <$> computation
 
 
 value :: Parser Value
-value =  liftM VVar identifier
-     <|> liftM VNum integer
+value =  fmap VVar identifier
+     <|> fmap VNum integer
      <|> lambdaExpr
      <|> fixOp
      <|> unit
@@ -200,8 +188,7 @@ lambdaExpr = do
     reservedOp ":"
     t <- typeAnnot
     reservedOp "->"
-    c <- computation
-    return $ VLambda x t c
+    VLambda x t <$> computation
 
 typeAnnot :: Parser ValueType
 typeAnnot =  (reserved "int" >> return TInt)
@@ -213,8 +200,7 @@ fixOp = do
     g <- identifier
     x <- identifier
     reservedOp "->" -- todo: other syntax?
-    c <- computation
-    return $ VFix g x c
+    VFix g x <$> computation
 
 unit :: Parser Value
 unit = reservedOp "(" >> reservedOp ")" >> return VUnit

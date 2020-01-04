@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ExistentialQuantification #-}
 module Eval where
 
@@ -19,7 +20,7 @@ type FuncRecord = [DValue] -> Either Error DValue
 instance Show DValue where
     show (DNum n) = "DNum " ++ show n
     show (DLambda _ _) = "DLambda"
-    show (DUnit) = "<>"
+    show  DUnit = "<>"
     show (DPair l r) = "(" ++ show l ++ ", " ++ show r ++ ")"
     show (DLabel l) = "L: " ++ show l
 
@@ -59,14 +60,14 @@ decomposeRow row l = aux id row where
     aux k row = case deconsRow row of
         Just (l', v, row') ->
             if l == l' then (return v, k row')
-                       else aux (k . (consRow' (l', v))) row'
+                       else aux (k . consRow' (l', v)) row'
         Nothing -> (Nothing, k row)
 
 
 eval :: Env -> ContComp -> Either Error DValue
 eval env e = case e of
     CPSValue v -> val env v
-    CPSApp fE args -> val env fE >>= \v -> case v of
+    CPSApp fE args -> val env fE >>= \case
         DLambda env' g -> mapM (val env) args >>= g -- do we need env'?
         _ -> Left $ EvalError "Application of non-lambda term"
     CPSBinOp op l r x cont -> do
@@ -80,7 +81,7 @@ eval env e = case e of
     CPSFix f formalParams body cont -> eval contEnv cont
         where contEnv = extendEnv env f func
               func = DLambda env funcRecord
-              funcRecord = \actualParams ->
+              funcRecord actualParams =
                 let params = zip formalParams actualParams in
                 let extEnv = foldl (uncurry . extendEnv) env params in
                 eval extEnv body
