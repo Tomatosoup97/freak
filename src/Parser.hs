@@ -1,7 +1,6 @@
 {-| BNF Grammar
 
 program : computation
-        | expr
         | empty
 
 computation : LET var <- computation in computation
@@ -57,8 +56,11 @@ languageDef =
                                      , "false"
                                      , "int"
                                      , "bool"
+                                     , "absurd"
+                                     , "do"
+                                     , "handle"
                                      ]
-           , Token.reservedOpNames = ["+", "*", "<-", "->", "\\", ":"]
+           , Token.reservedOpNames = ["+", "*", "<-", "->", "\\", ":", "(", ")"]
            }
 
 lexer = Token.makeTokenParser languageDef
@@ -75,18 +77,17 @@ whiteSpace = Token.whiteSpace lexer -- parses whitespace
 
 -- Parser
 --
-program :: Parser Term
-program = term
-
-term :: Parser Term
-term =  liftM TermExpr expr
-    <|> liftM TermComp computation
+program :: Parser Comp
+program = computation
 
 computation :: Parser Comp
 computation =  parens computation
            <|> letComp
-           <|> retComp
            <|> appComp
+           <|> splitComp
+           <|> caseComp
+           <|> absurdComp
+           <|> retComp
 
 letComp :: Parser Comp
 letComp = do
@@ -96,32 +97,73 @@ letComp = do
     c1 <- computation
     reserved "in"
     c2 <- computation
-    return $ CLet x c1 c2
-
-retComp :: Parser Comp
-retComp =  reserved "return"
-        >> liftM CRet expr
+    return $ ELet x c1 c2
 
 
 appComp :: Parser Comp
 appComp = do
-    v1 <- value
-    v2 <- value
-    return $ CApp v1 v2
+    v1 <- computation
+    v2 <- computation
+    return $ EApp v1 v2
 
 
-expr :: Parser Expr
-expr = buildExpressionParser binOps subExpr
+splitComp :: Parser Comp
+splitComp = do
+    reserved "let"
+    reservedOp "("
+    label <- identifier
+    reservedOp "="
+    x <- identifier
+    reservedOp ";"
+    y <- identifier
+    reservedOp ")"
+    reservedOp "="
+    v <- value
+    reserved "in"
+    comp <- computation
+    return $ ESplit label x y v comp
 
-binOps = [ [Infix  (reservedOp "*"   >> return (EBinOp BMul )) AssocLeft]
-         , [Infix  (reservedOp "+"   >> return (EBinOp BAdd )) AssocLeft]
-         ]
 
-subExpr :: Parser Expr
-subExpr = parens expr <|> valueExpr
+caseComp :: Parser Comp
+caseComp = do
+    reserved "case"
+    v <- value
+    reservedOp "{"
+    l <- identifier
+    x <- identifier
+    reservedOp "->"
+    xC <- computation
+    reservedOp ";"
+    y <- identifier
+    reservedOp "->"
+    yC <- computation
+    reservedOp "}"
+    return $ ECase v l x xC y yC
 
-valueExpr :: Parser Expr
-valueExpr = liftM EVal value
+
+absurdComp :: Parser Comp
+absurdComp = do
+    reserved "absurd"
+    v <- value
+    return $ EAbsurd v
+
+
+retComp :: Parser Comp
+retComp =  reserved "return"
+        >> liftM EReturn value
+
+-- expr :: Parser Comp
+-- expr = buildExpressionParser binOps subExpr
+
+-- binOps = [ [Infix  (reservedOp "*"   >> return (EBinOp BMul )) AssocLeft]
+--          , [Infix  (reservedOp "+"   >> return (EBinOp BAdd )) AssocLeft]
+--          ]
+
+-- subExpr :: Parser Expr
+-- subExpr = parens expr <|> valueExpr
+
+-- valueExpr :: Parser Expr
+-- valueExpr = liftM EVal value
 
 value :: Parser Value
 value =  liftM VVar identifier
@@ -153,14 +195,14 @@ boolFalse = reserved "false" >> return (VBool False)
 
 -- Local debugging tools
 --
-parseString :: String -> Term
+parseString :: String -> Comp
 parseString str =
   case parse program "" str of
     Left e  -> error $ show e
     Right r -> r
 
 
-parseFile :: String -> IO Term
+parseFile :: String -> IO Comp
 parseFile file =
   do code <- readFile file
      case parse program "" code of

@@ -29,7 +29,7 @@ data BinaryOp
     deriving (Show, Eq)
 
 data Comp
-    = EBinOp BinaryOp Comp Comp
+    = EBinOp BinaryOp Comp Comp -- should be value
     | EVal Value
     | ELet Var Comp Comp
     | EApp Comp Comp
