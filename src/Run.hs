@@ -18,7 +18,7 @@ outputRes expected e' = do
 main :: IO ()
 main = do
     let int = EVal . VNum
-    let plus = EBinOp BAdd (int 2) (EVal (VVar "x"))
+    let plus = EReturn $ VBinOp BAdd (VNum 2) (VVar "x")
     let lambda = EVal (VLambda "x" TInt plus)
     let app = EApp lambda (int 3)
     let letTerm = ELet "x" (int 4) plus

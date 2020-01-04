@@ -78,10 +78,12 @@ cps e k h = case e of
         convBody <- cps body (\v -> \h -> return $ CPSApp (CVar contVar) [v]) h
         contComp <- k (CVar g) h
         return $ CPSFix g [x, contVar] convBody contComp
-    EBinOp op e1 e2 -> do
+    EVal (VBinOp op e1 e2) -> do
         opVar <- freshVar
         contComp <- k (CVar opVar) h
-        cps e1 (\v1 -> \h -> cps e2 (\v2 -> \h -> return $ CPSBinOp op v1 v2 opVar contComp) h) h
+        let cont' v1 v2 h = return $ CPSBinOp op v1 v2 opVar contComp
+        let cont v1 = cps (EVal e2) (cont' v1)
+        cps (EVal e1) cont h
     EApp e1 e2 -> do
         resVar <- freshVar
         resArg <- freshVar
