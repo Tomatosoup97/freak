@@ -114,18 +114,31 @@ cps e k h = case e of
             h $ CPair (CLabel l) (exponential cv)) h
         return $ CPSFix fnvar [x] lambdaComp contComp
     EHandle body handler ->
-        cps body (cpsHRet k h (hret handler)) (cpsHOps k h (hops handler))
+        cps body (cpsHRet k h (hret handler)) (cpsHOps k h handler)
 
 
 cpsHRet :: PureCont -> EffCont -> Handler -> PureCont
 cpsHRet k h (HRet x comp) = \x -> \h' -> do
     xVar <- freshVar
-    convComp <- cps comp k h
+    convComp <- cps comp k h -- h'?
     return $ CPSLet xVar x convComp
 
 
-cpsHOps :: PureCont -> EffCont -> [AlgebraicOp] -> EffCont
-cpsHOps k h ops = \(CPair l (CPair p r)) -> undefined
+cpsHOps :: PureCont -> EffCont -> Handler -> EffCont
+cpsHOps k h ops = \(CPair (CLabel l) (CPair p r)) ->
+    case hop l ops of
+        Just (AlgOp _ pvar rvar comp) -> do
+            contComp <- cps comp k h
+            return $ CPSLet pvar p (CPSLet rvar r contComp)
+        Nothing -> undefined -- todo
+
+
+-- forward :: Label -> Var -> Var -> PureCont -> EffCont -> CPSMonad ContComp
+-- forward y p r k h = do
+--     fnvar <- freshVar
+--     x <- freshVar
+--     lambdaComp <- CApp r [x, k, h]
+--     contComp <- h (CPair (CLabel y) (CPair p (CVar fnvar)))
 
 
 runCPS :: Comp -> Either Error ContComp

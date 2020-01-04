@@ -49,7 +49,7 @@ data Handler
 data AlgebraicOp = AlgOp Label Var Var Comp
     deriving (Show, Eq)
 
--- todo: generalize these with Functor and catamorhpism
+-- todo: generalize these with Functor and catamorphism
 
 hret :: Handler -> Handler
 hret h@(HRet _ _) = h
