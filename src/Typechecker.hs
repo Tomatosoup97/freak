@@ -40,7 +40,7 @@ infer_value env (VVar x) = case Map.lookup x env of
     Nothing -> Left $ TypeError ("Unbound variable " ++ x)
 infer_value env (VLambda var varT comp) =
     let extEnv = extendTypeEnv env var (TVal varT) in
-    infer_comp extEnv comp >>= \tc -> return $ TLambda varT tc  -- TODO: η-reduct?
+    infer_comp extEnv comp >>= return . (TLambda varT)
 
 
 infer_expr :: TypeEnv -> Expr -> Either Error ValueType

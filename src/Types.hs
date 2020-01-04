@@ -6,8 +6,11 @@ data ValueType
     | TLambda ValueType CompType
     deriving (Eq)
 
+data RowType = RowType -- TODO
+    deriving (Eq)
+
 data EffectType
-    = RowType -- TODO
+    = ERowType RowType
     deriving (Eq)
 
 data CompType
@@ -31,5 +34,8 @@ instance Show Type where
 instance Show CompType where
     showsPrec _ (TComp tv te) = shows tv . showString "!" . shows te
 
+instance Show RowType where
+    showsPrec _ RowType = showString "Row " -- TODO
+
 instance Show EffectType where
-    showsPrec _ (RowType) = showString "{ row }" -- TODO
+    showsPrec _ (ERowType row) = showString $ "{ " ++ show row ++ " }"

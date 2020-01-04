@@ -1,74 +1,68 @@
 module AST where
 
+import qualified Data.Map as Map
 import Types
 
 type Var = String
+type Label = String
+
+data VariantRow a = VariantRow RowType Label a
+    deriving (Show, Eq)
+
+type RecordRow a = Map.Map Label a -- todo: presence variables?
 
 data Value
     = VVar Var
     | VNum Integer
     | VBool Bool
     | VLambda Var ValueType Comp
-    deriving (Eq)
+    | VFix Var Var Comp
+    | VUnit
+    | VRecordRow (RecordRow Value)
+    | VExtendRow Label Value Value
+    | VVariantRow (VariantRow Value)
+    deriving (Show, Eq)
 
 data BinaryOp
     = BAdd
     | BMul
-    deriving (Eq)
-
-data Expr
-    = EBinOp BinaryOp Expr Expr
-    | EVal Value
-    deriving (Eq)
+    deriving (Show, Eq)
 
 data Comp
-    = CLet Var Comp Comp
-    | CRet Expr
-    | CApp Value Value
-    deriving (Eq)
+    = EBinOp BinaryOp Comp Comp
+    | EVal Value
+    | ELet Var Comp Comp
+    | EApp Comp Comp
+    | ESplit Label Var Var Value Comp
+    | ECase Value Label Var Comp Var Comp
+    | EReturn Value
+    | EAbsurd Value
+    | EDo Label Value
+    | EHandle Comp Handler
+    deriving (Show, Eq)
 
-data Term
-    = TermExpr Expr
-    | TermComp Comp
-    deriving (Eq)
+data Handler
+    = HRet Var Comp
+    | HOps AlgebraicOp Handler
+    deriving (Show, Eq)
 
+data AlgebraicOp = AlgOp Label Var Var Comp
+    deriving (Show, Eq)
 
-addParens :: ShowS -> ShowS
-addParens s = showString "(" . s . showString ")"
+-- todo: generalize these with Functor and catamorphism
 
-instance Show Value where
-    showsPrec _ (VVar x) = showString x
-    showsPrec _ (VNum n) = shows n
-    showsPrec _ (VBool b) = shows b
-    showsPrec _ (VLambda var t c) =
-        showString "λ" . showString var . showString " -> " . shows c
+hret :: Handler -> Handler
+hret h@(HRet _ _) = h
+hret (HOps _ h) = hret h
 
-instance Show BinaryOp where
-    show BAdd = "+"
-    show BMul = "*"
+-- todo: these should be rows
+hops :: Handler -> [AlgebraicOp] -- todo: make it a set
+hops = aux []
+    where aux acc (HRet _ _) = acc
+          aux acc (HOps op h) = aux (op:acc) h
 
-instance Show Expr where
-    showsPrec p (EBinOp op e1 e2) =
-        showParen (p > p')
-          (showsPrec leftPrec e1 . showChar ' ' . shows op . showChar ' '
-          . showsPrec rightPrec e2)
-        where
-          (p',leftPrec,rightPrec) = binOpPrec op
-          binOpPrec :: BinaryOp -> (Int, Int, Int)
-          binOpPrec BAdd = (50, 50, 51)
-          binOpPrec BMul = (60, 60, 61)
-
-    showsPrec _ (EVal val) = shows val
-
-instance Show Comp where
-    showsPrec p (CLet x c1 c2) =
-        showParen (p > 0)
-        (showString "let " . showString x . showString " <- " . showsPrec 0 c1
-        . showString " in " . showsPrec 0 c2)
-
-    showsPrec _ (CRet e) = showString "return " . shows e
-    showsPrec _ (CApp v1 v2) = addParens (shows v1) . showString " " . shows v2
-
-instance Show Term where
-    showsPrec _ (TermExpr e) = shows e
-    showsPrec _ (TermComp c) = shows c
+hop :: Label -> Handler -> Maybe AlgebraicOp
+hop _ (HRet _ _) = Nothing
+hop l (HOps op@(AlgOp l' _ _ _) h)
+    | l == l' = return op
+    | otherwise = hop l h
