@@ -1,3 +1,6 @@
+build:
+	ghc Freak.hs
+
 clean:
 	rm -f Run
 	find . -name "*.hi" -type f -delete
@@ -5,3 +8,8 @@ clean:
 
 lint:
 	hlint .
+
+test:
+	runhaskell Tests.hs
+
+check: lint test
