@@ -1,5 +1,11 @@
 module Types where
 
+data Error
+    = EvalError String
+    | CPSError String
+    | ParseError String
+    deriving (Eq, Show)
+
 data ValueType
     = TInt
     | TBool

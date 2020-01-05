@@ -5,6 +5,7 @@ module Eval where
 import qualified Data.Map as Map
 import AST
 import CPS
+import Types
 
 data DValue
     = DNum Integer
@@ -24,6 +25,16 @@ instance Show DValue where
     show (DPair l r) = "(" ++ show l ++ ", " ++ show r ++ ")"
     show (DLabel l) = "L: " ++ show l
 
+instance Eq DValue where
+    DNum n == DNum n' = n == n'
+    DUnit == DUnit = True
+    DPair a b == DPair a' b' = a == a' && b == b'
+    DLabel l == DLabel l' = l == l'
+    _ == _ = False
+
+unboundVarErr :: String -> Either Error DValue
+unboundVarErr x = Left $ EvalError $ "Unbound variable " ++ x
+
 convOp :: BinaryOp -> Integer -> Integer -> Integer
 convOp BAdd n1 n2 = n1 + n2
 convOp BMul n1 n2 = n1 * n2
@@ -32,7 +43,7 @@ val :: Env -> CValue -> Either Error DValue
 val env e = case e of
     CVar x -> case Map.lookup x env of
         Just v -> return v
-        Nothing -> Left $ EvalError $ "Unbound variable " ++ x ++ show env
+        Nothing -> unboundVarErr x
     CNum n -> return $ DNum n
     CLabel l -> return $ DLabel l
     CUnit -> return DUnit
@@ -103,3 +114,7 @@ eval env e = case e of
         if l == l' then eval (extendEnv env x dv) tCont
         else eval (extendEnv env y dvariant) fCont
     CPSAbsurd _ _ -> Left $ EvalError "Absurd; divergent term"
+
+
+runEval :: ContComp -> Either Error DValue
+runEval = eval Map.empty

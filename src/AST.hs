@@ -31,7 +31,7 @@ data BinaryOp
 data Comp
     = EVal Value
     | ELet Var Comp Comp
-    | EApp Comp Comp
+    | EApp Value Value
     | ESplit Label Var Var Value Comp
     | ECase Value Label Var Comp Var Comp
     | EReturn Value

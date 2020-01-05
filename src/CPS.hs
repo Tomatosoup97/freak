@@ -6,11 +6,6 @@ import AST
 import Types
 
 
-data Error
-    = EvalError String
-    | CPSError String
-    deriving (Show)
-
 data CValue
     = CVar Var
     | CNum Integer
@@ -89,8 +84,8 @@ cps e k h = case e of
         resArg <- freshVar
         resBody <- k (CVar resArg) h
         let cont' f v h = return $ CPSApp f [v, CVar resVar]
-        let cont = cps e2 . cont'
-        contComp <- cps e1 cont h
+        let cont = cps (EVal e2) . cont'
+        contComp <- cps (EVal e1) cont h
         return $ CPSFix resVar [resArg] resBody contComp
     ELet x varComp e -> do
         convE <- cps e k h -- is passing continuation here correct?
