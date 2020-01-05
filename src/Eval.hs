@@ -30,6 +30,8 @@ instance Eq DValue where
     DUnit == DUnit = True
     DPair a b == DPair a' b' = a == a' && b == b'
     DLabel l == DLabel l' = l == l'
+    -- We don't want to compare functions extensionally
+    DLambda env _ == DLambda env' _ = env == env'
     _ == _ = False
 
 unboundVarErr :: String -> Either Error DValue
@@ -116,7 +118,7 @@ eval env e = case e of
         let (DPair (DLabel l') dv) = dvariant
         if l == l' then eval (extendEnv env x dv) tCont
         else eval (extendEnv env y dvariant) fCont
-    CPSAbsurd _ _ -> absurdErr
+    CPSAbsurd _ -> absurdErr
 
 
 runEval :: ContComp -> Either Error DValue

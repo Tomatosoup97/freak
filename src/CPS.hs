@@ -22,7 +22,7 @@ data ContComp
     | CPSLet Var CValue ContComp
     | CPSSplit Label Var Var CValue ContComp
     | CPSCase CValue Label Var ContComp Var ContComp
-    | CPSAbsurd Var CValue
+    | CPSAbsurd CValue
     deriving (Show)
 
 type CPSMonad a = ExceptT Error (State Int) a
@@ -34,7 +34,7 @@ initialPureCont :: PureCont
 initialPureCont v h = (return . CPSValue) v -- todo: point-free?
 
 initialEffCont :: EffCont
-initialEffCont (CPair z _) = return $ CPSAbsurd "x" z -- todo: "x" shouldn't be necessary
+initialEffCont (CPair z _) = return $ CPSAbsurd z -- todo: "x" shouldn't be necessary
 
 initialState :: Int
 initialState = 0
@@ -99,18 +99,14 @@ cps e k h = case e of
         cps (EVal variant) (
             \convVariant h -> return $ CPSCase convVariant l x tCont y fCont) h
     EReturn v -> cps (EVal v) k h
-    EAbsurd v -> do -- todo: not sure if that's desired translation
-        var <- freshVar
-        cont <- k (CVar var) h
-        cps (EVal v) (\cv h -> return $ CPSAbsurd var cv) h
+    EAbsurd v -> cps (EVal v) (\cv h -> return $ CPSAbsurd cv) h
     -- Algebraic effects
     EDo l v -> do
         fnvar <- freshVar
         x <- freshVar
         lambdaComp <- k (CVar x) h
-        let exponential cv = CPair cv (CVar fnvar)
-        contComp <- cps (EVal v) (\cv _ ->
-            h $ CPair (CLabel l) (exponential cv)) h
+        let pair cv = CPair (CLabel l) (CPair cv (CVar fnvar))
+        contComp <- cps (EVal v) (\cv h' -> h $ pair cv) h
         return $ CPSFix fnvar [x] lambdaComp contComp
     EHandle body handler ->
         cps body (cpsHRet k h (hret handler)) (cpsHOps k h handler)
