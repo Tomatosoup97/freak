@@ -56,17 +56,24 @@ program = computation
 
 computation :: Parser Comp
 computation =  parens computation
-           <|> letComp
-           <|> appComp
            <|> splitComp
+           <|> letComp
+           <|> letBasedComp
            <|> caseComp
            <|> absurdComp
            <|> retComp
            <|> doComp
+           <|> handleComp
+           <|> appComp
+
+
+letBasedComp :: Parser Comp
+letBasedComp = do
+    reserved "let"
+    letComp <|> splitComp
 
 letComp :: Parser Comp
 letComp = do
-    reserved "let"
     x <- identifier
     reservedOp "<-"
     c1 <- computation
@@ -76,13 +83,12 @@ letComp = do
 
 appComp :: Parser Comp
 appComp = do
-    v1 <- computation
-    EApp v1 <$> computation
+    v1 <- value
+    EApp v1 <$> value
 
 
 splitComp :: Parser Comp
 splitComp = do
-    reserved "let"
     reservedOp "("
     label <- identifier
     reservedOp "="
@@ -170,14 +176,10 @@ parseHret = do
     reservedOp "->"
     HRet x <$> computation
 
-
 value :: Parser Value
-value =  fmap VVar identifier
-     <|> fmap VNum integer
-     <|> lambdaExpr
+value =  lambdaExpr
      <|> fixOp
-     <|> unit
-     <|> extendRow
+     <|> row
      <|> variantRow
      <|> expr
 
@@ -202,12 +204,16 @@ fixOp = do
     reservedOp "->" -- todo: other syntax?
     VFix g x <$> computation
 
+row :: Parser Value
+row = do
+    reservedOp "("
+    extendRow <|> unit
+
 unit :: Parser Value
-unit = reservedOp "(" >> reservedOp ")" >> return VUnit
+unit = reservedOp ")" >> return VUnit
 
 extendRow :: Parser Value
 extendRow = do
-    reservedOp "("
     label <- identifier
     reservedOp "="
     v <- value
@@ -229,20 +235,29 @@ rowTypeAnnot :: Parser RowType
 rowTypeAnnot = reserved "row" >> return RowType -- todo
 
 expr :: Parser Value
-expr = buildExpressionParser binOps subExpr
+expr = buildExpressionParser binOps term
 
 binOps = [ [Infix  (reservedOp "*"   >> return (VBinOp BMul )) AssocLeft]
          , [Infix  (reservedOp "+"   >> return (VBinOp BAdd )) AssocLeft]
          ]
 
-subExpr :: Parser Value
-subExpr = parens expr <|> value
+term :: Parser Value
+term =  parens expr
+    <|> fmap VVar identifier
+    <|> fmap VNum integer
 
--- Local debugging tools
+-- Parser runners
 --
-parseString :: String -> Comp
-parseString str =
-  case parse program "" str of
+
+parseString :: String -> Either Error Comp
+parseString s = case parse program "" s of
+    Left e -> Left $ ParseError $ show e
+    Right r -> return r
+
+
+parseString' :: String -> Comp
+parseString' str =
+  case parseString str of
     Left e  -> error $ show e
     Right r -> r
 
