@@ -35,6 +35,9 @@ instance Eq DValue where
 unboundVarErr :: String -> Either Error DValue
 unboundVarErr x = Left $ EvalError $ "Unbound variable " ++ x
 
+absurdErr :: Either Error DValue
+absurdErr = Left $ EvalError "Absurd; divergent term"
+
 convOp :: BinaryOp -> Integer -> Integer -> Integer
 convOp BAdd n1 n2 = n1 + n2
 convOp BMul n1 n2 = n1 * n2
@@ -113,7 +116,7 @@ eval env e = case e of
         let (DPair (DLabel l') dv) = dvariant
         if l == l' then eval (extendEnv env x dv) tCont
         else eval (extendEnv env y dvariant) fCont
-    CPSAbsurd _ _ -> Left $ EvalError "Absurd; divergent term"
+    CPSAbsurd _ _ -> absurdErr
 
 
 runEval :: ContComp -> Either Error DValue

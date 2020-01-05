@@ -31,6 +31,10 @@ main = hspec $ do
     it "Undefined variable" $ do
       evalProgram "return x" `shouldBe` (unboundVarErr "x")
 
+    it "Absurd" $ do
+      evalProgram "absurd 42" `shouldBe` absurdErr
+      evalProgram "let x <- absurd 17 in return 42" `shouldBe` absurdErr
+
     it "Let expression" $ do
       evalProgram "let x <- return 3 in return x + 2" `shouldBe` (Right (DNum 5))
       evalProgram "let x <- return x in return x + 2" `shouldBe` (unboundVarErr "x")
@@ -49,3 +53,18 @@ main = hspec $ do
 
     it "Lambda application" $ do
       evalProgram "(\\x : int -> return x + 1) 42" `shouldBe` (Right (DNum 43))
+
+    it "Trivial handler" $ do
+      evalProgram "handle return 1 with {return x -> return x}" `shouldBe` (Right (DNum 1))
+
+    it "Trivial handler with ops" $ do
+      evalProgram "handle return 1 with {Op p r -> return 2 | return x -> return x }" `shouldBe` (Right (DNum 1))
+
+    it "Constant effect handler" $ do
+      evalProgram "handle do Const 1 with {Const p r -> return 42 | return x -> return 1 }" `shouldBe` (Right (DNum 42))
+
+    it "Identity effect handler" $ do
+      evalProgram "handle do Id 42 with {Id p r -> return p | return x -> return 1 }" `shouldBe` (Right (DNum 42))
+
+    it "Increment effect handler" $ do
+      evalProgram "handle do Inc 17 with {Id p r -> return p | Inc p r -> return p + 1 | return x -> return 1 }" `shouldBe` (Right (DNum 18))

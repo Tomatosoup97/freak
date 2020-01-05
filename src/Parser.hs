@@ -34,6 +34,7 @@ languageDef =
                                      , "case"
                                      , "do"
                                      , "handle"
+                                     , "with"
                                      ]
            , Token.reservedOpNames = [
                 "+", "*", "<-", "->", "\\", ":", "(", ")", "|", "<", ">"]
@@ -138,7 +139,9 @@ doComp = do
 handleComp :: Parser Comp
 handleComp = do
     reserved "handle"
-    EHandle <$> computation <*> handler
+    c <- computation
+    reserved "with"
+    EHandle c <$> handler
 
 
 handler :: Parser Handler
