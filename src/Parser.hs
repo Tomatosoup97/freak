@@ -11,6 +11,7 @@ import qualified Text.ParserCombinators.Parsec.Token as Token
 import AST
 import Types
 
+
 -- Lexer
 --
 languageDef =
@@ -28,13 +29,14 @@ languageDef =
                                      , "int"
                                      , "bool"
                                      , "absurd"
-                                     , "inj"
                                      , "row"
                                      , "rec"
+                                     , "case"
                                      , "do"
                                      , "handle"
                                      ]
-           , Token.reservedOpNames = ["+", "*", "<-", "->", "\\", ":", "(", ")", "|"]
+           , Token.reservedOpNames = [
+                "+", "*", "<-", "->", "\\", ":", "(", ")", "|", "<", ">"]
            }
 
 lexer = Token.makeTokenParser languageDef
@@ -55,8 +57,7 @@ program :: Parser Comp
 program = computation
 
 computation :: Parser Comp
-computation =  parens computation
-           <|> splitComp
+computation =  splitComp
            <|> letComp
            <|> letBasedComp
            <|> caseComp
@@ -82,9 +83,7 @@ letComp = do
 
 
 appComp :: Parser Comp
-appComp = do
-    v1 <- value
-    EApp v1 <$> value
+appComp = EApp <$> value <*> value
 
 
 splitComp :: Parser Comp
@@ -137,7 +136,9 @@ doComp = do
 
 
 handleComp :: Parser Comp
-handleComp = EHandle <$> computation <*> handler
+handleComp = do
+    reserved "handle"
+    EHandle <$> computation <*> handler
 
 
 handler :: Parser Handler
@@ -224,9 +225,10 @@ extendRow = do
 
 variantRow :: Parser Value
 variantRow = do
-    reserved "inj"
+    reservedOp "["
     label <- identifier
     v <- value
+    reservedOp "]"
     reservedOp ":"
     t <- rowTypeAnnot
     return $ VVariantRow (VariantRow t label v)
@@ -242,7 +244,7 @@ binOps = [ [Infix  (reservedOp "*"   >> return (VBinOp BMul )) AssocLeft]
          ]
 
 term :: Parser Value
-term =  parens expr
+term =  parens value
     <|> fmap VVar identifier
     <|> fmap VNum integer
 
