@@ -58,9 +58,7 @@ program :: Parser Comp
 program = computation
 
 computation :: Parser Comp
-computation =  splitComp
-           <|> letComp
-           <|> letBasedComp
+computation =  letBasedComp
            <|> caseComp
            <|> absurdComp
            <|> retComp
