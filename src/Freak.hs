@@ -13,13 +13,12 @@ evalProgram s = do
     cpsTerm <- runCPS ast
     runEval cpsTerm
 
-
 runProgram :: String -> IO ()
-runProgram s =
-    case evalProgram s of
-        Left e -> print $ show e
-        Right v -> print $ show v
+runProgram = outputResult . evalProgram
 
+runFromFile :: String -> IO ()
+runFromFile filename = readFile filename >>= runProgram
 
-runFile :: String -> IO ()
-runFile file = readFile file >>= runProgram
+outputResult :: Either Error DValue -> IO ()
+outputResult (Left e) = print $ show e
+outputResult (Right v) = print $ show v

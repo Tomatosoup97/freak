@@ -10,6 +10,11 @@ import Types
 
 genRow l n r = DPair (DLabel l) (DPair (DNum n) r)
 
+testFromFile :: String -> Either Error DValue -> IO ()
+testFromFile filename expected = do
+    code <- readFile filename
+    evalProgram code `shouldBe` expected
+
 main :: IO ()
 main = hspec $ do
   let row = "(a = 1; (b = 2; ()))"
@@ -41,8 +46,16 @@ main = hspec $ do
       evalProgram "let x <- return 3 in return x + 2" `shouldBe` (Right (DNum 5))
       evalProgram "let x <- return x in return x + 2" `shouldBe` (unboundVarErr "x")
 
+    it "Nested let expression" $ do
+      evalProgram "let x <- return 3 in let y <- return 2 in return x + y" `shouldBe` (Right (DNum 5))
+
+    it "Variable hiding" $ do
+      evalProgram "let x <- return 3 in let x <- return 2 in return x" `shouldBe` (Right (DNum 2))
+
     it "Return lambda" $ do
       evalProgram "return (\\x : int -> return x + 1)" `shouldBe` (Right dummyFunc)
+
+    -- TODO: test that scope is static!
 
     it "Row" $ do
       evalProgram ("return "++row) `shouldBe` (Right (genRow "a" 1 (genRow "b" 2 DUnit)))
@@ -58,6 +71,12 @@ main = hspec $ do
 
     it "Let lambda" $ do
       evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBe` (Right (DNum 43))
+
+    it "Let lambda forget function result" $ do
+      evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBe` (Right (DNum 1))
+
+    it "Let lambda forget function result - more verbose" $ do
+      evalProgram "let f <- return (\\x : int -> return x + 1) in let x <- f 42 in return 1" `shouldBe` (Right (DNum 1))
 
     it "If statement" $ do
       evalProgram "if 1 then return 1 else return 0" `shouldBe` (Right (DNum 1))
@@ -77,16 +96,31 @@ main = hspec $ do
       evalProgram "handle do Const 1 with {Const p r -> r 42 | return x -> return x }" `shouldBe` (Right (DNum 42))
 
     it "Identity effect handler" $ do
-      evalProgram "handle do Id 42 with {Id p r -> return p | return x -> r 1 }" `shouldBe` (Right (DNum 42))
+      evalProgram "handle do Id 42 with {Id p r -> r p | return x -> return x }" `shouldBe` (Right (DNum 42))
 
     it "Increment effect handler" $ do
       evalProgram "handle do Inc 17 with {Id p r -> return p | Inc p r -> return p + 1 | return x -> return 1 }" `shouldBe` (Right (DNum 18))
 
-    it "Simulate exceptions" $ do
-      evalProgram "handle let x <- do Except 42 in return 1 with {Except p r -> return p | return x -> return 1 }" `shouldBe` (Right (DNum 42))
-
     it "Compose let with do" $ do
       evalProgram "handle let x <- do Id 1 in return 3 with {Id p r -> r p | return x -> return x }" `shouldBe` (Right (DNum 3))
 
+    it "Simulate exceptions" $ do
+      testFromFile "programs/exceptions.fk" (Right (DNum 42))
+
     it "Double increment effect handler" $ do
-      evalProgram "handle let x <- do Inc 1 in do Inc x with {Inc p r -> let t <- return p + 1 in r t | return x -> return x }" `shouldBe` (Right (DNum 3))
+      testFromFile "programs/doubleIncrement.fk" (Right (DNum 3))
+
+    it "Compose effects" $ do
+      testFromFile "programs/composeEffects.fk" (Right (DNum 7))
+
+    it "Deep handlers" $ do
+      testFromFile "programs/deepHandlers.fk" (Right (DNum 7))
+
+    it "Drop resumption result" $ do
+      testFromFile "programs/dropResumption.fk" (Right (DNum 1))
+
+    it "Sum of possible choices" $ do
+      testFromFile "programs/choicesSum.fk" (Right (DNum 35))
+
+    -- it "Nested handlers" $ do
+    --   testFromFile "programs/nestedHandlers.fk" (Right (DNum 6))

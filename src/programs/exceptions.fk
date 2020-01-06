@@ -1,0 +1,6 @@
+handle
+    let x <- do Except 42 in return 1
+with {
+    Except p r -> return p |
+    return x -> return x
+}

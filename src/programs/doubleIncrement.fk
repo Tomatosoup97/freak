@@ -1,0 +1,7 @@
+handle
+    let x <- do Inc 1 in do Inc x
+with {
+    Id p r -> return p |
+    Inc p r -> let t <- return p + 1 in r t |
+    return x -> return x
+}

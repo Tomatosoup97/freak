@@ -1,0 +1,6 @@
+handle
+    do Drop ()
+with {
+    Drop p r -> let t <- r 0 in return 1 |
+    return x -> return x
+}

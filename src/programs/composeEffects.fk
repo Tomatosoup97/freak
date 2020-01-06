@@ -1,0 +1,10 @@
+handle
+    let x <- do Inc 2 in
+    let y <- do Double x in
+    do Inc y
+with {
+    Id p r -> return p |
+    Inc p r -> let t <- return p + 1 in r t |
+    Double p r -> let t <- return p * 2 in r t |
+    return x -> return x
+}
