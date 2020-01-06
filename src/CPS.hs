@@ -12,7 +12,14 @@ data CValue
     | CUnit
     | CPair CValue CValue
     | CLabel Label
-    deriving (Show)
+
+
+instance Show CValue where
+    show (CNum n) = show n
+    show  CUnit = "()"
+    show (CPair l r) = "(" ++ show l ++ ", " ++ show r ++ ")"
+    show (CLabel l) = "(L: " ++ show l ++ ")"
+    show (CVar x) = show x
 
 data ContComp
     = CPSApp CValue [CValue]
@@ -24,7 +31,17 @@ data ContComp
     | CPSCase CValue Label Var ContComp Var ContComp
     | CPSIf CValue ContComp ContComp
     | CPSAbsurd CValue
-    deriving (Show)
+
+instance Show ContComp where
+    show (CPSApp c1 cs) = "(" ++ show c1 ++ " " ++ show cs ++ ")"
+    show (CPSValue v) = show v
+    show (CPSFix f xs c c') = "(fix " ++ show f ++ " = " ++ "\\" ++ show xs ++ " ->\n\t" ++ show c ++ "\n\twithin\n\t" ++ show c' ++ ")"
+    show (CPSBinOp op vL vR x c) = show x ++ " := (" ++ show vL ++ show op ++ show vR ++ ") in " ++ show c
+    show (CPSLet x v c) = "let " ++ show x ++ " = " ++ show v ++ " in " ++ show c
+    show (CPSSplit l x y v c) = undefined
+    show (CPSCase v l x c y c') = "case " ++ show v ++ " { " ++ show l ++ " " ++ show x ++ "->" ++ show c ++ "; " ++ show y ++ " " ++ show c'
+    show (CPSIf v c c') = "if " ++ show v ++ " then " ++ show c ++ " else " ++ show c'
+    show (CPSAbsurd v) = "Absurd " ++ show v
 
 type CPSMonad a = ExceptT Error (State Int) a
 
@@ -130,7 +147,7 @@ cpsHOps k h ops (CPair (CLabel l) (CPair p r)) =
         Just (AlgOp _ pvar rvar comp) -> do
             contComp <- cps comp k h
             return $ CPSLet pvar p (CPSLet rvar r contComp)
-        Nothing -> undefined -- todo
+        Nothing -> throwError $ CPSError "Nested handlers are not supported yet!" -- TODO
 
 
 -- forward :: Label -> Var -> Var -> PureCont -> EffCont -> CPSMonad ContComp

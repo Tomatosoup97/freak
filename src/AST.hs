@@ -26,7 +26,11 @@ data Value
 data BinaryOp
     = BAdd
     | BMul
-    deriving (Show, Eq)
+    deriving (Eq)
+
+instance Show BinaryOp where
+    show BAdd = "+"
+    show BMul = "*"
 
 data Comp
     = EVal Value
