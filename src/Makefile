@@ -12,4 +12,4 @@ lint:
 test:
 	runhaskell Tests.hs
 
-check: lint test
+check: build lint test

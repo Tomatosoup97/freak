@@ -86,6 +86,10 @@ eval env e = case e of
     CPSApp fE args -> val env fE >>= \case
         DLambda env' g -> mapM (val env) args >>= g -- do we need env'?
         _ -> Left $ EvalError "Application of non-lambda term"
+    CPSResume fvar cont -> do
+        contRes <- eval env cont -- TODO: Not tail recursive!!
+        val env fvar >>= \case
+            DLambda env' g -> g [contRes]
     CPSBinOp op l r x cont -> do
         lv <- val env l
         rv <- val env r

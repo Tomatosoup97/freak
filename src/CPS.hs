@@ -23,6 +23,7 @@ instance Show CValue where
 
 data ContComp
     = CPSApp CValue [CValue]
+    | CPSResume CValue ContComp
     | CPSFix Var [Var] ContComp ContComp
     | CPSBinOp BinaryOp CValue CValue Var ContComp
     | CPSValue CValue
@@ -102,7 +103,7 @@ cps e k h = case e of
         resArg <- freshVar
         resBody <- k (CVar resArg) h
         let cont' f v h = return $ CPSApp f [v, CVar resVar]
-        let cont = cps (EVal e2) . cont'
+        let cont f = cps (EVal e2) (cont' f)
         contComp <- cps (EVal e1) cont h
         return $ CPSFix resVar [resArg] resBody contComp
     ELet x varComp e -> do
@@ -125,15 +126,16 @@ cps e k h = case e of
     EAbsurd v -> cps (EVal v) (\cv h -> return $ CPSAbsurd cv) h
     -- Algebraic effects
     EDo l v -> do
-        fnvar <- freshVar
+        resumption <- freshVar
         x <- freshVar
-        lambdaComp <- k (CVar x) h
-        let pair cv = CPair (CLabel l) (CPair cv (CVar fnvar))
-        contComp <- cps (EVal v) (\cv h' -> h $ pair cv) h
-        return $ CPSFix fnvar [x] lambdaComp contComp
+        contVar <- freshVar
+        pureCont <- k (CVar x) h
+        let lambdaComp = CPSResume (CVar contVar) pureCont
+        let pair cv = CPair (CLabel l) (CPair cv (CVar resumption))
+        contComp <- cps (EVal v) (\cv _ -> h $ pair cv) h
+        return $ CPSFix resumption [x, contVar] lambdaComp contComp
     EHandle body handler ->
         cps body (cpsHRet k h (hret handler)) (cpsHOps k h handler)
-
 
 cpsHRet :: PureCont -> EffCont -> Handler -> PureCont
 cpsHRet k h (HRet xVar comp) x h' = do
