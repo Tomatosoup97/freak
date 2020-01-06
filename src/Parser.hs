@@ -32,6 +32,9 @@ languageDef =
                                      , "row"
                                      , "rec"
                                      , "case"
+                                     , "if"
+                                     , "then"
+                                     , "else"
                                      , "do"
                                      , "handle"
                                      , "with"
@@ -60,6 +63,7 @@ program = computation
 computation :: Parser Comp
 computation =  letBasedComp
            <|> caseComp
+           <|> ifComp
            <|> absurdComp
            <|> retComp
            <|> doComp
@@ -79,7 +83,6 @@ letComp = do
     c1 <- computation
     reserved "in"
     ELet x c1 <$> computation
-
 
 appComp :: Parser Comp
 appComp = EApp <$> value <*> value
@@ -115,6 +118,16 @@ caseComp = do
     yC <- computation
     reservedOp "}"
     return $ ECase v l x xC y yC
+
+
+ifComp :: Parser Comp
+ifComp = do
+    reserved "if"
+    cond <- value
+    reserved "then"
+    c <- computation
+    reserved "else"
+    EIf cond c <$> computation
 
 
 absurdComp :: Parser Comp

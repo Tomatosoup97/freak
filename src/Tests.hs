@@ -59,6 +59,11 @@ main = hspec $ do
     it "Let lambda" $ do
       evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBe` (Right (DNum 43))
 
+    it "If statement" $ do
+      evalProgram "if 1 then return 1 else return 0" `shouldBe` (Right (DNum 1))
+      evalProgram "if 42 then return 1 else return 0" `shouldBe` (Right (DNum 1))
+      evalProgram "if 0 then return 1 else return 0" `shouldBe` (Right (DNum 0))
+
     it "Lambda application" $ do
       evalProgram "(\\x : int -> return x + 1) 42" `shouldBe` (Right (DNum 43))
 

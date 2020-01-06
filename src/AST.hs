@@ -36,6 +36,8 @@ data Comp
     | ECase Value Label Var Comp Var Comp
     | EReturn Value
     | EAbsurd Value
+    | EIf Value Comp Comp
+    -- Algebraic effects
     | EDo Label Value
     | EHandle Comp Handler
     deriving (Show, Eq)

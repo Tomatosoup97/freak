@@ -22,6 +22,7 @@ data ContComp
     | CPSLet Var CValue ContComp
     | CPSSplit Label Var Var CValue ContComp
     | CPSCase CValue Label Var ContComp Var ContComp
+    | CPSIf CValue ContComp ContComp
     | CPSAbsurd CValue
     deriving (Show)
 
@@ -98,6 +99,11 @@ cps e k h = case e of
         fCont <- cps fComp k h
         cps (EVal variant) (
             \convVariant h -> return $ CPSCase convVariant l x tCont y fCont) h
+    EIf cond tComp fComp -> do
+        -- TODO: unify with CPSCase
+        tCont <- cps tComp k h
+        fCont <- cps fComp k h
+        cps (EVal cond) (\convCond h -> return $ CPSIf convCond tCont fCont) h
     EReturn v -> cps (EVal v) k h
     EAbsurd v -> cps (EVal v) (\cv h -> return $ CPSAbsurd cv) h
     -- Algebraic effects

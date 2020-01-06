@@ -118,6 +118,9 @@ eval env e = case e of
         let (DPair (DLabel l') dv) = dvariant
         if l == l' then eval (extendEnv env x dv) tCont
         else eval (extendEnv env y dvariant) fCont
+    CPSIf cond tCont fCont -> do
+        (DNum n) <- val env cond
+        eval env (if n > 0 then tCont else fCont)
     CPSAbsurd _ -> absurdErr
 
 
