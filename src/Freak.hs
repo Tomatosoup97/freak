@@ -6,7 +6,6 @@ import CPS
 import Eval
 import Types
 
-
 evalProgram :: String -> Either Error DValue
 evalProgram s = do
     ast <- parseString s
