@@ -35,8 +35,6 @@ main = hspec $ do
       evalProgram "return 2 + 3 * 2" `shouldBe` (Right (DNum 8))
       evalProgram "return 2 * 3 + 2" `shouldBe` (Right (DNum 8))
       evalProgram "return 2 * (3 + 2)" `shouldBe` (Right (DNum 10))
-      -- evalProgram "return (2 + 3)" `shouldBe` (Right (DNum 5))
-      -- evalProgram "return (2 + 3) * 2" `shouldBe` (Right (DNum 10))
 
     it "Undefined variable" $ do
       evalProgram "return x" `shouldBe` (unboundVarErr "x")
@@ -66,6 +64,9 @@ main = hspec $ do
 
     it "Pair" $ do
       evalProgram ("return (1, 2)") `shouldBe` (Right (DPair (DNum 1) (DNum 2)))
+
+    it "Nested pair" $ do
+      evalProgram ("return ((1, 2), 3)") `shouldBe` (Right (DPair (DPair (DNum 1) (DNum 2)) (DNum 3)))
 
     it "Split" $ do
       evalProgram ("let (b = x; y) = "++row'++" in return 1 + x") `shouldBe` (Right (DNum 3))
@@ -149,12 +150,3 @@ main = hspec $ do
     it "List of possible choices" $ do
       let result = DPair (DPair (DNum 10) (DNum 5)) (DPair (DNum 20) (DNum 15))
       testFromFile "programs/choicesList.fk" (Right result)
-
-    -- it "State monad" $ do
-    --   testFromFile "programs/state.fk" (Right (DNum 1))
-
-    -- it "Assign handler to variable" $ do
-    --   testFromFile "programs/letHandler.fk" (Right (DPair (DNum 20) (DNum 5)))
-
-    -- it "Nested handlers" $ do
-    --   testFromFile "programs/nestedHandlers.fk" (Right (DNum 6))
