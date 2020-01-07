@@ -61,7 +61,7 @@ by stating what are the possible augmentations, that are intended to be made in 
     Idris, Scala or Multicore OCaml. \\
 
     As can be seen in the J. Yallop repository \cite{effects-bibliography},
-    algebraic effects and handlers are now trending branch of computer science.
+    algebraic effects and handlers are now trending branch in the computer science.
 
 \section{Syntax}
 
@@ -283,7 +283,32 @@ data DValue
         return x -> return x
     }
     \end{verbatim}
-    Where we imagine that x variable has been bound previously.
+    Where we imagine that $x$ variable has been bound previously.
+
+    \subsection{Side effects}
+
+    The complexity of the programs and their performance usually comes from side (d)effects.
+    Algebraic effects allow us to define code in a declarative manner, and hence
+    neatly tame the side effects that they produce. This gives us a lot of flexibility
+    in the actual meaning without duplicating the code. Let's consider the following
+    very basic code snippet:
+
+    \begin{verbatim}
+    let x <- do Fetch () in
+    -- operate on x
+    \end{verbatim}
+
+    The code is dependent on a context in which it is executed, which here is
+    the handler that defines the behaviour of the algebraic \verb!Fetch! effect.
+    In the imperative, or even functional approach, we would need to provide
+    the interface for fetching the data by doing dependency injection or even
+    embedding the operation directly. Here we are just stating what operation
+    we are performing, leaving the interpretation up to the execution context,
+    which could do the fetching or mock the external resource. \\
+
+    These implications are straightforward when looking from a categorical
+    standpoint and models of algebraic theories, nevertheless are very exciting
+    for programming use cases. The current Freak implementation does not yet support I/O.
 
 \section{Future work}
 
