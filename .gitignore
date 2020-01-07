@@ -25,3 +25,15 @@ cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
+
+
+# latex
+*.aux
+*.log
+*.out
+solution-blx.bib
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+texput.log

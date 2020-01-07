@@ -1,0 +1,195 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+% \usepackage{polski}
+\usepackage[]{amsthm}
+\usepackage[]{amssymb} %gives us the character \varnothing
+
+\usepackage{hyperref}
+\usepackage{titling}
+\usepackage[backend=bibtex]{biblatex}
+\addbibresource{mybib.bib}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\theoremstyle{lemma}
+\newtheorem{lemma}{Lemma}
+
+\theoremstyle{observation}
+\newtheorem{observation}{Observation}
+
+\theoremstyle{theorem}
+\newtheorem{theorem}{Theorem}
+
+\newcommand*{\fullref}[1]{\hyperref[{#1}]{\autoref*{#1} \nameref*{#1}}}
+
+
+\title{Continuation Passing Style for Effect Handlers}
+\author{Mateusz Urbańczyk}
+\date{7 January 2020}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+
+    We provide an implementation of algebraic effects and handlers by doing continuation
+    passing style tranformation of the functional programming language Freak,
+    which is based on the existing Links langauge \cite{handlers-cps}.
+
+\end{abstract}
+
+\section{Introduction}
+
+Implementation of Continuation Passing Style for Effect Handlers paper \cite{handlers-cps}
+
+\section{State of the art}
+
+    Frank \cite{frank}, Koka \cite{leijen-koka}, Helium \cite{helium}
+
+\section{Syntax}
+
+\section{Operational semantics}
+
+    \subsection{Integers}
+
+    \subsection{Binary operators}
+
+\section{Usage guide}
+    % TODO: not sure if correct place for that
+
+    All commands are available within \verb src  directory.
+
+    \subsection{Build and install}
+
+    \begin{itemize}
+        \item Install dependencies: \verb!make install!
+        \item Compile: \verb!make build!
+        \item Link to PATH: \verb!sudo make link!
+        \item Remove artiacts: \verb!make clean!
+        \item Run tests: \verb!make tests!
+        \item Run code linter: \verb!make lint!
+    \end{itemize}
+
+    After compiling and linking program to PATH, one may evaluate program as
+    follows: \verb!freak programs/choicesList.fk!. The actual code is described in \fullref{sec:choice-example}
+
+    \subsection{Running tests}
+
+    Test cases are available \href{https://github.com/Tomatosoup97/freak/blob/master/src/Tests.hs}{\underline{here}},
+    they include both inline and file-based tests. For more details about
+    writing tests, one may refer to HUnit documentation \cite{hunit-docs}. \\
+
+    \begin{itemize}
+        \item Run tests: \verb!make tests!
+        \item Run code linter: \verb!make lint!
+        \item Compile, run linter and tests: \verb!make check!
+    \end{itemize}
+
+\section{Implementation}
+
+    The Freak implementation is available at \href{https://github.com/Tomatosoup97/freak}{https://github.com/Tomatosoup97/freak}.
+    CPS based on \cite{appel-continuations}
+
+    \subsection{Row types}
+
+    \subsection{Type inference}
+
+    Type system as of this day is not implemented, as the focus has been put
+    on CPS transformation. Further work is required.
+
+\section{Examples}
+
+    In this section we present a few examples to show the capabilities of the
+    language. The ideas has been based on \cite{eff}, and thus will not be
+    described in great details.
+
+    \subsection{Choice}
+    \label{sec:choice-example}
+
+    The first example will be based on modelling (nondeterministic) choice
+    in the program. We will make two decisions, which will affect the computation
+    result:
+
+    \begin{verbatim}
+    let c1 <- do Choice () in
+    let c2 <- do Choice () in
+    let x <- if c1 then return 10 else return 20 in
+    let y <- if c2 then return 0 else return 5 in
+        return x - y
+    \end{verbatim}
+
+    With that in hand, we may want to define effect handlers:
+
+    \begin{verbatim}
+    handle ... with {
+        Choice p r ->
+            let t <- r 1 in
+            let f <- r 0 in
+            <PLACEHOLDER> |
+        return x -> return x
+    }
+    \end{verbatim}
+
+    where in the \verb!<PLACEHOLDER>! we can define on what to do with the
+    computation. For example, min-max strategy for picking the minimum value:
+
+    \begin{verbatim}
+    if t < f then return t else return f
+    \end{verbatim}
+
+    where the code evaluates to \verb!5!. Another example is a handler that
+    collects all possible results, which can be achieved by putting
+    \verb!return (t, f)! in the \verb!<PLACEHOLDER>!, which evaluates to \verb!((10, 5), (20, 15))!.
+
+    \subsection{Exceptions}
+
+    Exceptions are simply algebraic effect handlers which drop the resumption.
+
+    \begin{verbatim}
+    handle
+        if x == 0 then do Raise ()
+                  else return 1 / x
+    with {
+        Raise p r -> return 42 |
+        return x -> return x
+    }
+    \end{verbatim}
+
+    Where we imagine that x variable has been bound previously. More exemplary
+    programs in Freak language can be found \href{https://github.com/Tomatosoup97/freak/tree/master/src/programs}{\underline{here}}.
+
+\section{Future work}
+
+    \subsection{Abstract machine}
+
+    Implement abstract machine described in \cite{liberating-effects}
+
+    \subsection{Multiple instances of algebraic effect}
+
+    Proposed Helium \cite{binders-labels}, or Eff \cite{eff}
+
+    \subsection{Make the langugae more usable}
+
+    While the language is turing-complete, for convenient usage it
+    requires more basic constructs and syntactic sugar for common patterns
+    that would ease the programming.
+
+    \subsection{Selective CPS}
+
+    As in \cite{leijen-koka}
+
+    \subsection{Exceptions as separate constructs}
+
+    Exceptions are a trivial example of algebraic effect where the resumption is
+    discarded, and as described in \S 4.5 \cite{handlers-cps}, they can be modeled
+    as a separate construct to improve performance.
+
+    \subsection{Shallow handlers}
+
+    X \cite{shallow-handlers}
+
+\section{Conclusions}
+
+\printbibliography
+
+\end{document}
