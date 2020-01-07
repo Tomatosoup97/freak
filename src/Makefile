@@ -17,3 +17,8 @@ test:
 	runhaskell Tests.hs
 
 check: build lint test
+
+install:
+	cabal install hlint
+	cabal install hunit
+	cabal install parsec
