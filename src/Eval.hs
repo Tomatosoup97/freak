@@ -40,9 +40,19 @@ unboundVarErr x = Left $ EvalError $ "Unbound variable " ++ x
 absurdErr :: Either Error DValue
 absurdErr = Left $ EvalError "Absurd; divergent term"
 
-convOp :: BinaryOp -> Integer -> Integer -> Integer
-convOp BAdd n1 n2 = n1 + n2
-convOp BMul n1 n2 = n1 * n2
+boolToInt :: Bool -> Integer
+boolToInt b = if b then 1 else 0
+
+convOp :: BinaryOp -> (Integer, Integer) -> Integer
+convOp BAdd = uncurry (+)
+convOp BMul = uncurry (*)
+convOp BSub = uncurry (-)
+convOp BLte = boolToInt . uncurry (<=)
+convOp BLt = boolToInt . uncurry (<)
+convOp BGte = boolToInt . uncurry (>=)
+convOp BGt = boolToInt . uncurry (>)
+convOp BEq = boolToInt . uncurry (==)
+convOp BNe = boolToInt . uncurry (/=)
 
 val :: Env -> CValue -> Either Error DValue
 val env e = case e of
@@ -95,9 +105,9 @@ eval env e = case e of
         rv <- val env r
         case (lv, rv) of
           (DNum n1, DNum n2) -> eval extEnv cont
-              where res = DNum $ convOp op n1 n2
+              where res = DNum $ convOp op (n1, n2)
                     extEnv = extendEnv env x res
-          _ -> Left $ EvalError ""
+          _ -> Left $ EvalError $ "Could not perform " ++ show lv ++ " " ++ show op ++ " " ++ show rv
     CPSFix f formalParams body cont -> eval contEnv cont
         where contEnv = extendEnv env f func
               func = DLambda env funcRecord

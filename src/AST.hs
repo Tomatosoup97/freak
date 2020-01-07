@@ -26,11 +26,25 @@ data Value
 data BinaryOp
     = BAdd
     | BMul
+    | BSub
+    | BLte
+    | BLt
+    | BGte
+    | BGt
+    | BEq
+    | BNe
     deriving (Eq)
 
 instance Show BinaryOp where
     show BAdd = "+"
     show BMul = "*"
+    show BSub = "-"
+    show BLte = "<="
+    show BLt = "<"
+    show BGte = ">="
+    show BGt = ">"
+    show BEq = "=="
+    show BNe = "!="
 
 data Comp
     = EVal Value

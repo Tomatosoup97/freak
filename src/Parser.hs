@@ -40,7 +40,9 @@ languageDef =
                                      , "with"
                                      ]
            , Token.reservedOpNames = [
-                "+", "*", "<-", "->", "\\", ":", "(", ")", "|", "<", ">"]
+                "+", "*", "<-", "->", "\\", ":", "(", ")", "|",
+                "<", ">", ">=", "<=", "==", "!=", ","
+            ]
            }
 
 lexer = Token.makeTokenParser languageDef
@@ -253,8 +255,19 @@ rowTypeAnnot = reserved "row" >> return RowType -- todo
 expr :: Parser Value
 expr = buildExpressionParser binOps term
 
-binOps = [ [Infix  (reservedOp "*"   >> return (VBinOp BMul )) AssocLeft]
-         , [Infix  (reservedOp "+"   >> return (VBinOp BAdd )) AssocLeft]
+binOps = [ [
+            Infix  (reservedOp "<="   >> return (VBinOp BLte )) AssocLeft,
+            Infix  (reservedOp "<"   >> return (VBinOp BLt )) AssocLeft,
+            Infix  (reservedOp ">="   >> return (VBinOp BGte )) AssocLeft,
+            Infix  (reservedOp ">"   >> return (VBinOp BGt )) AssocLeft,
+            Infix  (reservedOp "=="   >> return (VBinOp BEq )) AssocLeft,
+            Infix  (reservedOp "!="   >> return (VBinOp BNe )) AssocLeft
+           ]
+         , [Infix  (reservedOp "*"   >> return (VBinOp BMul )) AssocLeft]
+         , [
+            Infix  (reservedOp "+"   >> return (VBinOp BAdd )) AssocLeft,
+            Infix  (reservedOp "-"   >> return (VBinOp BSub )) AssocLeft
+           ]
          ]
 
 term :: Parser Value

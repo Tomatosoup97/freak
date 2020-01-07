@@ -27,6 +27,7 @@ main = hspec $ do
       evalProgram "return 1" `shouldBe` (Right (DNum 1))
       evalProgram "return 2 + 3" `shouldBe` (Right (DNum 5))
       evalProgram "return 2 * 3" `shouldBe` (Right (DNum 6))
+      evalProgram "return 5 - 2" `shouldBe` (Right (DNum 3))
 
     it "Order of operations" $ do
       evalProgram "return 2 + 3 * 2" `shouldBe` (Right (DNum 8))
@@ -55,7 +56,8 @@ main = hspec $ do
     it "Return lambda" $ do
       evalProgram "return (\\x : int -> return x + 1)" `shouldBe` (Right dummyFunc)
 
-    -- TODO: test that scope is static!
+    it "Static scope" $ do
+      testFromFile "programs/staticScope.fk" (Right (DNum 3))
 
     it "Row" $ do
       evalProgram ("return "++row) `shouldBe` (Right (genRow "a" 1 (genRow "b" 2 DUnit)))
@@ -85,6 +87,20 @@ main = hspec $ do
 
     it "Lambda application" $ do
       evalProgram "(\\x : int -> return x + 1) 42" `shouldBe` (Right (DNum 43))
+
+    it "Relational operators" $ do
+      evalProgram "return 1 >= 1" `shouldBe` (Right (DNum 1))
+      evalProgram "return 1 > 1" `shouldBe` (Right (DNum 0))
+      evalProgram "return 42 >= 17" `shouldBe` (Right (DNum 1))
+      evalProgram "return 42 <= 17" `shouldBe` (Right (DNum 0))
+      evalProgram "return 2 == 2" `shouldBe` (Right (DNum 1))
+      evalProgram "return 2 != 2" `shouldBe` (Right (DNum 0))
+      evalProgram "return 2 < 3" `shouldBe` (Right (DNum 1))
+
+    it "Branching" $ do
+      evalProgram "if 2 >= 3 then return 1 else return 0" `shouldBe` (Right (DNum 0))
+
+    -- Algebraic effects and handlers tests
 
     it "Trivial handler" $ do
       evalProgram "handle return 1 with {return x -> return x}" `shouldBe` (Right (DNum 1))
