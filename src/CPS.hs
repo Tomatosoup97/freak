@@ -76,6 +76,9 @@ cps e k h = case e of
     EVal (VNum n) -> k (CNum n) h
     EVal (VRecordRow row) -> undefined -- todo: records are constructed using ExtendRow
     EVal VUnit -> k CUnit h
+    EVal (VPair v1 v2) ->
+        let cont cv1 = cps (EVal v2) (\cv2 _ -> k (CPair cv1 cv2) h) in
+        cps (EVal v1) cont h
     EVal (VExtendRow l v row) -> cps (EVal v) valCont h
         where valCont cv = cps (EVal row) (rowCont cv)
               rowCont cv rowV = k ((l, cv) `consRow` rowV)

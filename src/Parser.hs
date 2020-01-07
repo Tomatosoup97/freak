@@ -196,9 +196,22 @@ parseHret = do
 value :: Parser Value
 value =  lambdaExpr
      <|> fixOp
-     <|> row
+     <|> parensValue
+     <|> extendRow
      <|> variantRow
      <|> expr
+
+parensValue = do
+    reservedOp "("
+    unit <|> pair
+
+pair :: Parser Value
+pair = do
+    v1 <- value
+    reservedOp ","
+    v2 <- value
+    reservedOp ")"
+    return $ VPair v1 v2
 
 lambdaExpr :: Parser Value
 lambdaExpr = do
@@ -221,22 +234,18 @@ fixOp = do
     reservedOp "->" -- todo: other syntax?
     VFix g x <$> computation
 
-row :: Parser Value
-row = do
-    reservedOp "("
-    extendRow <|> unit
-
 unit :: Parser Value
 unit = reservedOp ")" >> return VUnit
 
 extendRow :: Parser Value
 extendRow = do
+    reservedOp "{"
     label <- identifier
     reservedOp "="
     v <- value
     reservedOp ";"
     vs <- value
-    reservedOp ")"
+    reservedOp "}"
     return $ VExtendRow label v vs
 
 variantRow :: Parser Value

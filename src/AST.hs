@@ -17,6 +17,7 @@ data Value
     | VLambda Var ValueType Comp
     | VFix Var Var Comp
     | VUnit
+    | VPair Value Value
     | VRecordRow (RecordRow Value)
     | VExtendRow Label Value Value
     | VVariantRow (VariantRow Value)

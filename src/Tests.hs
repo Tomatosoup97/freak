@@ -17,8 +17,8 @@ testFromFile filename expected = do
 
 main :: IO ()
 main = hspec $ do
-  let row = "(a = 1; (b = 2; ()))"
-  let row' = "(c = 3; " ++ row ++ ")"
+  let row = "{a = 1; {b = 2; ()}}"
+  let row' = "{c = 3; " ++ row ++ "}"
   let variant s = "["++s++" 1 ] : row"
   let dummyFunc = DLambda Map.empty (\x -> return (DNum 1))
 
@@ -61,6 +61,9 @@ main = hspec $ do
 
     it "Row" $ do
       evalProgram ("return "++row) `shouldBe` (Right (genRow "a" 1 (genRow "b" 2 DUnit)))
+
+    it "Pair" $ do
+      evalProgram ("return (1, 2)") `shouldBe` (Right (DPair (DNum 1) (DNum 2)))
 
     it "Split" $ do
       evalProgram ("let (b = x; y) = "++row'++" in return 1 + x") `shouldBe` (Right (DNum 3))
