@@ -1,13 +1,13 @@
 build:
-	pdflatex solution.tex
-	bibtex solution
-	pdflatex solution.tex
+	pdflatex article.tex
+	bibtex article
+	pdflatex article.tex
 
 clean:
 	rm -f *.aux
 	rm -f *.log
 	rm -f *.out
-	rm -f solution-blx.bib
+	rm -f article-blx.bib
 	rm -f *.bbl
 	rm -f *.bcf
 	rm -f *.blg

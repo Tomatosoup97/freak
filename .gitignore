@@ -31,7 +31,7 @@ cabal.project.local~
 *.aux
 *.log
 *.out
-solution-blx.bib
+article-blx.bib
 *.bbl
 *.bcf
 *.blg
