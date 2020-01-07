@@ -272,7 +272,10 @@ binOps = [ [
             Infix  (reservedOp "=="   >> return (VBinOp BEq )) AssocLeft,
             Infix  (reservedOp "!="   >> return (VBinOp BNe )) AssocLeft
            ]
-         , [Infix  (reservedOp "*"   >> return (VBinOp BMul )) AssocLeft]
+         , [
+            Infix  (reservedOp "*"   >> return (VBinOp BMul )) AssocLeft,
+            Infix  (reservedOp "/"   >> return (VBinOp BDiv )) AssocLeft
+           ]
          , [
             Infix  (reservedOp "+"   >> return (VBinOp BAdd )) AssocLeft,
             Infix  (reservedOp "-"   >> return (VBinOp BSub )) AssocLeft

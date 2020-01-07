@@ -1,0 +1,7 @@
+handle
+    do Inc 17
+with {
+    Id p r -> return p |
+    Inc p r -> return p + 1 |
+    return x -> return x
+}

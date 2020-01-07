@@ -28,6 +28,8 @@ main = hspec $ do
       evalProgram "return 2 + 3" `shouldBe` (Right (DNum 5))
       evalProgram "return 2 * 3" `shouldBe` (Right (DNum 6))
       evalProgram "return 5 - 2" `shouldBe` (Right (DNum 3))
+      evalProgram "return 5 / 2" `shouldBe` (Right (DNum 2))
+      evalProgram "return 6 / 2" `shouldBe` (Right (DNum 3))
 
     it "Order of operations" $ do
       evalProgram "return 2 + 3 * 2" `shouldBe` (Right (DNum 8))
@@ -117,11 +119,11 @@ main = hspec $ do
     it "Identity effect handler" $ do
       evalProgram "handle do Id 42 with {Id p r -> r p | return x -> return x }" `shouldBe` (Right (DNum 42))
 
-    it "Increment effect handler" $ do
-      evalProgram "handle do Inc 17 with {Id p r -> return p | Inc p r -> return p + 1 | return x -> return 1 }" `shouldBe` (Right (DNum 18))
-
     it "Compose let with do" $ do
       evalProgram "handle let x <- do Id 1 in return 3 with {Id p r -> r p | return x -> return x }" `shouldBe` (Right (DNum 3))
+
+    it "Increment effect handler" $ do
+      testFromFile "programs/increment.fk" (Right (DNum 18))
 
     it "Simulate exceptions" $ do
       testFromFile "programs/exceptions.fk" (Right (DNum 42))
@@ -143,6 +145,10 @@ main = hspec $ do
 
     it "Max of possible choices" $ do
       testFromFile "programs/choicesMin.fk" (Right (DNum 5))
+
+    it "List of possible choices" $ do
+      let result = DPair (DPair (DNum 10) (DNum 5)) (DPair (DNum 20) (DNum 15))
+      testFromFile "programs/choicesList.fk" (Right result)
 
     -- it "State monad" $ do
     --   testFromFile "programs/state.fk" (Right (DNum 1))

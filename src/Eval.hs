@@ -46,6 +46,7 @@ boolToInt b = if b then 1 else 0
 convOp :: BinaryOp -> (Integer, Integer) -> Integer
 convOp BAdd = uncurry (+)
 convOp BMul = uncurry (*)
+convOp BDiv = uncurry div
 convOp BSub = uncurry (-)
 convOp BLte = boolToInt . uncurry (<=)
 convOp BLt = boolToInt . uncurry (<)

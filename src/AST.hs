@@ -27,6 +27,7 @@ data Value
 data BinaryOp
     = BAdd
     | BMul
+    | BDiv
     | BSub
     | BLte
     | BLt
