@@ -141,5 +141,14 @@ main = hspec $ do
     it "Sum of possible choices" $ do
       testFromFile "programs/choicesSum.fk" (Right (DNum 35))
 
+    it "Max of possible choices" $ do
+      testFromFile "programs/choicesMin.fk" (Right (DNum 5))
+
+    -- it "State monad" $ do
+    --   testFromFile "programs/state.fk" (Right (DNum 1))
+
+    -- it "Assign handler to variable" $ do
+    --   testFromFile "programs/letHandler.fk" (Right (DPair (DNum 20) (DNum 5)))
+
     -- it "Nested handlers" $ do
     --   testFromFile "programs/nestedHandlers.fk" (Right (DNum 6))

@@ -35,8 +35,9 @@ data ContComp
 
 instance Show ContComp where
     show (CPSApp c1 cs) = "(" ++ show c1 ++ " " ++ show cs ++ ")"
+    show (CPSResume c1 cont) = "(" ++ show c1 ++ " (" ++ show cont ++ "))"
     show (CPSValue v) = show v
-    show (CPSFix f xs c c') = "(fix " ++ show f ++ " = " ++ "\\" ++ show xs ++ " ->\n\t" ++ show c ++ "\n\twithin\n\t" ++ show c' ++ ")"
+    show (CPSFix f xs c c') = "(fix " ++ show f ++ " = " ++ "λ" ++ show xs ++ " ->\n\t" ++ show c ++ "\n\twithin\n\t" ++ show c' ++ ")"
     show (CPSBinOp op vL vR x c) = show x ++ " := (" ++ show vL ++ show op ++ show vR ++ ") in " ++ show c
     show (CPSLet x v c) = "let " ++ show x ++ " = " ++ show v ++ " in " ++ show c
     show (CPSSplit l x y v c) = undefined
@@ -58,11 +59,14 @@ initialEffCont (CPair z _) = return $ CPSAbsurd z -- todo: "x" shouldn't be nece
 initialState :: Int
 initialState = 0
 
-freshVar :: CPSMonad Var
-freshVar = do
+freshVar' :: String -> CPSMonad Var
+freshVar' s = do
     n <- get
     put (n+1)
-    return $ "__meta" ++ show n -- todo: this should be unique!
+    return $ s ++ show n
+
+freshVar :: CPSMonad Var
+freshVar = freshVar' "__m" -- todo: this should be unique!
 
 consRow :: (Label, CValue) -> CValue -> CValue
 consRow (l, v) rowV = CPair (CLabel l) (CPair v rowV)
@@ -129,8 +133,8 @@ cps e k h = case e of
     EAbsurd v -> cps (EVal v) (\cv h -> return $ CPSAbsurd cv) h
     -- Algebraic effects
     EDo l v -> do
-        resumption <- freshVar
-        x <- freshVar
+        resumption <- freshVar' "r"
+        x <- freshVar' "rArg"
         contVar <- freshVar
         pureCont <- k (CVar x) h
         let lambdaComp = CPSResume (CVar contVar) pureCont

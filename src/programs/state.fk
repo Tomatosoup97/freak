@@ -1,0 +1,11 @@
+let runState <- handle
+    let x <- do Put 2 in
+    let y <- do Get 2 in
+    let y <- return y + 3 in
+    let x <- do Put y in
+    do Get 1
+with {
+    Put s2 r -> return (\s : int -> let t <- r () in t s2) |
+    Get p r -> return (\s : int -> let t <- r s in t s) |
+    return x -> return (\s : int -> return x)
+} in runState 0

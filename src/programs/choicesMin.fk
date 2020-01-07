@@ -1,0 +1,13 @@
+handle
+    let c1 <- do Choice () in
+    let c2 <- do Choice () in
+    let x <- if c1 then return 10 else return 20 in
+    let y <- if c2 then return 0 else return 5 in
+    return x - y
+with {
+    Choice p r ->
+        let t <- r 1 in
+        let f <- r 0 in
+        if t < f then return t else return f |
+    return x -> return x
+}

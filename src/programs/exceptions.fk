@@ -1,6 +1,6 @@
 handle
-    let x <- do Except 42 in return 1
+    let x <- do Raise () in return 1
 with {
-    Except p r -> return p |
+    Raise p r -> return 42 |
     return x -> return x
 }

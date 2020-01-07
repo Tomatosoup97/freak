@@ -19,9 +19,9 @@ type Env = Map.Map Var DValue
 type FuncRecord = [DValue] -> Either Error DValue
 
 instance Show DValue where
-    show (DNum n) = "DNum " ++ show n
-    show (DLambda _ _) = "DLambda"
-    show  DUnit = "<>"
+    show (DNum n) = show n
+    show (DLambda env _) = "(λ " ++ show env ++ ")"
+    show  DUnit = "()"
     show (DPair l r) = "(" ++ show l ++ ", " ++ show r ++ ")"
     show (DLabel l) = "L: " ++ show l
 
@@ -93,9 +93,9 @@ decomposeRow row l = aux id row where
 eval :: Env -> ContComp -> Either Error DValue
 eval env e = case e of
     CPSValue v -> val env v
-    CPSApp fE args -> val env fE >>= \case
+    CPSApp fE args -> val env fE >>= \f -> case f of
         DLambda env' g -> mapM (val env) args >>= g -- do we need env'?
-        _ -> Left $ EvalError "Application of non-lambda term"
+        _ -> Left $ EvalError $ "Application of non-lambda term: " ++ show f ++ " " ++ show args
     CPSResume fvar cont -> do
         contRes <- eval env cont -- TODO: Not tail recursive!!
         val env fvar >>= \case
