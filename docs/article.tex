@@ -53,7 +53,7 @@ by stating what are the possible augmentations, that are intended to be made in 
 
 \section{State of the art}
 
-    Despite from Links language \cite{handlers-cps}, on which the implementation
+    Except from Links language \cite{handlers-cps}, on which the implementation
     is based, there are currently many other alternatives available. One may take
     a look at Frank \cite{frank}, which provides a support for multihandlers,
     Koka \cite{leijen-koka}, Helium \cite{helium} or Eff \cite{eff}. Except from
@@ -61,7 +61,7 @@ by stating what are the possible augmentations, that are intended to be made in 
     Idris, Scala or Multicore OCaml. \\
 
     As can be seen in the J. Yallop repository \cite{effects-bibliography},
-    algebraic effects and handlers are now trending branch in the computer science.
+    algebraic effects and handlers are now trending branch in the programming languages theory.
 
 \section{Syntax}
 
@@ -116,14 +116,14 @@ by stating what are the possible augmentations, that are intended to be made in 
     \end{flushleft}
 
     \begin{flushleft}
-    \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow M \quad \quad $  if $n \neq 0$ \\
-    \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow N \quad \quad $    if $n = 0$ \\
+    \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow M \quad \quad $ if $n \neq 0$ \\
+    \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow N \quad \quad $ if $n = 0$ \\
     \end{flushleft}
 
     \begin{flushleft}
     $nat \; n \oplus nat \; n' \rightsquigarrow n'' \quad \quad $    if $ n'' = n \oplus n' $ \\
-    $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    if $ n \approx n' $ \\
-    $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    if $ n \not\approx n' $
+    $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
+    $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
 
     \end{flushleft}
 
@@ -158,15 +158,14 @@ by stating what are the possible augmentations, that are intended to be made in 
 
 \section{Implementation}
 
-    The Freak implementation is available at \href{https://github.com/Tomatosoup97/freak}{https://github.com/Tomatosoup97/freak}.
+    The Freak implementation is available \href{https://github.com/Tomatosoup97/freak}{\underline{here}}.
     While the paper provided a good overview of the language and the translation,
     the lower-level details were omitted. Therefore, the actual CPS implementation
     is based on A. Appel \cite{appel-continuations}, which provides a translation
     for a simplified ML calculus. \\
 
     Abstract Syntax Tree structure is defined just as syntax is. The core data
-    structure into which the source program is transformed,
-    the \verb!Continuation Computation!, is defined as follows:
+    structure, into which the source program is transformed, is defined as follows:
 
     \begin{verbatim}
 data ContComp
@@ -246,7 +245,6 @@ data DValue
     let y <- if c2 then return 0 else return 5 in
         return x - y
     \end{verbatim}
-
     With that in hand, we may want to define effect handlers:
 
     \begin{verbatim}
@@ -258,14 +256,12 @@ data DValue
         return x -> return x
     }
     \end{verbatim}
-
     where in the \verb!<PLACEHOLDER>! we can define on what to do with the
     computation. For example, min-max strategy for picking the minimum value:
 
     \begin{verbatim}
     if t < f then return t else return f
     \end{verbatim}
-
     where the code evaluates to \verb!5!. Another example is a handler that
     collects all possible results, which can be achieved by putting
     \verb!return (t, f)! in the \verb!<PLACEHOLDER>!, which evaluates to \verb!((10, 5), (20, 15))!.
@@ -287,7 +283,7 @@ data DValue
 
     \subsection{Side effects}
 
-    The complexity of the programs and their performance usually comes from side (d)effects.
+    The complexity of the programs and their performance usually comes from side effects.
     Algebraic effects allow us to define code in a declarative manner, and hence
     neatly tame the side effects that they produce. This gives us a lot of flexibility
     in the actual meaning without duplicating the code. Let's consider the following
