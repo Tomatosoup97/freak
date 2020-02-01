@@ -3,9 +3,6 @@ module AST where
 import qualified Data.Map as Map
 import Types
 
-type Var = String
-type Label = String
-
 data VariantRow a = VariantRow RowType Label a
     deriving (Show, Eq)
 
@@ -40,6 +37,7 @@ data BinaryOp
 instance Show BinaryOp where
     show BAdd = "+"
     show BMul = "*"
+    show BDiv = "/"
     show BSub = "-"
     show BLte = "<="
     show BLt = "<"

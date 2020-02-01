@@ -1,5 +1,8 @@
 module Types where
 
+type Var = String
+type Label = String
+
 data Error
     = EvalError String
     | CPSError String
