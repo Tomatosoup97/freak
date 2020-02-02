@@ -276,9 +276,9 @@ data ContComp
     | CPSIf CValue ContComp ContComp
     | CPSAbsurd CValue
     \end{verbatim}
-    Each term at the end has a coinductive reference to itself, which represents
+    Most of the terms at the end have a coinductive reference to itself, which represents
     the rest of the computation that needs to be done. For more clarification,
-    one may take a look that the book cited above. The source code for curried
+    one may take a look into the book mentioned above \cite{appel-continuations}. The source code for curried
     translation and evaluation can be found respectively in \verb!CPSAppel.hs! and
     \verb!EvalCPS.hs!.
 
@@ -303,7 +303,7 @@ data Cont = Pure ContF
     \end{verbatim}
     Where \verb!CPSMonad! is a monad transformer over \verb!Either! and \verb!State!.
     \verb!State! was required to generate labels for fresh variables that
-    came from the translation. The core code is split into five functions
+    came from the translation. The core code is split into five functions:
 
     \begin{verbatim}
 cps     :: Comp    -> [Cont] -> CPSMonad UComp
@@ -313,14 +313,14 @@ cpsHOps :: Handler -> Cont
 forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
     \end{verbatim}
     Where the first two are implementing cps for computations and values.
-    \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful computation,
+    \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
     based on a given handler. The last one is responsible for forwarding the
     computation to the outer handler.\\
 
     This results in an implementation that finally supports nested handlers,
     as can be seen by evaluating \verb!programs/complexNestedHandlers.fk! program.
     Unfortunately, following closely translation from the paper resulted in
-    behaviour in which invoked resumption forgets its pure continuation. This means,
+    a behaviour, in which invoked resumption forgets its pure continuation. This means,
     that the following code, evaluating correctly on the Appel-based translation,
     returns 0 rather than 1:
 
@@ -334,14 +334,14 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
 
     \subsection{Source code structure}
 
-    The source code is divided into a number of modules, each with a different
-    responsibility.
+    The source code is divided into a number of modules, where the most
+    crucial parts have already been described.
 
     \begin{verbatim}
     AST.hs          - AST data structures
     CommonCPS.hs    - Common functions for CPS translation
     CommonEval.hs   - Common functions for evaluation
-    CPSAppel.hs     - Appel based CPS translation
+    CPSAppel.hs     - Appel-based CPS translation
     CPSLists.hs     - Uncurried CPS translation
     EvalCPS.hs      - Evaluation of the Appel's CPS structure
     EvalTarget.hs   - Evaluation of the target calculus
