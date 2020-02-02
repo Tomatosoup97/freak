@@ -12,10 +12,6 @@ link-appel: link-clean
 	ln -s EvalCPS.hs Eval.hs
 	ln -s CPSAppel.hs CPS.hs
 
-link-curry: link-clean
-	ln -s EvalTarget.hs Eval.hs
-	ln -s CPSCurry.hs CPS.hs
-
 link-lists: link-clean
 	ln -s EvalTarget.hs Eval.hs
 	ln -s CPSLists.hs CPS.hs
