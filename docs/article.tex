@@ -170,7 +170,7 @@ by stating what are the possible augmentations, that are intended to be made in 
     The first one is based on curried translation and A. Appel \cite{appel-continuations}
     book, and the second one directly on the uncurried translation to target
     calculus with continuations represented as explicit stacks from the paper.
-    We start by presenting core data structrues, and afterwards move to actual
+    We start by presenting core data structures, and afterwards move to actual
     translation details.
 
     \subsection{Abstract Syntax Trees}
@@ -247,19 +247,19 @@ data DValue
 
     The first take was heavily inspired by A. Appel's Compiling with Continuations
     \cite{appel-continuations}, which provides a translation for a simplified ML
-    calculus. The calculus was extended and translation adopted to handle algebraic
+    calculus. The calculus was extended and translation adapted to handle algebraic
     effects and their handlers. The translation is based on the curried first-order
     translation. That being said, the source code diverged a lot from the paper on
     which it was based, leading to a different transformation for which
     the correctness and cohesion with operational semantics should be proved
     separately. Indeed, while the interpreter worked well on the use cases
-    defined in tests, the evaluation had part which was not tail-recursive. What's
+    defined in tests, the evaluation had a part which was not tail-recursive. What's
     more, nested handlers were not supported, and the implementation was found to be
-    more tricky than it should, as it was not obvious on how to adopt the technique
+    trickier than it should, as it was not obvious on how to adopt the technique
     proposed in the paper. \\
 
     In terms of improving the performance of the evaluation, uncurried higher-order
-    translation should be adopted, so that administrative redexes are contracted
+    translation should be adapted, so that administrative redexes are contracted
     and proper tail-recursion is obtained. The core data structure, into which the
     source program is transformed, is defined as follows:
 
@@ -279,7 +279,7 @@ data ContComp
     Each term at the end has a coinductive reference to itself, which represents
     the rest of the computation that needs to be done. For more clarification,
     one may take a look that the book cited above. The source code for curried
-    translation and evaulation can be found respetively in \verb!CPSAppel.hs! and
+    translation and evaluation can be found respectively in \verb!CPSAppel.hs! and
     \verb!EvalCPS.hs!.
 
     \subsection{Uncurried translation}
@@ -319,7 +319,7 @@ forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
 
     This results in an implementation that finally supports nested handlers,
     as can be seen by evaluating \verb!programs/complexNestedHandlers.fk! program.
-    Unfortunatelly, following closely translation from the paper resulted in
+    Unfortunately, following closely translation from the paper resulted in
     behaviour in which invoked resumption forgets its pure continuation. This means,
     that the following code, evaluating correctly on the Appel-based translation,
     returns 0 rather than 1:
@@ -327,9 +327,9 @@ forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
     \begin{verbatim}
 handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     \end{verbatim}
-    Nevertheless, working out this issue seems less demanding than coping with
+    Nevertheless, working out this issue appears as less demanding than coping with
     discrepancies created in the first translation. The source code for uncurried
-    translation and evaulation can be found respetively in \verb!CPSLists.hs! and
+    translation and evaluation can be found respectively in \verb!CPSLists.hs! and
     \verb!EvalTarget.hs!.
 
     \subsection{Source code structure}
@@ -435,14 +435,14 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
 
     These implications are straightforward when looking from a categorical
     standpoint, where effects are viewed as free models of algebraic theories
-    \cite{adequacy}, and handlers are homomorhpisms preserving the model structure
+    \cite{adequacy}, and handlers are homomorphisms preserving the model structure
     \cite{handlers}. Nevertheless, the results are very exciting for programming
     use cases. The current Freak implementation does not support I/O.
 
 \section{Future work}
 
     The Freak language is experimental and a lot of possible enhancements
-    could be adopted. Here we provide a list of the proposed directions in which
+    could be adapted. Here we provide a list of the proposed directions in which
     further work could be done.
 
     \subsection{Alternative evaluation}
