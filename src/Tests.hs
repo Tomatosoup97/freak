@@ -20,7 +20,6 @@ main = hspec $ do
   let row = "{a = 1; {b = 2; ()}}"
   let row' = "{c = 3; " ++ row ++ "}"
   let variant s = "["++s++" 1 ] : row"
-  let dummyFunc = DLambda Map.empty (\x -> return (DNum 1))
 
   describe "Freak" $ do
     it "Basic arithmetic" $ do
@@ -45,6 +44,8 @@ main = hspec $ do
 
     it "Let expression" $ do
       evalProgram "let x <- return 3 in return x + 2" `shouldBe` (Right (DNum 5))
+
+    it "Let expression undefined var" $ do
       evalProgram "let x <- return x in return x + 2" `shouldBe` (unboundVarErr "x")
 
     it "Nested let expression" $ do
@@ -53,14 +54,11 @@ main = hspec $ do
     it "Variable hiding" $ do
       evalProgram "let x <- return 3 in let x <- return 2 in return x" `shouldBe` (Right (DNum 2))
 
-    it "Return lambda" $ do
-      evalProgram "return (\\x : int -> return x + 1)" `shouldBe` (Right dummyFunc)
-
     it "Static scope" $ do
       testFromFile "programs/staticScope.fk" (Right (DNum 3))
 
-    it "Row" $ do
-      evalProgram ("return "++row) `shouldBe` (Right (genRow "a" 1 (genRow "b" 2 DUnit)))
+    -- it "Row" $ do
+    --   evalProgram ("return "++row) `shouldBe` (Right (genRow "a" 1 (genRow "b" 2 DUnit)))
 
     it "Pair" $ do
       evalProgram ("return (1, 2)") `shouldBe` (Right (DPair (DNum 1) (DNum 2)))
@@ -68,17 +66,24 @@ main = hspec $ do
     it "Nested pair" $ do
       evalProgram ("return ((1, 2), 3)") `shouldBe` (Right (DPair (DPair (DNum 1) (DNum 2)) (DNum 3)))
 
-    it "Split" $ do
-      evalProgram ("let (b = x; y) = "++row'++" in return 1 + x") `shouldBe` (Right (DNum 3))
-      evalProgram ("let (a = x; y) = "++row'++" in return 1 + x") `shouldBe` (Right (DNum 2))
+    -- it "Split" $ do
+    --   evalProgram ("let (b = x; y) = "++row'++" in return 1 + x") `shouldBe` (Right (DNum 3))
+    --   evalProgram ("let (a = x; y) = "++row'++" in return 1 + x") `shouldBe` (Right (DNum 2))
 
-    it "Case" $ do
-      let body = " {a x -> return x; y -> return 42}"
-      evalProgram ("case "++variant "a"++body) `shouldBe` (Right (DNum 1))
-      evalProgram ("case "++variant "c"++body) `shouldBe` (Right (DNum 42))
+    -- it "Case" $ do
+    --   let body = " {a x -> return x; y -> return 42}"
+    --   evalProgram ("case "++variant "a"++body) `shouldBe` (Right (DNum 1))
+    --   evalProgram ("case "++variant "c"++body) `shouldBe` (Right (DNum 42))
 
     it "Let lambda" $ do
       evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBe` (Right (DNum 43))
+
+    it "Application" $ do
+      evalProgram "(\\x : int -> return x + 1) 1" `shouldBe` (Right (DNum 2))
+
+    it "Let application" $ do
+      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return 3" `shouldBe` (Right (DNum 3))
+      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return x + 1" `shouldBe` (Right (DNum 3))
 
     it "Let lambda forget function result" $ do
       evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBe` (Right (DNum 1))
@@ -144,9 +149,15 @@ main = hspec $ do
     it "Sum of possible choices" $ do
       testFromFile "programs/choicesSum.fk" (Right (DNum 35))
 
-    it "Max of possible choices" $ do
+    it "Min of possible choices" $ do
       testFromFile "programs/choicesMin.fk" (Right (DNum 5))
 
     it "List of possible choices" $ do
       let result = DPair (DPair (DNum 10) (DNum 5)) (DPair (DNum 20) (DNum 15))
       testFromFile "programs/choicesList.fk" (Right result)
+
+    it "Let handler" $ do
+      testFromFile "programs/letHandler.fk" (Right (DNum 14))
+
+    it "Nested handlers" $ do
+      testFromFile "programs/nestedHandlers.fk" (Right (DNum 4))

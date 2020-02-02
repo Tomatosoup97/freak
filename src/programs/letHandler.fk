@@ -1,0 +1,7 @@
+let x <- handle
+    do Effect 1
+with {
+    Effect p r -> let t <- return p + 1 in r t |
+    return x -> return x + 2
+}
+in return x + 10
