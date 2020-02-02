@@ -3,6 +3,7 @@ module Freak where
 import Parser
 import AST
 import CPS
+import CommonEval
 import Eval
 import Types
 

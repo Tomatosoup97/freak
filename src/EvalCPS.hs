@@ -5,55 +5,8 @@ module Eval where
 import qualified Data.Map as Map
 import AST
 import CPS
+import CommonEval
 import Types
-
-data DValue
-    = DNum Integer
-    | DLambda Env FuncRecord
-    | DUnit
-    | DPair DValue DValue
-    | DLabel Label
-
-type Env = Map.Map Var DValue
-
-type FuncRecord = [DValue] -> Either Error DValue
-
-instance Show DValue where
-    show (DNum n) = show n
-    show (DLambda env _) = "(λ " ++ show env ++ ")"
-    show  DUnit = "()"
-    show (DPair l r) = "(" ++ show l ++ ", " ++ show r ++ ")"
-    show (DLabel l) = "L: " ++ show l
-
-instance Eq DValue where
-    DNum n == DNum n' = n == n'
-    DUnit == DUnit = True
-    DPair a b == DPair a' b' = a == a' && b == b'
-    DLabel l == DLabel l' = l == l'
-    -- We don't want to compare functions extensionally
-    DLambda env _ == DLambda env' _ = env == env'
-    _ == _ = False
-
-unboundVarErr :: String -> Either Error DValue
-unboundVarErr x = Left $ EvalError $ "Unbound variable " ++ x
-
-absurdErr :: Either Error DValue
-absurdErr = Left $ EvalError "Absurd; divergent term"
-
-boolToInt :: Bool -> Integer
-boolToInt b = if b then 1 else 0
-
-convOp :: BinaryOp -> (Integer, Integer) -> Integer
-convOp BAdd = uncurry (+)
-convOp BMul = uncurry (*)
-convOp BDiv = uncurry div
-convOp BSub = uncurry (-)
-convOp BLte = boolToInt . uncurry (<=)
-convOp BLt = boolToInt . uncurry (<)
-convOp BGte = boolToInt . uncurry (>=)
-convOp BGt = boolToInt . uncurry (>)
-convOp BEq = boolToInt . uncurry (==)
-convOp BNe = boolToInt . uncurry (/=)
 
 val :: Env -> CValue -> Either Error DValue
 val env e = case e of
@@ -67,10 +20,6 @@ val env e = case e of
         dL <- val env cL
         dR <- val env cR
         return $ DPair dL dR
-
-extendEnv :: Env -> Var -> DValue -> Env
-extendEnv env x v = Map.insert x v env
-
 
 deconsRow :: DValue -> Maybe (Label, DValue, DValue)
 deconsRow (DPair (DLabel l) (DPair v row')) = return (l, v, row')
@@ -95,12 +44,12 @@ eval :: Env -> ContComp -> Either Error DValue
 eval env e = case e of
     CPSValue v -> val env v
     CPSApp fE args -> val env fE >>= \f -> case f of
-        DLambda env' g -> mapM (val env) args >>= g -- do we need env'?
+        DLambda g -> mapM (val env) args >>= g
         _ -> Left $ EvalError $ "Application of non-lambda term: " ++ show f ++ " " ++ show args
     CPSResume fvar cont -> do
         contRes <- eval env cont -- TODO: Not tail recursive!!
         val env fvar >>= \case
-            DLambda env' g -> g [contRes]
+            DLambda g -> g [contRes]
     CPSBinOp op l r x cont -> do
         lv <- val env l
         rv <- val env r
@@ -111,7 +60,7 @@ eval env e = case e of
           _ -> Left $ EvalError $ "Could not perform " ++ show lv ++ " " ++ show op ++ " " ++ show rv
     CPSFix f formalParams body cont -> eval contEnv cont
         where contEnv = extendEnv env f func
-              func = DLambda env funcRecord
+              func = DLambda funcRecord
               funcRecord actualParams =
                 let params = zip formalParams actualParams in
                 let extEnv = foldl (uncurry . extendEnv) env params in

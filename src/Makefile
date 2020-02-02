@@ -20,7 +20,7 @@ link-lists: link-clean
 	ln -s EvalTarget.hs Eval.hs
 	ln -s CPSLists.hs CPS.hs
 
-clean: link-clean
+clean:
 	rm -f freak
 	rm -f Tests
 	find . -name "*.hi" -type f -delete

@@ -6,6 +6,7 @@ import qualified Data.Map as Map
 
 import Freak
 import Eval
+import CommonEval
 import Types
 
 genRow l n r = DPair (DLabel l) (DPair (DNum n) r)
