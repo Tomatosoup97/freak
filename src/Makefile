@@ -16,6 +16,10 @@ link-curry: link-clean
 	ln -s EvalTarget.hs Eval.hs
 	ln -s CPSCurry.hs CPS.hs
 
+link-lists: link-clean
+	ln -s EvalTarget.hs Eval.hs
+	ln -s CPSLists.hs CPS.hs
+
 clean: link-clean
 	rm -f freak
 	rm -f Tests
