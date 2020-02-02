@@ -22,7 +22,7 @@ data UComp
     | USplit Label Var Var UValue UComp
     | UCase UValue Label UComp Var UComp
     | UIf UValue UComp UComp
-    | ULet Var UValue UComp
+    | ULet Var UComp UComp
     | UAbsurd UValue
     deriving (Eq)
 

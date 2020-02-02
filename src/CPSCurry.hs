@@ -1,22 +1,21 @@
-module CPSAlt where
+module CPS where
 
 import qualified Data.Map as Map
 import Control.Monad.Except
 import Control.Monad.State
 import AST
+import CommonCPS
 import TargetAST
 import Types
 import Debug.Trace
 
 debug = flip trace
 
-type CPSMonad a = ExceptT Error (State Int) a
-
 type EffCont = UValue -> CPSMonad UComp
 type PureCont = UValue -> EffCont -> CPSMonad UComp
 
 initialPureCont :: PureCont
-initialPureCont v h = (return . UVal) v -- todo: point-free?
+initialPureCont v h = (return . UVal) v
 
 initialEffCont :: EffCont
 initialEffCont (UPair z _) = return $ UAbsurd z
@@ -24,22 +23,13 @@ initialEffCont (UPair z _) = return $ UAbsurd z
 initialState :: Int
 initialState = 0
 
-freshVar' :: String -> CPSMonad Var
-freshVar' s = do
-    n <- get
-    put (n+1)
-    return $ s ++ show n
-
-freshVar :: CPSMonad Var
-freshVar = freshVar' "__m" -- todo: this should be unique!
-
 consRow :: (Label, UValue) -> UValue -> UValue
 consRow (l, v) rowV = UPair (ULabel l) (UPair v rowV)
 
 jota :: Label -> UValue -> UValue
 jota l = UPair (ULabel l)
 
--- notHandledYetErr :: String -> Either Error UValue
+notSupportedErr :: CPSMonad UValue
 notSupportedErr = throwError $ CPSError "The operation is not supported yet"
 
 cpsVal :: Value -> PureCont -> EffCont -> CPSMonad UValue
@@ -54,7 +44,7 @@ cpsVal e k h = case e of
         return $ UPair v1 v2
     VExtendRow l v row -> notSupportedErr
     VVariantRow (VariantRow _ l v) -> notSupportedErr
-    VLambda x _ body -> ULambda x <$> cps body k h `debug` ("lambda " ++ show x)
+    VLambda x _ body -> ULambda x <$> cps body k h
     VFix g x body -> URec g x <$> cps body k h
     VBinOp op e1 e2 -> do
         v1 <- cpsVal e1 k h
@@ -69,14 +59,14 @@ cps e k h = case e of
         f <- cpsVal vF k h
         arg <- cpsVal vArg k h
         return $ UApp (UVal f) (UVal arg)
-    ELet x varComp comp -> do
+    ELet x varComp comp ->
         -- varVal <- cps varComp k h
         -- body <- cps comp k h
         -- return $ ULet x varVal body
-        (cps `debug` "let") varComp (
+        cps varComp (
             \varVal h -> do
-                body <- cps comp k h `debug` ("k called with: " ++ show varVal)
-                return $ ULet x varVal body) h
+                body <- cps comp k h
+                return $ ULet x (UVal varVal) body) h
     ESplit l x y row comp -> do
         v <- cpsVal row k h
         c <- cps comp k h
@@ -92,7 +82,7 @@ cps e k h = case e of
         fC <- cps fComp k h
         return $ UIf cond tC fC
     -- EReturn v -> cps (EVal v) k h
-    EReturn v -> cps (EVal v) k h `debug` ("return " ++ show v)
+    EReturn v -> cps (EVal v) k h
     EAbsurd v -> do
         v <- cpsVal v k h
         return $ UAbsurd v
@@ -112,7 +102,7 @@ cps e k h = case e of
 cpsHRet :: PureCont -> EffCont -> Handler -> PureCont
 cpsHRet k h (HRet xVar comp) x h' = do
     convComp <- cps comp k h
-    return $ ULet xVar x convComp
+    return $ ULet xVar (UVal x) convComp
 
 
 cpsHOps :: PureCont -> EffCont -> Handler -> EffCont
@@ -120,8 +110,8 @@ cpsHOps k h ops (UPair (ULabel l) (UPair p r)) =
     case hop l ops of
         Just (AlgOp _ pvar rvar comp) -> do
             contComp <- cps comp k h
-            return $ ULet pvar p (ULet rvar r contComp)
-        Nothing -> throwError $ CPSError "Nested handlers are not supported yet!" -- TODO
+            return $ ULet pvar (UVal p) (ULet rvar (UVal r) contComp)
+        Nothing -> throwError $ CPSError "Nested handlers are not supported yet!"
 
 
 runCPS :: Comp -> Either Error UComp
