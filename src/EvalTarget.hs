@@ -1,4 +1,4 @@
-module EvalTarget where
+module Eval where
 
 import qualified Data.Map as Map
 import AST
@@ -80,8 +80,8 @@ eval env c = case c of
         then eval env tComp
         else eval (Map.insert y l env) fComp
     UAbsurd _ -> absurdErr
-    ULet x varVal comp -> do
-        varVal <- eval env (UVal varVal)
+    ULet x varComp comp -> do
+        varVal <- eval env varComp
         let env' = extendEnv env x varVal
         eval env' comp
     -- Values
