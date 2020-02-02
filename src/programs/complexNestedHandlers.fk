@@ -1,0 +1,19 @@
+handle
+    handle
+        handle
+            let x <- do Inc 1 in do Mult x
+        with {
+            Inc p r -> let t <- return p + 1 in r t |
+            return x -> return x
+        }
+    with {
+        Mult p r ->
+            let t <- return p * 2 in
+            let t <- do Mult t in
+            r t |
+        return x -> return x + 1
+    }
+with {
+    Mult p r -> let t <- return p * 3 in r t |
+    return x -> return x + 2
+}

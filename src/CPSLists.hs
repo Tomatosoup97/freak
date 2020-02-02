@@ -63,12 +63,19 @@ cps e ks = case e of
         f <- cpsVal vF ks
         arg <- cpsVal vArg ks
         return $ UApp (UVal f) (UVal arg)
+    -- todo: This ELet fails on Drop resumption result test
     ELet x varComp comp -> do
         let k:ks' = ks
         let cont varVal ks'' = do
             body <- cps comp (k:ks')
             return $ ULet x (UVal varVal) body
         cps varComp (Pure cont:ks')
+    -- todo: This ELet fails on Simulate exceptions test
+    -- ELet x varComp comp -> do
+    --     let k:ks' = ks
+    --     body <- cps comp ks
+    --     varVal <- cps varComp ks
+    --     return $ ULet x varVal body
     ESplit l x y row comp -> do
         v <- cpsVal row ks
         c <- cps comp ks
@@ -83,8 +90,7 @@ cps e ks = case e of
         tC <- cps tComp ks
         fC <- cps fComp ks
         return $ UIf cond tC fC
-    EReturn v -> do
-        cps (EVal v) ks
+    EReturn v -> cps (EVal v) ks
     EAbsurd v -> do
         v <- cpsVal v ks
         return $ UAbsurd v
@@ -98,20 +104,20 @@ cps e ks = case e of
         cv <- cpsVal v ks
         hf (pair cv) ks'
     EHandle body handler -> do
-        let pureCont = cpsHRet ks (hret handler)
-        let effCont = cpsHOps ks handler
+        let pureCont = cpsHRet (hret handler)
+        let effCont = cpsHOps handler
         cps body (pureCont:effCont:ks)
 
 
-cpsHRet :: [Cont] -> Handler -> Cont
-cpsHRet ks'' (HRet xVar comp) = Pure (\x ks -> do
+cpsHRet :: Handler -> Cont
+cpsHRet (HRet xVar comp) = Pure (\x ks -> do
     let Eff hf:ks' = ks
     convComp <- cps comp ks'
     return $ ULet xVar (UVal x) convComp)
 
 
-cpsHOps :: [Cont] -> Handler -> Cont
-cpsHOps ks'' ops = Eff (\(UPair (ULabel l) (UPair p r)) ks ->
+cpsHOps :: Handler -> Cont
+cpsHOps ops = Eff (\(UPair (ULabel l) (UPair p r)) ks ->
     case hop l ops of
         Just (AlgOp _ pvar rvar comp) -> do
             contComp <- cps comp ks
@@ -126,7 +132,7 @@ forward y p r ks = do
     pureComp <- kf' (UVar x) (h':ks')
     let resumption = ULambda x pureComp
     let pair = UPair (ULabel y) (UPair p resumption)
-    hf' pair (h':ks')
+    hf' pair ks'
 
 
 runCPS :: Comp -> Either Error UComp

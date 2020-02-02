@@ -3,13 +3,10 @@ module CPS where
 import qualified Data.Map as Map
 import Control.Monad.Except
 import Control.Monad.State
-import AST
 import CommonCPS
+import AST
 import TargetAST
 import Types
-import Debug.Trace
-
-debug = flip trace
 
 type EffCont = UValue -> CPSMonad UComp
 type PureCont = UValue -> EffCont -> CPSMonad UComp
@@ -54,19 +51,14 @@ cpsVal e k h = case e of
 cps :: Comp -> PureCont -> EffCont -> CPSMonad UComp
 cps e k h = case e of
     EVal v -> cpsVal v initialPureCont h >>= \v -> k v h
-    -- EVal v -> UVal <$> cpsVal v k h
     EApp vF vArg -> do
         f <- cpsVal vF k h
         arg <- cpsVal vArg k h
         return $ UApp (UVal f) (UVal arg)
     ELet x varComp comp ->
-        -- varVal <- cps varComp k h
-        -- body <- cps comp k h
-        -- return $ ULet x varVal body
-        cps varComp (
-            \varVal h -> do
-                body <- cps comp k h
-                return $ ULet x (UVal varVal) body) h
+        cps varComp (\varVal h -> do
+            body <- cps comp k h
+            return $ ULet x (UVal varVal) body) h
     ESplit l x y row comp -> do
         v <- cpsVal row k h
         c <- cps comp k h
@@ -81,11 +73,8 @@ cps e k h = case e of
         tC <- cps tComp k h
         fC <- cps fComp k h
         return $ UIf cond tC fC
-    -- EReturn v -> cps (EVal v) k h
     EReturn v -> cps (EVal v) k h
-    EAbsurd v -> do
-        v <- cpsVal v k h
-        return $ UAbsurd v
+    EAbsurd v -> UAbsurd <$> cpsVal v k h
     -- Algebraic effects
     EDo l v -> do
         x <- freshVar' "rArg"
