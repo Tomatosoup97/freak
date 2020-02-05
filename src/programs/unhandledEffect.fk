@@ -1,0 +1,5 @@
+handle
+    do Effect ()
+with {
+    return x -> return x
+}

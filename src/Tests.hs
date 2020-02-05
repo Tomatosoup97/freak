@@ -144,6 +144,9 @@ main = hspec $ do
     it "Deep handlers" $ do
       testFromFile "programs/deepHandlers.fk" (Right (DNum 7))
 
+    it "Unhandled effect" $ do
+      testFromFile "programs/unhandledEffect.fk" (absurdErr)
+
     -- it "Drop resumption result" $ do
     --   testFromFile "programs/dropResumption.fk" (Right (DNum 1))
 
