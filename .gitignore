@@ -31,9 +31,11 @@ cabal.project.local~
 *.aux
 *.log
 *.out
-article-blx.bib
 *.bbl
 *.bcf
 *.blg
 *.run.xml
 texput.log
+*.toc
+article-blx.bib
+thesis-blx.bib
