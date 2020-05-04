@@ -30,7 +30,10 @@
 
 
 %%%%% WLASNE DODATKOWE PAKIETY
-% \usepackage{graphicx,listings,amsmath,amssymb,amsthm,amsfonts,tikz}
+% \usepackage{graphicx,listings,tikz}
+\usepackage{syntax}
+\usepackage{mathalfa}
+
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{mybib.bib}
 %
@@ -49,11 +52,17 @@
 %%%%% POCZĄTEK ZASADNICZEGO TEKSTU PRACY
 
 \chapter{Introduction}
+
+In this thesis we present experimental programming language Freak, which is an
+implementation of Continuation Passing Style for Effect Handlers paper \cite{handlers-cps},
+with the addition of a few basic constructs. We start by presenting the related work,
+then discuss syntax and operational semantics. Basic usage guide for playing with
+the language is provided, as well as implementation details and examples. We conclude
+by stating what are the possible augmentations, that are intended to be made in the future.
+
 \section{Problem Analysis}
 \section{Problem Statement}
 \section{Thesis Outline}
-
-\ldots \cite{frank}
 
 \chapter{Background}
 \section{Algebraic Effects}
@@ -67,27 +76,455 @@
 \section{Cohandlers as a Separate Construct}
 \section{Related Work}
 
+    Except from Links language \cite{handlers-cps}, on which the implementation
+    is based, there are currently many other alternatives available. One may take
+    a look at Frank \cite{frank}, which provides a support for multihandlers,
+    Koka \cite{leijen-koka}, Helium \cite{helium} or Eff \cite{eff}. Except from
+    separate languages, many libraries arose for existing ones like Haskell,
+    Idris, Scala or Multicore OCaml.
+
+    As can be seen in the J. Yallop repository \cite{effects-bibliography},
+    algebraic effects and handlers are now trending branch in the programming languages theory.
+
+
 \chapter{Coeffectful Programming with Cohandlers}
 \section{Examples}
+\label{sec:examples}
+    In this section we present a few examples to show the capabilities of the
+    language. The ideas have been based on \cite{programming-in-eff}, and thus will not be
+    described in great details. More exemplary programs in Freak language can
+    be found under \\ \href{https://github.com/Tomatosoup97/freak/tree/master/src/programs}{\underline{https://github.com/Tomatosoup97/freak/tree/master/src/programs}}.
+
+    \subsection{Choice}
+    \label{sec:choice-example}
+
+    The first example will be based on modelling (nondeterministic) choice
+    in the program. We will make two decisions, which will affect the computation
+    result:
+
+    \begin{verbatim}
+    let c1 <- do Choice () in
+    let c2 <- do Choice () in
+    let x <- if c1 then return 10 else return 20 in
+    let y <- if c2 then return 0 else return 5 in
+        return x - y
+    \end{verbatim}
+    With that in hand, we may want to define effect handlers:
+
+    \begin{verbatim}
+    handle ... with {
+        Choice p r ->
+            let t <- r 1 in
+            let f <- r 0 in
+            <PLACEHOLDER> |
+        return x -> return x
+    }
+    \end{verbatim}
+    where in the \verb!<PLACEHOLDER>! we can define on what to do with the
+    computation. For example, min-max strategy for picking the minimum value:
+
+    \begin{verbatim}
+    if t < f then return t else return f
+    \end{verbatim}
+    where the code evaluates to \verb!5!. Another example is a handler that
+    collects all possible results, which can be achieved by putting
+    \verb!return (t, f)! in the \verb!<PLACEHOLDER>!, which evaluates to \verb!((10, 5), (20, 15))!.
+
+    \subsection{Exceptions}
+
+    Exceptions are simply algebraic effect handlers which drop the resumption.
+
+    \begin{verbatim}
+    handle
+        if x == 0 then do ZeroDivisionError ()
+                  else return 1/x
+    with {
+        ZeroDivisionError p r -> return 42 |
+        return x -> return x
+    }
+    \end{verbatim}
+    Where we imagine that $x$ variable has been bound previously.
+
+    \subsection{Side effects}
+
+    The complexity of the programs and their performance usually comes from side effects.
+    Algebraic effects allow us to define code in a declarative manner, and hence
+    neatly tame the side effects that they produce. This gives us a lot of flexibility
+    in the actual meaning without duplicating the code. Let's consider the following
+    very basic code snippet:
+
+    \begin{verbatim}
+    let x <- do Fetch () in
+    -- operate on x
+    \end{verbatim}
+
+    The code is dependent on a context in which it is executed, which here is
+    the handler that defines the behaviour of the algebraic \verb!Fetch! effect.
+    In the imperative, or even functional approach, we would need to provide
+    the interface for fetching the data by doing dependency injection or even
+    embedding the operation directly. Here we are just stating what operation
+    we are performing, leaving the interpretation up to the execution context,
+    which could do the fetching or mock the external resource.
+
+    These implications are straightforward when looking from a categorical
+    standpoint, where effects are viewed as free models of algebraic theories
+    \cite{adequacy}, and handlers are homomorphisms preserving the model structure
+    \cite{handlers}. Nevertheless, the results are very exciting for programming
+    use cases. The current Freak implementation does not support I/O.
+
+\section{Coexamples}
+    \ldots
+
 \section{Usage guide}
+
+    As of this day, two implementations are available, one based on the curried
+    translation and Appel \cite{appel-continuations}, and the second one based
+    directly on the uncurried translation with continuations as explicit stacks
+    from paper. More details can be found in section \ref{sec:implementation}.
+    All commands are available within \verb src  directory.
+
+    \subsection{Build and install}
+
+    \begin{itemize}
+        \item Install dependencies: \verb!make install!
+        \item Select implementation: \verb!make link-lists! (default) vs \verb!make link-appel!
+        \item Compile: \verb!make build!
+        \item Link to PATH: \verb!sudo make link!
+        \item Remove artifacts: \verb!make clean!
+    \end{itemize}
+
+    After compiling and linking program to PATH, one may evaluate program as
+    follows: \verb!freak programs/choicesList.fk!. The actual code is described in section \ref{sec:choice-example}
+
+    \subsection{Running tests}
+
+    Test cases are available \href{https://github.com/Tomatosoup97/freak/blob/master/src/Tests.hs}{\underline{here}},
+    they include both inline and file-based tests. For more details about
+    writing tests, one may refer to \textit{HUnit documentation} \cite{hunit-docs}.
+
+    \begin{itemize}
+        \item Run tests: \verb!make tests!
+        \item Run code linter: \verb!make lint!
+        \item Compile, run linter and tests: \verb!make check!
+    \end{itemize}
 
 \chapter{Calculus of Freak language}
 \section{Syntax}
+
+    The syntax for the calculus is shown below. $nat \; n$ represents an integer $n$,
+    $V \oplus W$ and $V \approx W$ are respectively binary and relational
+    operators, where we support basic arithmetic and comparison operations.
+    \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ is a standard branching statement.
+    The other constructs are just as in Links, with slight syntax modifications.
+    Actual programs in Freak can be found in section \ref{sec:examples}.
+
+    \begin{grammar}
+
+        <Values V, W> ::= $ x $ | $nat \; n$ \\
+            | $ \backslash x : A \rightarrow M $ | \textbf{rec} $ g \; x \rightarrow M $\\
+            | $V \oplus W$ | $V \approx W$ \\
+            | <> | $ \{ \ell = V; W\} $  | $[ \ell \; V]^{R}$
+
+        <Computations M, N> ::= $ V $ $ W $ \\
+            | \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ \\
+            | \textbf{let} $\{\ell  = x; y\} = V$ \textbf{in} $ N $ \\
+            | \textbf{case} $V \{ \ell \; x \rightarrow M; y \rightarrow N\}$ | \textbf{absurd} $ V $ \\
+            | \textbf{return} $V$ | \textbf{let} $ x \leftarrow M $ \textbf{in} $ N $ \\
+            | \textbf{do} $\ell \; V$ | \textbf{handle} $M$ \textbf{with} $ \{ H \} $
+
+        <Handlers H> ::= \textbf{return} $ x \rightarrow M $ | $ \ell \; p \; r \rightarrow M, H $
+
+        <Binary operators $\oplus$> ::= + | - | * | /
+
+        <Relational operators $\approx$> ::= $ \textless $ | $\leqslant$ | $>$ | $\geqslant$ | == | !=
+
+    \end{grammar}
+
+
 \section{Typing Rules}
 \section{Operational Semantics}
+
+    The source language's dynamics have been described
+    extensively by providing small-step operational semantics,
+    continuation passing style transformation \cite{handlers-cps} as well
+    as abstract machine \cite{liberating-effects}, which was proved to coincide
+    with CPS translation. That being said, Freak introduces new basic
+    constructs to the language, for which we shall define the semantics.
+
+    \begin{flushleft}
+    Extension of the evaluation contexts:
+    \end{flushleft}
+
+    \begin{flushleft}
+    $\mathcal{E}$ ::= $ \mathcal{E} \oplus W \; | \; nat \; n \oplus \mathcal{E} \; |$ \textbf{if} $\mathcal{E}$ \textbf{then} $M$ \textbf{else} $N$
+    \end{flushleft}
+
+    \begin{flushleft}
+    Small-step operational semantics:
+    \end{flushleft}
+
+    \begin{flushleft}
+    \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow M \quad \quad $ if $n \neq 0$ \\
+    \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow N \quad \quad $ if $n = 0$
+    \end{flushleft}
+
+    \begin{flushleft}
+    $nat \; n \oplus nat \; n' \rightsquigarrow n'' \quad \quad $    if $ n'' = n \oplus n' $ \\
+    $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
+    $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
+
+    \end{flushleft}
+
 \section{Continuation Passing Style Transformation}
+    \ldots
 
 \chapter{Implementation}
-\section{Abstract Syntax Trees}
-\section{Curried Translation}
-\section{Uncurried Translation}
-\section{Cohandlers}
-\section{Type System}
-\section{Source Code Structure}
+\label{sec:implementation}
+
+    The Freak implementation is available at \href{https://github.com/Tomatosoup97/freak}{\underline{https://github.com/Tomatosoup97/freak}},
+    written purely in Haskell. While the paper provided a good overview of the
+    language and the translation, the lower-level details were omitted. That
+    being said, two inherently different takes at the implementations were made.
+    The first one is based on curried translation and A. Appel \cite{appel-continuations}
+    book, and the second one directly on the uncurried translation to target
+    calculus with continuations represented as explicit stacks from the paper.
+    We start by presenting core data structures, and afterwards move to actual
+    translation details.
+
+    \section{Abstract Syntax Trees}
+    \label{sec:implementation-ast}
+
+    The language's AST is defined without surprises, just as syntax is:
+
+    \begin{verbatim}
+data Value
+    = VVar Var
+    | VNum Integer
+    | VLambda Var ValueType Comp
+    | VFix Var Var Comp
+    | VUnit
+    | VPair Value Value
+    | VRecordRow (RecordRow Value)
+    | VExtendRow Label Value Value
+    | VVariantRow (VariantRow Value)
+    | VBinOp BinaryOp Value Value
+
+data Comp
+    = EVal Value
+    | ELet Var Comp Comp
+    | EApp Value Value
+    | ESplit Label Var Var Value Comp
+    | ECase Value Label Var Comp Var Comp
+    | EReturn Value
+    | EAbsurd Value
+    | EIf Value Comp Comp
+    | EDo Label Value
+    | EHandle Comp Handler
+    \end{verbatim}
+    Similarly for the target calculus data structure. However, as one may notice,
+    for convenience the \textbf{let} translation is homomorphic, as opposed to be
+    to lambda abstracted with immediate application:
+
+    \begin{verbatim}
+data UValue
+    = UVar Var
+    | UNum Integer
+    | UBool Bool
+    | ULambda Var UComp
+    | UUnit
+    | UPair UValue UValue
+    | ULabel Label
+    | URec Var Var UComp
+    | UBinOp BinaryOp UValue UValue
+
+data UComp
+    = UVal UValue
+    | UApp UComp UComp
+    | USplit Label Var Var UValue UComp
+    | UCase UValue Label UComp Var UComp
+    | UIf UValue UComp UComp
+    | ULet Var UComp UComp
+    | UAbsurd UValue
+
+    \end{verbatim}
+    The final answer, common to both evaluations, is represented as a \verb!DValue!,
+    where the meaning of the coproduct is as one would expect:
+
+    \begin{verbatim}
+type Label = String
+type FuncRecord = [DValue] -> Either Error DValue
+data DValue
+    = DNum Integer
+    | DLambda FuncRecord
+    | DUnit
+    | DPair DValue DValue
+    | DLabel Label
+    \end{verbatim}
+
+    \section{Curried translation}
+
+    The first take was heavily inspired by A. Appel's Compiling with Continuations
+    \cite{appel-continuations}, which provides a translation for a simplified ML
+    calculus. The calculus was extended and translation adapted to handle algebraic
+    effects and their handlers. The translation is based on the curried first-order
+    translation. That being said, the source code diverged a lot from the paper on
+    which it was based, leading to a different transformation for which
+    the correctness and cohesion with operational semantics should be proved
+    separately. Indeed, while the interpreter worked well on the use cases
+    defined in tests, the evaluation had a part which was not tail-recursive. What's
+    more, nested handlers were not supported, and the implementation was found to be
+    trickier than it should, as it was not obvious on how to adopt the technique
+    proposed in the paper.
+
+    In terms of improving the performance of the evaluation, uncurried higher-order
+    translation should be adapted, so that administrative redexes are contracted
+    and proper tail-recursion is obtained. The core data structure, into which the
+    source program is transformed, is defined as follows:
+
+    \begin{verbatim}
+data ContComp
+    = CPSApp CValue [CValue]
+    | CPSResume CValue ContComp
+    | CPSFix Var [Var] ContComp ContComp
+    | CPSBinOp BinaryOp CValue CValue Var ContComp
+    | CPSValue CValue
+    | CPSLet Var CValue ContComp
+    | CPSSplit Label Var Var CValue ContComp
+    | CPSCase CValue Label Var ContComp Var ContComp
+    | CPSIf CValue ContComp ContComp
+    | CPSAbsurd CValue
+    \end{verbatim}
+    Most of the terms at the end have a coinductive reference to itself, which represents
+    the rest of the computation that needs to be done. For more clarification,
+    one may take a look into the book mentioned above \cite{appel-continuations}. The source code for curried
+    translation and evaluation can be found respectively in \verb!CPSAppel.hs! and
+    \verb!EvalCPS.hs!.
+
+    \section{Uncurried translation}
+
+    Having in mind the drawbacks mentioned above, alternative translation was
+    written, that coincides with the translation from the paper. Namely, with
+    the uncurried translation to target calculus with continuations represented
+    as explicit stacks. The target calculus was described in section \ref{sec:implementation-ast},
+    for which the evaluation is straightforward. The continuations are represented
+    as \verb!Cont!, with syntactic distinction between pure and effectful computations,
+    which occupy alternating positions in the stack. Explicit distinction gave
+    more control in the source code.
+
+    \begin{verbatim}
+type CPSMonad a = ExceptT Error (State Int) a
+
+type ContF = UValue -> [Cont] -> CPSMonad UComp
+
+data Cont = Pure ContF
+          | Eff ContF
+    \end{verbatim}
+    Where \verb!CPSMonad! is a monad transformer over \verb!Either! and \verb!State!.
+    \verb!State! was required to generate labels for fresh variables that
+    came from the translation. The core code is split into five functions:
+
+    \begin{verbatim}
+cps     :: Comp    -> [Cont] -> CPSMonad UComp
+cpsVal  :: Value   -> [Cont] -> CPSMonad UValue
+cpsHRet :: Handler -> Cont
+cpsHOps :: Handler -> Cont
+forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
+    \end{verbatim}
+    Where the first two are implementing cps for computations and values.
+    \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
+    based on a given handler. The last one is responsible for forwarding the
+    computation to the outer handler.
+
+    This results in an implementation that finally supports nested handlers,
+    as can be seen by evaluating \verb!programs/complexNestedHandlers.fk! program.
+    Unfortunately, following closely translation from the paper resulted in
+    a behaviour, in which invoked resumption forgets its pure continuation. This means,
+    that the following code, evaluating correctly on the Appel-based translation,
+    returns 0 rather than 1:
+
+    \begin{verbatim}
+handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
+    \end{verbatim}
+    Nevertheless, working out this issue appears as less demanding than coping with
+    discrepancies created in the first translation. The source code for uncurried
+    translation and evaluation can be found respectively in \verb!CPSLists.hs! and
+    \verb!EvalTarget.hs!.
+
+    \section{Cohandlers}
+    \ldots
+
+    \section{Type System}
+    \ldots
+
+    \section{Source Code Structure}
+
+    The source code is divided into a number of modules, where the most
+    crucial parts have already been described.
+
+    \begin{verbatim}
+    AST.hs          - AST data structures
+    CommonCPS.hs    - Common functions for CPS translation
+    CommonEval.hs   - Common functions for evaluation
+    CPSAppel.hs     - Appel-based CPS translation
+    CPSLists.hs     - Uncurried CPS translation
+    EvalCPS.hs      - Evaluation of the Appel's CPS structure
+    EvalTarget.hs   - Evaluation of the target calculus
+    Freak.hs        - API for the language
+    Main.hs         - Main module running evaluator on given filename
+    Parser.hs       - Parser and lexer
+    TargetAST.hs    - AST for the target calculus
+    Tests.hs        - Tests module
+    Types.hs        - Common types definition
+    programs/       - Exemplary programs used in tests
+    \end{verbatim}
 
 \chapter{Conclusion}
 \section{Summary}
+    \ldots
 \section{Future work}
+
+    \subsection{Alternative evaluation}
+
+    The Links language also provides small-step operational semantics and
+    an abstract machine \cite{liberating-effects}. Implementing another way
+    of evaluation could serve as a way to empirically assert correctness,
+    as opposed to formally.
+
+    \subsection{Type inference}
+
+    The type system as of this day is not implemented, as the focus has been put
+    on CPS transformation. Further work is required here, especially considering
+    the fact that a huge advantage of algebraic effects is that they are explicitly
+    defined in the type of a computation.
+
+    \subsection{Multiple instances of algebraic effect}
+
+    The Freak language is limited to a single instance of an effect. We would
+    need to support cases where many instances of the algebraic effects, with
+    the same handler code, could be instantiated. The current state of the
+    art introduces a concept of resources and instances, as in Eff \cite{programming-in-eff},
+    or instance variables, as in Helium \cite{binders-labels}.
+
+    \subsection{Selective CPS}
+
+    Other languages, like Koka \cite{leijen-koka}, or even the core of the Links, are
+    performing selective CPS translation, which reduces the overhead on code
+    that does not perform algebraic effects. Our current translation is fully
+    embedded in the CPS.
+
+    \subsection{Exceptions as separate constructs}
+
+    Exceptions are a trivial example of algebraic effect where the resumption is
+    discarded, and as described in \S 4.5 \cite{handlers-cps}, they can be modeled
+    as a separate construct to improve performance.
+
+    \subsection{Shallow handlers}
+
+    Shallow and deep handlers while being able to simulate each other up to
+    administrative reductions, have a very different meaning from a theoretical
+    point of view. Implementing them as defined by Lindley et al. \cite{shallow-handlers} could
+    be another way of enhancing Freak.
+
 
 %%%%% BIBLIOGRAFIA
 

@@ -5,6 +5,8 @@ build:
 
 build_auto:
 	pdflatex -interaction=nonstopmode thesis.tex
+	bibtex thesis
+	pdflatex -interaction=nonstopmode thesis.tex
 
 clean:
 	rm -f *.aux
