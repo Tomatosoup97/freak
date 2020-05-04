@@ -1,0 +1,61 @@
+% Opcje klasy 'iithesis' opisane sa w komentarzach w pliku klasy. Za ich pomoca
+% ustawia sie przede wszystkim jezyk i rodzaj (lic/inz/mgr) pracy, oraz czy na
+% drugiej stronie pracy ma byc skladany wzor oswiadczenia o autorskim wykonaniu.
+\documentclass[declaration,shortabstract]{iithesis}
+
+\usepackage[utf8]{inputenc}
+
+
+%%%%% DANE DO STRONY TYTUŁOWEJ
+% Niezaleznie od jezyka pracy wybranego w opcjach klasy, tytul i streszczenie
+% pracy nalezy podac zarowno w jezyku polskim, jak i angielskim.
+% Pamietaj o madrym (zgodnym z logicznym rozbiorem zdania oraz estetyka) recznym
+% zlamaniu wierszy w temacie pracy, zwlaszcza tego w jezyku pracy. Uzyj do tego
+% polecenia \fmlinebreak.
+\polishtitle    {Efekty koalgebraiczne oraz ich kohandlery \fmlinebreak w językach programowania}
+\englishtitle   {Coalgebraic effects and their cohandlers \fmlinebreak in programming languages}
+\polishabstract {
+    \ldots
+}
+\englishabstract{
+}
+\author         {Mateusz Urbańczyk}
+\advisor        {dr Maciej Piróg}
+\date           {30 czerwca 2020}                     % Data zlozenia pracy
+% Dane do oswiadczenia o autorskim wykonaniu
+% \transcriptnum {291480}                     % Numer indeksu
+% \advisorgen    {dr. Macieja Piróga} % Nazwisko promotora w dopelniaczu
+%%%%%
+
+
+%%%%% WLASNE DODATKOWE PAKIETY
+% \usepackage{graphicx,listings,amsmath,amssymb,amsthm,amsfonts,tikz}
+\usepackage[backend=bibtex]{biblatex}
+\addbibresource{mybib.bib}
+%
+%%%%% WŁASNE DEFINICJE I POLECENIA
+%
+%\theoremstyle{definition} \newtheorem{definition}{Definition}[chapter]
+%\theoremstyle{remark} \newtheorem{remark}[definition]{Observation}
+%\theoremstyle{plain} \newtheorem{theorem}[definition]{Theorem}
+%\theoremstyle{plain} \newtheorem{lemma}[definition]{Lemma}
+%\renewcommand \qedsymbol {\ensuremath{\square}}
+% ...
+%%%%%
+
+\begin{document}
+
+%%%%% POCZĄTEK ZASADNICZEGO TEKSTU PRACY
+
+\chapter{Introduction}
+
+
+%%%%% BIBLIOGRAFIA
+
+% \begin{thebibliography}{1}
+% \bibitem{example} \ldots
+% \end{thebibliography}
+
+\printbibliography
+
+\end{document}
