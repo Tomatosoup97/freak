@@ -7,11 +7,6 @@
 
 
 %%%%% DANE DO STRONY TYTUŁOWEJ
-% Niezaleznie od jezyka pracy wybranego w opcjach klasy, tytul i streszczenie
-% pracy nalezy podac zarowno w jezyku polskim, jak i angielskim.
-% Pamietaj o madrym (zgodnym z logicznym rozbiorem zdania oraz estetyka) recznym
-% zlamaniu wierszy w temacie pracy, zwlaszcza tego w jezyku pracy. Uzyj do tego
-% polecenia \fmlinebreak.
 \polishtitle    {Efekty koalgebraiczne oraz ich kohandlery \fmlinebreak w językach programowania}
 \englishtitle   {Coalgebraic effects and their cohandlers \fmlinebreak in programming languages}
 \polishabstract {
@@ -66,15 +61,24 @@ by stating what are the possible augmentations, that are intended to be made in 
 
 \chapter{Background}
 \section{Algebraic Effects}
-\section{Categorical Setting for Universal Algebra}
-\section{Comodels and Duality}
+\section{Categorical Setting of Universal Algebra}
+    \subsection{Algebraic Theories}
+    \subsection{Free models form monads}
+    \subsection{Models homomorphisms}
+    \subsection{Parametrized operations}
+\section{Duality}
+    \subsection{Comodels}
+    \subsection{Cooperations}
+    \subsection{Coalgebraic Effects}
 
 \chapter{Proposed Solutions}
+\section{One-shot continuations}
 \section{Dynamic Constraints Checking}
 \section{Linear Types}
 \section{Data-Flow Analysis}
-\section{Cohandlers as a Separate Construct}
+\section{Cohandlers as Separate Constructs}
 \section{Related Work}
+    \subsection{Algebraic Effects}
 
     Except from Links language \cite{handlers-cps}, on which the implementation
     is based, there are currently many other alternatives available. One may take
@@ -85,6 +89,10 @@ by stating what are the possible augmentations, that are intended to be made in 
 
     As can be seen in the J. Yallop repository \cite{effects-bibliography},
     algebraic effects and handlers are now trending branch in the programming languages theory.
+
+    \subsection{Coalgebraic Effects}
+
+    \ldots
 
 
 \chapter{Coeffectful Programming with Cohandlers}
@@ -145,7 +153,7 @@ by stating what are the possible augmentations, that are intended to be made in 
     \end{verbatim}
     Where we imagine that $x$ variable has been bound previously.
 
-    \subsection{Side effects}
+    \subsection{Taming Side effects}
 
     The complexity of the programs and their performance usually comes from side effects.
     Algebraic effects allow us to define code in a declarative manner, and hence
@@ -291,7 +299,7 @@ by stating what are the possible augmentations, that are intended to be made in 
     We start by presenting core data structures, and afterwards move to actual
     translation details.
 
-    \section{Abstract Syntax Trees}
+    \section{Abstract Syntax Tree}
     \label{sec:implementation-ast}
 
     The language's AST is defined without surprises, just as syntax is:
@@ -360,6 +368,8 @@ data DValue
     | DPair DValue DValue
     | DLabel Label
     \end{verbatim}
+
+    \section{Target calculus}
 
     \section{Curried translation}
 
@@ -454,7 +464,8 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     \ldots
 
     \section{Type System}
-    \ldots
+
+        \subsection{Row polymorphism}
 
     \section{Source Code Structure}
 
@@ -483,7 +494,7 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     \ldots
 \section{Future work}
 
-    \subsection{Alternative evaluation}
+    \subsection{Abstract machine}
 
     The Links language also provides small-step operational semantics and
     an abstract machine \cite{liberating-effects}. Implementing another way
@@ -497,7 +508,7 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     the fact that a huge advantage of algebraic effects is that they are explicitly
     defined in the type of a computation.
 
-    \subsection{Multiple instances of algebraic effect}
+    \subsection{Multiple instances of algebraic effects}
 
     The Freak language is limited to a single instance of an effect. We would
     need to support cases where many instances of the algebraic effects, with
@@ -526,11 +537,7 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     be another way of enhancing Freak.
 
 
-%%%%% BIBLIOGRAFIA
-
-% \begin{thebibliography}{1}
-% \bibitem{example} \ldots
-% \end{thebibliography}
+%%%%% BIBLIOGRAPHY
 
 \printbibliography
 
