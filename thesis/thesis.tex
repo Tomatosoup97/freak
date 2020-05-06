@@ -1,6 +1,3 @@
-% Opcje klasy 'iithesis' opisane sa w komentarzach w pliku klasy. Za ich pomoca
-% ustawia sie przede wszystkim jezyk i rodzaj (lic/inz/mgr) pracy, oraz czy na
-% drugiej stronie pracy ma byc skladany wzor oswiadczenia o autorskim wykonaniu.
 \documentclass[declaration,shortabstract]{iithesis}
 
 \usepackage[utf8]{inputenc}
@@ -48,6 +45,7 @@
 
 \chapter{Introduction}
 
+% TODO This requires a rework
 In this thesis we present experimental programming language Freak, which is an
 implementation of Continuation Passing Style for Effect Handlers paper \cite{handlers-cps},
 with the addition of a few basic constructs. We start by presenting the related work,
@@ -56,27 +54,52 @@ the language is provided, as well as implementation details and examples. We con
 by stating what are the possible augmentations, that are intended to be made in the future.
 
 \section{Problem Analysis}
+
+What are the issues with normal algebraic effects?
+
 \section{Problem Statement}
+
+Brief and concise description of the problem
+
 \section{Thesis Outline}
 
 \chapter{Background}
 \section{Algebraic Effects}
+
+What are algebraic effects?
+
 \section{Categorical Setting of Universal Algebra}
+
+For the purpose of describing the duality between algebra and coalgebra,
+we allow ourselves to wander a bit deeper into category theory.
+
     \subsection{Algebraic Theories}
+
+    Sigma-Signatures, Sigma-Terms, Sigma-Equations, Interpretations, Models, Free models
+
     \subsection{Free models form monads}
+
+    Maybe not a subsection but just a lemma
+
     \subsection{Models homomorphisms}
+
+    T-homomorphisms with respect to theory T
+
     \subsection{Parametrized operations}
+
 \section{Duality}
     \subsection{Comodels}
+
+    Comodel in $\mathcal{C}$ is just a Model in $ \mathcal{C}^{op} $.
+
+    Models -- Worlds
+
     \subsection{Cooperations}
+
+    Derive from Models duality
+
     \subsection{Coalgebraic Effects}
 
-\chapter{Proposed Solutions}
-\section{One-shot continuations}
-\section{Dynamic Constraints Checking}
-\section{Linear Types}
-\section{Data-Flow Analysis}
-\section{Cohandlers as Separate Constructs}
 \section{Related Work}
     \subsection{Algebraic Effects}
 
@@ -92,10 +115,29 @@ by stating what are the possible augmentations, that are intended to be made in 
 
     \subsection{Coalgebraic Effects}
 
-    \ldots
+    Ahman and Bauer \cite{runners-in-action}
 
 
-\chapter{Coeffectful Programming with Cohandlers}
+\chapter{Potential Solutions}
+
+One-shot continuations
+
+\section{Dynamic Constraints Checking}
+
+\section{Linear Types}
+
+Solve the issue through introduction of linear type system.
+
+\section{Data-Flow Analysis}
+
+Another static analysis of the program.
+
+\section{Cohandlers as Separate Constructs}
+
+Simplify semantics by separating coalgebraic effects into a new, restricted
+construct in programming language
+
+\chapter{Effectful and Coeffectful Programming}
 \section{Examples}
 \label{sec:examples}
     In this section we present a few examples to show the capabilities of the
@@ -181,10 +223,12 @@ by stating what are the possible augmentations, that are intended to be made in 
     use cases. The current Freak implementation does not support I/O.
 
 \section{Coexamples}
-    \ldots
+
+    Examples for cohandlers
 
 \section{Usage guide}
 
+    % Outdated
     As of this day, two implementations are available, one based on the curried
     translation and Appel \cite{appel-continuations}, and the second one based
     directly on the uncurried translation with continuations as explicit stacks
@@ -247,7 +291,6 @@ by stating what are the possible augmentations, that are intended to be made in 
         <Relational operators $\approx$> ::= $ \textless $ | $\leqslant$ | $>$ | $\geqslant$ | == | !=
 
     \end{grammar}
-
 
 \section{Typing Rules}
 \section{Operational Semantics}
@@ -463,10 +506,6 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     \section{Cohandlers}
     \ldots
 
-    \section{Type System}
-
-        \subsection{Row polymorphism}
-
     \section{Source Code Structure}
 
     The source code is divided into a number of modules, where the most
@@ -491,7 +530,9 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
 
 \chapter{Conclusion}
 \section{Summary}
-    \ldots
+
+    What was achieved, what was described, what needs to be done or researched.
+
 \section{Future work}
 
     \subsection{Abstract machine}
@@ -501,7 +542,7 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     of evaluation could serve as a way to empirically assert correctness,
     as opposed to formally.
 
-    \subsection{Type inference}
+    \subsection{Type inference and row polymorphism}
 
     The type system as of this day is not implemented, as the focus has been put
     on CPS transformation. Further work is required here, especially considering
