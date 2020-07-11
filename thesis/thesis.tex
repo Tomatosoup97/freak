@@ -51,9 +51,9 @@
 In this thesis we present experimental programming language Freak, which is an
 implementation of Continuation Passing Style for Effect Handlers paper~\cite{handlers-cps},
 with the addition of a few basic constructs. We start by presenting the related work,
-then discuss syntax and operational semantics. Basic usage guide for playing with
-the language is provided, as well as implementation details and examples. We conclude
-by stating what are the possible augmentations, that are intended to be made in the future.
+then discuss syntax and operational semantics. Basic usage guide for playing with the
+language is provided, as well as implementation details and examples. We conclude by
+stating what are the possible augmentations, that are intended to be made in the future.
 
 \section{Problem Analysis}
 
@@ -112,8 +112,8 @@ we allow ourselves to wander a bit deeper into category theory.
     separate languages, many libraries arose for existing ones like Haskell,
     Idris, Scala or Multicore OCaml.
 
-    As can be seen in the J. Yallop repository~\cite{effects-bibliography},
-    algebraic effects and handlers are now trending branch in the programming languages theory.
+    As can be seen in the J. Yallop repository~\cite{effects-bibliography}, algebraic
+    effects and handlers are now trending branch in the programming languages theory.
 
     \subsection{Coalgebraic Effects}
 
@@ -142,8 +142,8 @@ construct in programming language
 \chapter{Effectful and Coeffectful Programming}
 \section{Examples}\label{sec:examples}
 
-    In this section we present a few examples to show the capabilities of the
-    language. The ideas have been based on~\cite{programming-in-eff}, and thus will not be
+    In this section we present a few examples to show the capabilities of the language.
+    The ideas have been based on~\cite{programming-in-eff}, and thus will not be
     described in great details. More exemplary programs in Freak language can
     be found under \\ \href{https://github.com/Tomatosoup97/freak/tree/master/src/programs}{\underline{https://github.com/Tomatosoup97/freak/tree/master/src/programs}}.
 
@@ -179,7 +179,8 @@ construct in programming language
     \end{verbatim}
     where the code evaluates to \verb!5!. Another example is a handler that
     collects all possible results, which can be achieved by putting
-    \verb!return (t, f)! in the \verb!<PLACEHOLDER>!, which evaluates to \verb!((10, 5), (20, 15))!.
+    \verb!return (t, f)! in the \verb!<PLACEHOLDER>!, which evaluates to
+    \verb!((10, 5), (20, 15))!.
 
     \subsection{Exceptions}
 
@@ -265,11 +266,11 @@ construct in programming language
 \section{Syntax}
 
     The syntax for the calculus is shown below. $nat \; n$ represents an integer $n$,
-    $V \oplus W$ and $V \approx W$ are respectively binary and relational
-    operators, where we support basic arithmetic and comparison operations.
-    \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ is a standard branching statement.
-    The other constructs are just as in Links, with slight syntax modifications.
-    Actual programs in Freak can be found in Section~\ref{sec:examples}.
+    $V \oplus W$ and $V \approx W$ are respectively binary and relational operators,
+    where we support basic arithmetic and comparison operations.
+    \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ is a standard branching
+    statement. The other constructs are just as in Links, with slight syntax
+    modifications. Actual programs in Freak can be found in Section~\ref{sec:examples}.
 
     \begin{grammar}
 
@@ -445,10 +446,11 @@ data ContComp
     | CPSIf CValue ContComp ContComp
     | CPSAbsurd CValue
     \end{verbatim}
-    Most of the terms at the end have a coinductive reference to itself, which represents
-    the rest of the computation that needs to be done. For more clarification,
-    one may take a look into the book mentioned above~\cite{appel-continuations}. The source code for curried
-    translation and evaluation can be found respectively in \verb!CPSAppel.hs! and
+    Most of the terms at the end have a coinductive reference to itself, which
+    represents the rest of the computation that needs to be done. For more
+    clarification, one may take a look into the book mentioned
+    above~\cite{appel-continuations}. The source code for curried translation and
+    evaluation can be found respectively in \verb!CPSAppel.hs! and
     \verb!EvalCPS.hs!.
 
     \section{Uncurried translation}
@@ -571,9 +573,9 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     \subsection{Shallow handlers}
 
     Shallow and deep handlers while being able to simulate each other up to
-    administrative reductions, have a very different meaning from a theoretical
-    point of view. Implementing them as defined by Lindley et al.~\cite{shallow-handlers} could
-    be another way of enhancing Freak.
+    administrative reductions, have a very different meaning from a theoretical point
+    of view. Implementing them as defined by Lindley et al.~\cite{shallow-handlers}
+    could be another way of enhancing Freak.
 
 
 %%%%% BIBLIOGRAPHY
