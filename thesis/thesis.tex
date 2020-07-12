@@ -22,32 +22,37 @@
 %%%%%
 
 
-
 %%%%% WLASNE DODATKOWE PAKIETY
 % \usepackage{graphicx,listings,tikz}
 \usepackage{syntax}
 \usepackage{mathalfa}
+\usepackage{textcomp}
 
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{mybib.bib}
 %
 %%%%% WŁASNE DEFINICJE I POLECENIA
 %
-%\theoremstyle{definition} \newtheorem{definition}{Definition}[chapter]
-%\theoremstyle{remark} \newtheorem{remark}[definition]{Observation}
-%\theoremstyle{plain} \newtheorem{theorem}[definition]{Theorem}
-%\theoremstyle{plain} \newtheorem{lemma}[definition]{Lemma}
+\theoremstyle{definition} \newtheorem{definition}{Definition}[chapter]
+\theoremstyle{remark} \newtheorem{remark}[definition]{Observation}
+\theoremstyle{plain} \newtheorem{theorem}[definition]{Theorem}
+\theoremstyle{plain} \newtheorem{lemma}[definition]{Lemma}
 %\renewcommand \qedsymbol {\ensuremath{\square}}
 % ...
 %%%%%
 
 \begin{document}
 
-%%%%% POCZĄTEK ZASADNICZEGO TEKSTU PRACY
 
 \chapter{Introduction}
 
+\textit{
+    My algebraic methods are really methods of working and thinking; this is why
+    they have crept in everywhere anonymously. $\sim{}$Emmy Noether
+}
+
 % TODO This requires a rework
+
 In this thesis we present experimental programming language Freak, which is an
 implementation of Continuation Passing Style for Effect Handlers paper~\cite{handlers-cps},
 with the addition of a few basic constructs. We start by presenting the related work,
@@ -66,9 +71,82 @@ Brief and concise description of the problem
 \section{Thesis Outline}
 
 \chapter{Background}
+
+\section{Computational Effects}
+
+Since the rapid development of computational theory in 1930s by A. Turing, K. Godel and
+A. Church, we have a well-established notion of what can and what cannot be done
+through algorithmic means, which we can almost directly translate to being computable
+by our machines. Through next years we have developed mainstream languages that are used
+almost everywhere, with a great success.
+
+Under these circumstances one may pose a question, why do we still bother with
+development of languages theory, since so much has been done already. Is there
+anything that drives us towards further research? Indeed, one active branch
+revolves around equational theory to asses equality of two programs, which we
+know that in general setting is undecidable. Proof methods may include extensional,
+contextual or logical equality. However, there is no doubt that these formal
+ways of reasoning about programs, while being crucial for assessing correctness,
+do not bring direct benefits for practical, everyday use cases.
+
+% Not sure I like this part. Isn't it too broad to say handle complexity?
+Other branch of languages theory, that we shall investigate more in this thesis,
+is about handling complexity of programs. Various methods of static analysis has
+been developed, most notably, type systems.
+
+What is the source of complexity? Thanks to strong and static type systems along
+with their implementations, we have solid tools to work efficiently on functions
+that are pure. That being said, we claim that the sole complexity of programs
+comes from side effects, which we cannot avoid in writing anything useful.
+
+We need to have a good way for handling computational effects, which so far has
+been modeled through monads~\cite{moggi}.
+
+However, they were found to be, to say the least, cumbersome to work with when
+complexity and number of different effects increases. It is perhaps not a coincidence
+that many functional programming languages do not have them, because of the
+non-composable nature of them.
+
+Having functions $ f: a \rightarrow m b $ and $ g : b \rightarrow m' c $, it
+should not be an issue to compose them together.
+
+Recall that the main idea of monads lies on the fact that we provide a function
+to lift value into a functor and associative kleisli composition operator to combine
+computations together. It turns out, that it becomes complex and unpleasent to
+combine two functors together to form a new monad. For this purpose, monad
+transformers arose in Haskell.
+
+Most of the common languages avoid this by not expressing computational effects
+in the type system, and instead one may think about functions as being implicitly
+embed in a Kleisli Category over a functor T, where T is a hidden signature over
+all possible side effects that occur in our program.
+
+Not only we would like to bring back effects to our type system, but also do it
+in a way that is composable. This is where algebraic effects comes to the rescue.
+
+
+From theoretical point of view, we need to develop equa about our effects
+to assert correctness of our langauge as well as to have the right hammer
+to reason about our programs.
+
+That is the point where we would like to introduce to unfamiliar read a notion
+of algebraic effects.
+
 \section{Algebraic Effects}
 
 What are algebraic effects?
+
+% Algebraic effects as Interfaces for side effects
+
+Algebraic effects can be thought as an public interface for computational effects.
+Declarative approach allow us to write programs in which the actual semantic of
+source code is dependent on handler that defines the meaning of a subset of effects.
+
+This is really a breakthrough from practical point of view, as we may substitute
+logic depending on execution environment. As an example, fetching for resources
+can behave differently as we run tests, debug our code, or run it on production.
+In the same manner, they neatly allow us to abstract over implementation details.
+
 
 \section{Categorical Setting of Universal Algebra}
 
@@ -102,6 +180,27 @@ we allow ourselves to wander a bit deeper into category theory.
 
     \subsection{Coalgebraic Effects}
 
+    \subsection{Coinductive Reasoning}
+
+    Coinduction, and coinductive structures, provide us a way of observation
+    of the behaviour, as a contractry to construction in inductive reasoning.
+    Simple example of the duality can be expressed through induction over finite
+    list and coinductive observation of infinite streams.
+
+    Doing the latter may involve modification of the internal state of the machine
+    that is generating the infinite streams, or in more concrete scenario,
+    alternation of the external resource that is providing us the data.
+
+    This is one of the cases where interaction with external resource multiple
+    times, or more specifically in case of algebraic effects, invoking resumption more
+    than once, may lead to unexpected behaviour that would not be expected in standard
+    control flow. This captures the excessive generality of effects, and is the
+    issue that we would like to address with coalgebraic effects.
+
+    % TODO: On it's own this snippet a bit dry and of course requires additional examples,
+    % for instance the classic one with operating on closed file
+
+
 \section{Related Work}
     \subsection{Algebraic Effects}
 
@@ -123,6 +222,8 @@ we allow ourselves to wander a bit deeper into category theory.
 \chapter{Potential Solutions}
 
 One-shot continuations
+
+Detecting whether resumption is called only once is undecidable.
 
 \section{Dynamic Constraints Checking}
 
