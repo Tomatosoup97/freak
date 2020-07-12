@@ -27,6 +27,7 @@
 \usepackage{syntax}
 \usepackage{mathalfa}
 \usepackage{textcomp}
+\usepackage{stmaryrd}
 
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{mybib.bib}
@@ -38,6 +39,9 @@
 \theoremstyle{plain} \newtheorem{theorem}[definition]{Theorem}
 \theoremstyle{plain} \newtheorem{lemma}[definition]{Lemma}
 %\renewcommand \qedsymbol {\ensuremath{\square}}
+
+\newcommand{\mathVar}[1]{{\operatorname{\mathit{#1}}}}
+
 % ...
 %%%%%
 
@@ -155,7 +159,62 @@ we allow ourselves to wander a bit deeper into category theory.
 
     \subsection{Algebraic Theories}
 
-    Sigma-Signatures, Sigma-Terms, Sigma-Equations, Interpretations, Models, Free models
+    \begin{definition}{\mathVar{Signature}}
+
+    A \textit{signature $ \Sigma $} is given by a collection of operation symbols $ op_{i} $
+    with associated parameters $ P_{i} $ and arities $ A_{i} $, where
+    $ P_{i} $ and $ A_{i} $ are objects in the category of our interest.
+    We will write an operation as $ op_{i} : P_{i} \rightsquigarrow A_{i} $
+
+    \end{definition}
+
+    \begin{definition}{$\mathVar{\Sigma-terms}$}
+
+    Collection of $\mathVar{\Sigma-terms}$ is a free algebra with a generator $X$
+    for a functor $ \mu H_{\Sigma} $ that maps objects into trees over a given
+    signature $ \Sigma $ and morphisms into folds over trees.
+
+    \end{definition}
+
+    \begin{definition}{$ \mathVar{\Sigma-Equation} $}
+
+        A $ \mathVar{\Sigma-Equation} $ is an object X and a pair of
+        $\mathVar{\Sigma-terms}$ $l, r \in Tree_{\Sigma}(X)$, written as
+
+        $ X $ $|$ $l = r$
+
+    \end{definition}
+
+    \begin{definition}{Algebraic Theory}
+
+    An \textit{algebraic theory} $T = (\Sigma_{T}, \mathcal{E}_{T})$, is given by
+    a signature $\Sigma_{T}$ and a collection $\mathcal{E}_{T}$ of
+    $\mathVar{\Sigma_{T}-equations}$. For clarity we will usually omit T subscript
+
+    \end{definition}
+
+    \begin{definition}{Interpretation}
+
+    An \textit{interpretation $I$ over a given signature $\Sigma$} is given by
+    a carrier object $|I|$ and for each $ op_{i} : P_{i} \rightsquigarrow A_{i} $
+    in $\Sigma$ a map
+
+    $ {\llbracket op_{i} \rrbracket}_I : P_{i} \times{} {|I|}^{A_{i}} \rightarrow |I| $
+
+    Interpretation may be naturally extended to $\mathVar{\Sigma-terms}$, such
+    that a given $\mathVar{\Sigma-term}$ $X$ $|$ $t$ is interpreted by a map
+
+    $ {\llbracket X | t \rrbracket}_I : {|I|}^{k} \rightarrow |I| $
+
+    TODO actually define the map as a projection on variables and
+    map composition on compound terms.
+
+    where ${|I|}^{k}$ is an k-ary product in our category, assuming that all of the
+    necessary products exist.
+
+    \end{definition}
+
+    TODO Models, Free models
 
     \subsection{Free models form monads}
 
