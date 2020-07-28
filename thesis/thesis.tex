@@ -28,6 +28,12 @@
 \usepackage{mathalfa}
 \usepackage{textcomp}
 \usepackage{stmaryrd}
+\usepackage{tikz-cd}
+% Not sure if necessary
+\usepackage[utf8]{inputenc}
+\usepackage{rotchiffre}
+
+
 
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{mybib.bib}
@@ -154,12 +160,14 @@ In the same manner, they neatly allow us to abstract over implementation details
 
 \section{Categorical Setting of Universal Algebra}
 
-For the purpose of describing the duality between algebra and coalgebra,
-we allow ourselves to wander a bit deeper into category theory.
+Algebraic effects can be describe via operational means, however,
+for the purpose of presenting the duality between algebra and coalgebra,
+we allow ourselves to wander a bit deeper into category theory and describe
+effects from denotational point of view.
 
     \subsection{Algebraic Theories}
 
-    \begin{definition}{\mathVar{Signature}}
+    \begin{definition}
 
     A \textit{signature $ \Sigma $} is given by a collection of operation symbols $ op_{i} $
     with associated parameters $ P_{i} $ and arities $ A_{i} $, where
@@ -168,7 +176,7 @@ we allow ourselves to wander a bit deeper into category theory.
 
     \end{definition}
 
-    \begin{definition}{$\mathVar{\Sigma-terms}$}
+    \begin{definition}
 
     Collection of $\mathVar{\Sigma-terms}$ is a free algebra with a generator $X$
     for a functor $ \mu H_{\Sigma} $ that maps objects into trees over a given
@@ -176,16 +184,18 @@ we allow ourselves to wander a bit deeper into category theory.
 
     \end{definition}
 
-    \begin{definition}{$ \mathVar{\Sigma-Equation} $}
+    \begin{definition}
 
         A $ \mathVar{\Sigma-Equation} $ is an object X and a pair of
         $\mathVar{\Sigma-terms}$ $l, r \in Tree_{\Sigma}(X)$, written as
 
-        $ X $ $|$ $l = r$
+        \begin{center}
+        $ X \mid l = r $
+        \end{center}
 
     \end{definition}
 
-    \begin{definition}{Algebraic Theory}
+    \begin{definition}
 
     An \textit{algebraic theory} $T = (\Sigma_{T}, \mathcal{E}_{T})$, is given by
     a signature $\Sigma_{T}$ and a collection $\mathcal{E}_{T}$ of
@@ -193,38 +203,87 @@ we allow ourselves to wander a bit deeper into category theory.
 
     \end{definition}
 
-    \begin{definition}{Interpretation}
+    \begin{definition}
 
     An \textit{interpretation $I$ over a given signature $\Sigma$} is given by
     a carrier object $|I|$ and for each $ op_{i} : P_{i} \rightsquigarrow A_{i} $
     in $\Sigma$ a map
 
-    $ {\llbracket op_{i} \rrbracket}_I : P_{i} \times{} {|I|}^{A_{i}} \rightarrow |I| $
-
+    \begin{center}
+        $ {\llbracket op_{i} \rrbracket}_I : P_{i} \times{} {|I|}^{A_{i}} \rightarrow |I| $
+    \end{center}
     Interpretation may be naturally extended to $\mathVar{\Sigma-terms}$, such
-    that a given $\mathVar{\Sigma-term}$ $X$ $|$ $t$ is interpreted by a map
-
-    $ {\llbracket X | t \rrbracket}_I : {|I|}^{k} \rightarrow |I| $
-
-    TODO actually define the map as a projection on variables and
-    map composition on compound terms.
-
-    where ${|I|}^{k}$ is an k-ary product in our category, assuming that all of the
-    necessary products exist.
+    that a given $\mathVar{\Sigma-term}$ $X \mid t$ is interpreted by a map
+    which sends variables into projections from environment and terms into
+    map composition over each subterm.
 
     \end{definition}
 
-    TODO Models, Free models
+    \begin{definition}
 
-    \subsection{Free models form monads}
+    A \textit{model M} of an algebraic theory T is an interpretation of the
+    signature ${\Sigma_{T}}$ which validates all the equations $\mathcal{E_{T}}$.
+    That is, for every equation $X \mid l = r$ the following diagram commutes:
 
-    Maybe not a subsection but just a lemma
+    \begin{center}
+    \begin{tikzcd}[row sep=huge, column sep=large]
+        {|M|}^k \arrow[rr, '\phi', bend right] \arrow[rr, '\rrbracket{} X|l', bend left] &  & {|M|}
+    \end{tikzcd}
+    \end{center}
+    % TODO: this diagram doesn't work
 
-    \subsection{Models homomorphisms}
+    \begin{center}
+    \begin{tikzcd}
+    A \arrow[rd] \arrow[r, '\phi'] & B \\
+    & C
+    \end{tikzcd}
+    \end{center}
 
-    T-homomorphisms with respect to theory T
+    \end{definition}
 
-    \subsection{Parametrized operations}
+
+    \begin{definition}
+
+    Free F-algebra on an object A (of generators) in $\mathcal{C}$ is meant an algebra
+
+    \begin{center}
+
+    $ \varphi_{A} : F A^{\#} \longrightarrow A $
+
+    \end{center}
+    \\
+    together with an universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $. Universality means that for every algebra
+    $ \beta : F B \longrightarrow B $ and every morphism $ f : A \longrightarrow B $ in $ \mathcal{C}$, there exists a unique homomorphism
+    $ \overline{f} : A^{\#} \longrightarrow B $ extending f, i.e.\ a unique morphism of $ \mathcal{C}$ for which the diagram below
+    commutes:
+
+    % TODO:
+    \begin{center}
+    \begin{tikzcd}[row sep=huge, column sep=large]
+    % F A^{\#} \arrow[d, "F \overline{f}"] \arrow[r, "\varphi_{A}"] & A^{\#} \arrow[d, "\overline{f}"] & A \arrow[l, "\eta_{A}"'] \arrow[ld, "f"] \\
+    % F B \arrow[r, "\beta"']                                       & B                                &
+    \end{tikzcd}
+    \end{center}
+
+    \end{definition}
+
+    \begin{definition} \textit{Free model} is just a model which is free algebra.
+
+    \end{definition}
+
+
+    \begin{lemma}{Free models form monads}
+
+    \end{lemma}
+
+    \begin{definition}
+
+    Let L, M be models of a theory T. A $ \mathVar{T-homomorphism}$
+    $\phi : L \rightarrow M$ is a map such that the following diagram commutes:
+
+    % TODO
+
+    \end{definition}
 
 \section{Duality}
     \subsection{Comodels}
