@@ -83,6 +83,7 @@
 
 \RequirePackage[OT4]{fontenc}
 \RequirePackage{amsmath,amssymb,amsthm,amsfonts}
+\RequirePackage{xcolor}
 \RequirePackage{babel,titling,geometry}
 \geometry{margin=3cm,bindingoffset=1cm,a4paper,onecolumn,twoside}
 

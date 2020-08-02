@@ -23,7 +23,10 @@
 %%%%% WLASNE DODATKOWE PAKIETY
 % \usepackage{graphicx,listings,tikz}
 \usepackage{syntax}
+\usepackage{tabularx}
+\usepackage{booktabs}
 \usepackage{mathalfa}
+\usepackage{csquotes}
 \usepackage{textcomp}
 \usepackage{stmaryrd}
 \usepackage{tikz-cd}
@@ -268,18 +271,18 @@ effects from denotational point of view.
     That is, for every equation $X \mid l = r$ the following diagram commutes:
 
     \begin{center}
-    \begin{tikzcd}[row sep=huge, column sep=large]
-        {|M|}^k \arrow[rr, '\phi', bend right] \arrow[rr, '\rrbracket{} X|l', bend left] &  & {|M|}
-    \end{tikzcd}
+    % \begin{tikzcd}[row sep=huge, column sep=large]
+    %     {|M|}^k \arrow[rr, '\phi', bend right] \arrow[rr, '\rrbracket{} X|l', bend left] &  & {|M|}
+    % \end{tikzcd}
     \end{center}
 
     TODO this diagram doesn't work
 
     \begin{center}
-    \begin{tikzcd}
-    A \arrow[rd] \arrow[r, '\phi'] & B \\
-    & C
-    \end{tikzcd}
+    % \begin{tikzcd}
+    % A \arrow[rd] \arrow[r, '\phi'] & B \\
+    % & C
+    % \end{tikzcd}
     \end{center}
 
     \end{definition}
@@ -294,7 +297,6 @@ effects from denotational point of view.
     $ \varphi_{A} : F A^{\#} \longrightarrow A $
 
     \end{center}
-    \\
     together with an universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $.
     Universality means that for every algebra $ \beta : F B \longrightarrow B $
     and every morphism $ f : A \longrightarrow B $ in $ \mathcal{C}$, there
@@ -363,27 +365,33 @@ effects from denotational point of view.
 
     Here is a table that summarizes difference between these two methods of reasoning:
 
-    \begin{grammar}
+    \begin{center}
+    \begin{tabular}{lcc}
+    \toprule
 
-    TODO rewrite into latex-table \\
+    \textbf{feature}             & \textbf{induction}            & \textbf{coinduction}          \\
+    \midrule
 
-    | feature             | induction            | coinduction          |
+    basic activity      & construction          & deconstruction \\
+    \midrule
 
-    |---------------------|----------------------|----------------------|
+    derived activity    & deconstruction       & construction         \\
+    \midrule
 
-    | basic activity      | construction         | deconstruction       |
+    functions shape     & inductive domain     & coinductive codomain \\
+    \midrule
 
-    | derived activity    | deconstruction       | construction         |
+    (co) recursive calls& shrinks the argument & grows the result     \\
+    \midrule
 
-    | functions shape     | inductive domain     | coinductive codomain |
+    functions feature   & terminating          & productive           \\
+    \midrule
 
-    | (co) recursive calls| shrinks the argument | grows the result     |
+    evaluation          & possibly eager       & necessarily lazy     \\
+    \bottomrule
 
-    | functions feature   | terminating          | productive           |
-
-    | evaluation          | possibly eager       | necessarily lazy     |
-
-    \end{grammar}
+    \end{tabular}
+    \end{center}
 
     Reader that focuses on pragmatism may pose a question, why do we even want
     to reason about infinite structures? They never appear in practice! In fact,
