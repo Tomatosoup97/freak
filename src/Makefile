@@ -32,5 +32,5 @@ check: build lint test
 
 install:
 	cabal install hlint
-	cabal install hunit
+	cabal install HUnit
 	cabal install parsec
