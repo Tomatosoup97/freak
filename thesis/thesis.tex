@@ -3,8 +3,6 @@
 \usepackage[utf8]{inputenc}
 
 
-
-%%%%% DANE DO STRONY TYTUŁOWEJ
 \polishtitle{Efekty koalgebraiczne oraz ich kohandlery \fmlinebreak{} w językach programowania}
 \englishtitle{Coalgebraic effects and their cohandlers \fmlinebreak{} in programming languages}
 \polishabstract{
@@ -34,7 +32,6 @@
 \usepackage{rotchiffre}
 
 
-
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{mybib.bib}
 %
@@ -48,9 +45,6 @@
 
 \newcommand{\mathVar}[1]{{\operatorname{\mathit{#1}}}}
 
-% ...
-%%%%%
-
 \begin{document}
 
 
@@ -61,34 +55,64 @@
     they have crept in everywhere anonymously. $\sim{}$Emmy Noether
 }
 
-% TODO This requires a rework
+TODO This requires a rework
 
 In this thesis we present experimental programming language Freak, which is an
 implementation of Continuation Passing Style for Effect Handlers paper~\cite{handlers-cps},
-with the addition of a few basic constructs. We start by presenting the related work,
-then discuss syntax and operational semantics. Basic usage guide for playing with the
-language is provided, as well as implementation details and examples. We conclude by
-stating what are the possible augmentations, that are intended to be made in the future.
+with the addition of a few basic constructs.
 
 \section{Problem Analysis}
 
-What are the issues with normal algebraic effects?
+TODO add citations
+
+Algebraic effects, while not being a new concept, in the recent years
+have received a lot of attention, both from theoretical and practical side.
+
+TODO refactor the following
+
+They give developer necessary tools for declarative programming, writing
+programs in a way to strive from exposing implementation details, while still
+preserving a lot of flexibility and having strong theoretical background and
+ways of formal reasoning.
+
+In fact, that very flexibility can be troublesome. Allowing developer for too
+much freedome may lead to undesired behaviour and incorrect programs, for that
+very reason, we develop type systems, to detect errors before they occur.
 
 \section{Problem Statement}
 
-Brief and concise description of the problem
+TODO Think about merging Problem Analysis with Statement \\
+
+Multi-shot resumptions in effect handlers are a powerful tool to describe
+fairly complex logic in a concise way. That being said, they give rise to
+issues that would not occur in standard control flow, especially when composing
+various effects together.
+
+We will explain this in greater details and think about possible ways to address
+the issue of flexibility of effects in the next sections.
+
+TODO actually point out which sections you talk about
 
 \section{Thesis Outline}
+
+TODO Guide reader through thesis, probably later than sooner \\
+TODO Clearly divide categorical from operational approach for less algebraically fluent readers
+
+TODO it's outdated
+We start by presenting the related work,
+then discuss syntax and operational semantics. Basic usage guide for playing with the
+language is provided, as well as implementation details and examples. We conclude by
+stating what are the possible augmentations, that are intended to be made in the future.
 
 \chapter{Background}
 
 \section{Computational Effects}
 
-Since the rapid development of computational theory in 1930s by A. Turing, K. Godel and
-A. Church, we have a well-established notion of what can and what cannot be done
-through algorithmic means, which we can almost directly translate to being computable
-by our machines. Through next years we have developed mainstream languages that are used
-almost everywhere, with a great success.
+Since the rapid development of computational theory in 1930s by A. Turing,
+K. Godel and A. Church, we have a well-established notion of what can and what
+cannot be done through algorithmic means, which we can almost directly translate
+to being computable by our machines. Through next years we have developed
+mainstream languages that are used almost everywhere, with a great success.
 
 Under these circumstances one may pose a question, why do we still bother with
 development of languages theory, since so much has been done already. Is there
@@ -97,56 +121,56 @@ revolves around equational theory to asses equality of two programs, which we
 know that in general setting is undecidable. Proof methods may include extensional,
 contextual or logical equality. However, there is no doubt that these formal
 ways of reasoning about programs, while being crucial for assessing correctness,
-do not bring direct benefits for practical, everyday use cases.
+do not bring direct benefits for everyday use cases, as they are rarely accessible
+by a common developer.
 
-% Not sure I like this part. Isn't it too broad to say handle complexity?
 Other branch of languages theory, that we shall investigate more in this thesis,
-is about handling complexity of programs. Various methods of static analysis has
-been developed, most notably, type systems.
+is about taming complexity of programs. Various methods of static analysis has
+been developed for various use cases, most notably, type systems.
 
 What is the source of complexity? Thanks to strong and static type systems along
 with their implementations, we have solid tools to work efficiently on functions
-that are pure. That being said, we claim that the sole complexity of programs
+that are pure. That being said, we claim that the core complexity of programs
 comes from side effects, which we cannot avoid in writing anything useful.
 
-We need to have a good way for handling computational effects, which so far has
-been modeled through monads~\cite{moggi}.
+We need to have a good way for handling computational effects. One of the ways
+to model them, can be done through monads~\cite{moggi}. However, they were
+found to be, to say the least, cumbersome to work with when the number of
+different effects increases. It is perhaps not a coincidence that many
+functional programming languages do not have them, because of the non-composable
+nature of them, or at least not composable in their implementations.
 
-However, they were found to be, to say the least, cumbersome to work with when
-complexity and number of different effects increases. It is perhaps not a coincidence
-that many functional programming languages do not have them, because of the
-non-composable nature of them.
+Let's put the following functions
 
-Having functions $ f: a \rightarrow m b $ and $ g : b \rightarrow m' c $, it
-should not be an issue to compose them together.
+\begin{center}
 
-Recall that the main idea of monads lies on the fact that we provide a function
-to lift value into a functor and associative kleisli composition operator to combine
-computations together. It turns out, that it becomes complex and unpleasent to
-combine two functors together to form a new monad. For this purpose, monad
-transformers arose in Haskell.
+    $ f: a \rightarrow b $, $ g : b \rightarrow c $ \\
+    $ f': a \rightarrow m \; b $, $ g' : b \rightarrow m \; c $ \\
+    $ f'': a \rightarrow m' \; m \; b $, $ g'' : b \rightarrow m' \; m \; c $ \\
 
+\end{center}
+
+where $m$, $m'$ are monads. Functions $f$, $g$ can be composed using standard
+composition, for $f'$, $g'$ we can use Kleisli composition operator from monad $m$.
+What in case of adding one more effect?
+
+It turns out, that it becomes complex and unpleasent to combine two functors
+together to form a new monad, for which purpose, monad transformers arose in Haskell.
 Most of the common languages avoid this by not expressing computational effects
 in the type system, and instead one may think about functions as being implicitly
 embed in a Kleisli Category over a functor T, where T is a hidden signature over
 all possible side effects that occur in our program.
 
+TODO Think about describing what is Kleisli Category
+
 Not only we would like to bring back effects to our type system, but also do it
 in a way that is composable. This is where algebraic effects comes to the rescue.
-
-
-From theoretical point of view, we need to develop equa about our effects
-to assert correctness of our langauge as well as to have the right hammer
-to reason about our programs.
-
-That is the point where we would like to introduce to unfamiliar read a notion
-of algebraic effects.
+From theoretical point of view, we need to develop equational theory about our
+effects to assert correctness of our langauge as well as to have the right hammer
+to reason about our programs. That is the point where we would like to introduce
+to unfamiliar reader a notion of algebraic effects.
 
 \section{Algebraic Effects}
-
-What are algebraic effects?
-
-% Algebraic effects as Interfaces for side effects
 
 Algebraic effects can be thought as an public interface for computational effects.
 Declarative approach allow us to write programs in which the actual semantic of
@@ -157,10 +181,29 @@ logic depending on execution environment. As an example, fetching for resources
 can behave differently as we run tests, debug our code, or run it on production.
 In the same manner, they neatly allow us to abstract over implementation details.
 
+Patterns like these are well known in programming, for which other alternatives
+arose. One can mention interfaces from object-oriented programming, which are also
+a way to describe the API of a certain component. In order to abstract from
+implementation details, we pass an object around which represents a certain
+interface. While this is certainly better than having no abstractions at all,
+we need to pass this interface into every function that is going to use it.
+This practice is called dependency injection, and while it sounds like it solves
+some of the issues, we end up in functions that need to carry representants
+of the interfaces, and pass them in every subcall that they make. It also can't
+be ommited that it's not really a substitute, as it's solving only one particular
+issue that algebraic effects address.
+
+TODO add link to paper with plenty of examples
+
+- Exceptions
+- Async/await
+- Flipping coin
+- Backtracking?
+- Operating on file
 
 \section{Categorical Setting of Universal Algebra}
 
-Algebraic effects can be describe via operational means, however,
+Algebraic effects can be described via operational means, however,
 for the purpose of presenting the duality between algebra and coalgebra,
 we allow ourselves to wander a bit deeper into category theory and describe
 effects from denotational point of view.
@@ -169,15 +212,14 @@ effects from denotational point of view.
 
     \begin{definition}
 
-    A \textit{signature $ \Sigma $} is given by a collection of operation symbols $ op_{i} $
-    with associated parameters $ P_{i} $ and arities $ A_{i} $, where
-    $ P_{i} $ and $ A_{i} $ are objects in the category of our interest.
+    A \textit{signature $ \Sigma $} is given by a collection of operation
+    symbols $ op_{i} $ with associated parameters $ P_{i} $ and arities $ A_{i} $,
+    where $ P_{i} $ and $ A_{i} $ are objects in the category of our interest.
     We will write an operation as $ op_{i} : P_{i} \rightsquigarrow A_{i} $
 
     \end{definition}
 
     \begin{definition}
-
     Collection of $\mathVar{\Sigma-terms}$ is a free algebra with a generator $X$
     for a functor $ \mu H_{\Sigma} $ that maps objects into trees over a given
     signature $ \Sigma $ and morphisms into folds over trees.
@@ -197,9 +239,9 @@ effects from denotational point of view.
 
     \begin{definition}
 
-    An \textit{algebraic theory} $T = (\Sigma_{T}, \mathcal{E}_{T})$, is given by
-    a signature $\Sigma_{T}$ and a collection $\mathcal{E}_{T}$ of
-    $\mathVar{\Sigma_{T}-equations}$. For clarity we will usually omit T subscript
+    An \textit{algebraic theory} $T = (\Sigma_{T}, \mathcal{E}_{T})$, is given
+    by a signature $\Sigma_{T}$ and a collection $\mathcal{E}_{T}$ of
+    $\mathVar{\Sigma_{T}-equations}$. For clarity, we will usually omit T subscript.
 
     \end{definition}
 
@@ -230,7 +272,8 @@ effects from denotational point of view.
         {|M|}^k \arrow[rr, '\phi', bend right] \arrow[rr, '\rrbracket{} X|l', bend left] &  & {|M|}
     \end{tikzcd}
     \end{center}
-    % TODO: this diagram doesn't work
+
+    TODO this diagram doesn't work
 
     \begin{center}
     \begin{tikzcd}
@@ -252,12 +295,15 @@ effects from denotational point of view.
 
     \end{center}
     \\
-    together with an universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $. Universality means that for every algebra
-    $ \beta : F B \longrightarrow B $ and every morphism $ f : A \longrightarrow B $ in $ \mathcal{C}$, there exists a unique homomorphism
-    $ \overline{f} : A^{\#} \longrightarrow B $ extending f, i.e.\ a unique morphism of $ \mathcal{C}$ for which the diagram below
-    commutes:
+    together with an universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $.
+    Universality means that for every algebra $ \beta : F B \longrightarrow B $
+    and every morphism $ f : A \longrightarrow B $ in $ \mathcal{C}$, there
+    exists a unique homomorphism $ \overline{f} : A^{\#} \longrightarrow B $
+    extending f, i.e.\ a unique morphism of $ \mathcal{C}$ for which the diagram
+    below commutes:
 
-    % TODO:
+    TODO we can also say it's an initial algebra over initial object.
+
     \begin{center}
     \begin{tikzcd}[row sep=huge, column sep=large]
     % F A^{\#} \arrow[d, "F \overline{f}"] \arrow[r, "\varphi_{A}"] & A^{\#} \arrow[d, "\overline{f}"] & A \arrow[l, "\eta_{A}"'] \arrow[ld, "f"] \\
@@ -271,7 +317,6 @@ effects from denotational point of view.
 
     \end{definition}
 
-
     \begin{lemma}{Free models form monads}
 
     \end{lemma}
@@ -281,16 +326,20 @@ effects from denotational point of view.
     Let L, M be models of a theory T. A $ \mathVar{T-homomorphism}$
     $\phi : L \rightarrow M$ is a map such that the following diagram commutes:
 
-    % TODO
+    TODO finish definition
 
     \end{definition}
 
 \section{Duality}
     \subsection{Comodels}
 
-    Comodel in $\mathcal{C}$ is just a Model in $ \mathcal{C}^{op} $.
+    \begin{definition}
+        Comodel in $\mathcal{C}$ is just a Model in $ \mathcal{C}^{op} $.
+    \end{definition}
 
-    Models --- Worlds
+    We could end by stating this definition, and everything else would follow
+    directly from duality. However, expanding definitions is going to give us
+    better intuition, as well as give more solid ground for implementation.
 
     \subsection{Cooperations}
 
@@ -300,14 +349,61 @@ effects from denotational point of view.
 
     \subsection{Coinductive Reasoning}
 
-    Coinduction, and coinductive structures, provide us a way of observation
-    of the behaviour, as a contractry to construction in inductive reasoning.
+    Induction and Coinduction
+
+    Induction is a way of constructing new structures. Recursion is a way of
+    folding inductively defined structure in an terminating way. Recursive functions
+    should shrink the argument in each call, meaning that it eventually ends up
+    terminating in a base case.
+
+    Coinduction is literally a dual notion to induction. We \textit{observe} possibly
+    infinite structures, by doing deconstruction. Corecursion, however, is a way
+    of productively defining new, possibly enlarged structures. Due to infinity,
+    the evaluation should be lazy, whereas in induction it may be eager.
+
+    Here is a table that summarizes difference between these two methods of reasoning:
+
+    \begin{grammar}
+
+    TODO rewrite into latex-table \\
+
+    | feature             | induction            | coinduction          |
+
+    |---------------------|----------------------|----------------------|
+
+    | basic activity      | construction         | deconstruction       |
+
+    | derived activity    | deconstruction       | construction         |
+
+    | functions shape     | inductive domain     | coinductive codomain |
+
+    | (co) recursive calls| shrinks the argument | grows the result     |
+
+    | functions feature   | terminating          | productive           |
+
+    | evaluation          | possibly eager       | necessarily lazy     |
+
+    \end{grammar}
+
+    Reader that focuses on pragmatism may pose a question, why do we even want
+    to reason about infinite structures? They never appear in practice! In fact,
+    it's very common to operate on never-ending transition systems or streams of
+    data without, wher efinitary means of reasoning are of no use, as we can’t
+    expect an end to stream!
+
     Simple example of the duality can be expressed through induction over finite
     list and coinductive observation of infinite streams.
 
-    Doing the latter may involve modification of the internal state of the machine
-    that is generating the infinite streams, or in more concrete scenario,
-    alternation of the external resource that is providing us the data.
+    Doing the latter may involve modification of the internal state of the
+    machine that is generating the infinite streams, or in more concrete
+    scenario, alternation of the external resource that is providing us the data.
+
+    TODO Write a coinductive proof for divergent terms using coinductive proof
+    principle.
+
+\subsection{Coinduction Coalgebra something section}
+
+    TODO Rethink this section, back by examples
 
     This is one of the cases where interaction with external resource multiple
     times, or more specifically in case of algebraic effects, invoking resumption more
@@ -315,12 +411,21 @@ effects from denotational point of view.
     control flow. This captures the excessive generality of effects, and is the
     issue that we would like to address with coalgebraic effects.
 
-    % TODO: On it's own this snippet a bit dry and of course requires additional examples,
-    % for instance the classic one with operating on closed file
+    TODO On it's own this snippet a bit dry and of course requires additional examples,
+    for instance the classic one with operating on closed file and/or on
+    streams of data
 
 
 \section{Related Work}
     \subsection{Algebraic Effects}
+
+    In fact, libraries for algebraic effects also arose in mainstream languages,
+    such as C or Python. In Python, effects are implemented through generators,
+    using built-in feature of sending value when doing \textit{yield} operation.
+    Resumptions in handlers that are sending value, are one-shot and tail-recursive,
+    therefore we do not need to handle coalgebraic part, at the cost of flexibility.
+
+    TODO add reference to C and Python lib
 
     Except from Links language~\cite{handlers-cps}, on which the implementation
     is based, there are currently many other alternatives available. One may take
@@ -339,26 +444,56 @@ effects from denotational point of view.
 
 \chapter{Potential Solutions}
 
-One-shot continuations
+TODO smth smt initialization before finalization.
 
-Detecting whether resumption is called only once is undecidable.
+It can be seen, that issues lies with the fact, that interacting with coalgebras
+may lead to change of their internal state system. Examples include change
+of state in NFA, taking next element in infinite stream or a closing file.
+
+One of the ways to approach this problem, caused by extensive generality of
+effects, is extension of the calculus with Coalgebraic effects, also named
+coeffects. Difference is that resumptions in coeffects handlers are one-shot
+only, which means that continuation can be invoked at most once.
+
+\begin{lemma}
+    Problem of detection whether resumption is called only once is undecidable.
+\end{lemma}
+
+\begin{proof}
+    Follows directly from Rice's Theorem, as checking whether function was called
+    is a nontrivial semantic property of a program.
+\end{proof}
+
 
 \section{Dynamic Constraints Checking}
+
+One approach is to dynamically during execution check against contract that
+continuation may only be called once. In this setting we are sure that our
+program will not accidentaly go into wrong state, however by definition we lack
+static analysis to prevent from errors before they occur.
 
 \section{Linear Types}
 
 Solve the issue through introduction of linear type system.
 
+TODO Explain it can get complex and unfamiliar for users.
+
 \section{Data-Flow Analysis}
 
 Another static analysis of the program.
+
+TODO Describe what is data-flow analysis \\
+
+TODO Give example for constant folding \\
+
+TODO Propose analysis on imaginary CFG Not sure if it makes sense?
 
 \section{Cohandlers as Separate Constructs}
 
 Simplify semantics by separating coalgebraic effects into a new, restricted
 construct in programming language
 
-\chapter{Effectful and Coeffectful Programming}
+\chapter{(Co) Effectful Programming}  % TODO w/o space?
 \section{Examples}\label{sec:examples}
 
     In this section we present a few examples to show the capabilities of the language.
@@ -370,6 +505,7 @@ construct in programming language
 
     The first example will be based on modelling (nondeterministic) choice
     in the program. We will make two decisions, which will affect the computation
+
     result:
 
     \begin{verbatim}
@@ -437,6 +573,8 @@ construct in programming language
     we are performing, leaving the interpretation up to the execution context,
     which could do the fetching or mock the external resource.
 
+    TODO subset of this section's content is explained already
+
     These implications are straightforward when looking from a categorical standpoint,
     where effects are viewed as free models of algebraic theories~\cite{adequacy},
     and handlers are homomorphisms preserving the model structure~\cite{handlers}.
@@ -484,6 +622,8 @@ construct in programming language
 \chapter{Calculus of Freak language}
 \section{Syntax}
 
+    TODO Extend language with basic constructs for usability
+
     The syntax for the calculus is shown below. $nat \; n$ represents an integer $n$,
     $V \oplus W$ and $V \approx W$ are respectively binary and relational operators,
     where we support basic arithmetic and comparison operations.
@@ -522,6 +662,8 @@ construct in programming language
     as abstract machine~\cite{liberating-effects}, which was proved to coincide
     with CPS translation. That being said, Freak introduces new basic
     constructs to the language, for which we shall define the semantics.
+
+    TODO Rewrite here operational semantics from Links paper
 
     \begin{flushleft}
     Extension of the evaluation contexts:
@@ -722,8 +864,12 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     translation and evaluation can be found respectively in \verb!CPSLists.hs! and
     \verb!EvalTarget.hs!.
 
+    TODO Drop of continuations is still an issue
+
     \section{Cohandlers}
     \ldots
+
+    TODO Simple implementation for cohandlers
 
     \section{Source Code Structure}
 
