@@ -26,14 +26,9 @@
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage{mathalfa}
-\usepackage{csquotes}
 \usepackage{textcomp}
 \usepackage{stmaryrd}
 \usepackage{tikz-cd}
-% Not sure if necessary
-\usepackage[utf8]{inputenc}
-\usepackage{rotchiffre}
-
 
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{mybib.bib}
@@ -50,41 +45,33 @@
 
 \begin{document}
 
-
-\chapter{Introduction}
+\chapter{Introduction}\label{chapter:introduction}
 
 \textit{
     My algebraic methods are really methods of working and thinking; this is why
     they have crept in everywhere anonymously. $\sim{}$Emmy Noether
 }
 
-TODO This requires a rework
+In this thesis we discuss issues with excessive generality of algebraic effects,
+and propose a solution without coalgebraic means along with presentation of
+experimental programming language Freak, which is a language with (co) algebraic
+effects and (co) handlers, where implementaiton is based on Continutation Passing
+Style translation.
 
-In this thesis we present experimental programming language Freak, which is an
-implementation of Continuation Passing Style for Effect Handlers paper~\cite{handlers-cps},
-with the addition of a few basic constructs.
+\section{Problem Statement}
 
-\section{Problem Analysis}
+Algebraic effects, while not being a new concept, in the recent years have
+received a lot of attention~\cite{effects-bibliography}, both from theoretical
+and practical side.
 
-TODO add citations
-
-Algebraic effects, while not being a new concept, in the recent years
-have received a lot of attention, both from theoretical and practical side.
-
-TODO refactor the following
-
-They give developer necessary tools for declarative programming, writing
-programs in a way to strive from exposing implementation details, while still
-preserving a lot of flexibility and having strong theoretical background and
-ways of formal reasoning.
+They give developer necessary tools for declarative programming and writing
+programs in a way to strive from exposing implementation details by defining
+computational effects as an API\@. In the same time, they preserve a lot of
+flexibility and have strong theoretical background.
 
 In fact, that very flexibility can be troublesome. Allowing developer for too
 much freedome may lead to undesired behaviour and incorrect programs, for that
 very reason, we develop type systems, to detect errors before they occur.
-
-\section{Problem Statement}
-
-TODO Think about merging Problem Analysis with Statement \\
 
 Multi-shot resumptions in effect handlers are a powerful tool to describe
 fairly complex logic in a concise way. That being said, they give rise to
@@ -94,20 +81,25 @@ various effects together.
 We will explain this in greater details and think about possible ways to address
 the issue of flexibility of effects in the next sections.
 
-TODO actually point out which sections you talk about
+TODO actually point out which sections you talk about or maybe even put example
+here
 
 \section{Thesis Outline}
 
-TODO Guide reader through thesis, probably later than sooner \\
-TODO Clearly divide categorical from operational approach for less algebraically fluent readers
+We start with Chapter~\ref{chapter:background}, which provides a background
+about effects, defines algebraic effects in categorical setting as well as point
+out dual coalgebraic effects and cohandlers, finishing with showing related work
+in this area. Chapter~\ref{chapter:potential-solutions} describes possible ways
+to approach issue of excesive generality,
+Chapter~\ref{chapter:co-effectful-programming} shows Freak language by
+examples along with usage guide, and then
+Chapter~\ref{chapter:calculus-of-freak-language} describes the language's syntax,
+operational semantics and CPS translation. In next one,
+Chapter~\ref{chapter:implementation}, implementation details are revealed.
+We conclude in Chapter~\ref{chapter:conclusion} by stating what are the possible
+augmentations, that are intended to be made in the future.
 
-TODO it's outdated
-We start by presenting the related work,
-then discuss syntax and operational semantics. Basic usage guide for playing with the
-language is provided, as well as implementation details and examples. We conclude by
-stating what are the possible augmentations, that are intended to be made in the future.
-
-\chapter{Background}
+\chapter{Background}\label{chapter:background}
 
 \section{Computational Effects}
 
@@ -129,17 +121,16 @@ by a common developer.
 
 Other branch of languages theory, that we shall investigate more in this thesis,
 is about taming complexity of programs. Various methods of static analysis has
-been developed for various use cases, most notably, type systems.
-
-What is the source of complexity? Thanks to strong and static type systems along
-with their implementations, we have solid tools to work efficiently on functions
-that are pure. That being said, we claim that the core complexity of programs
-comes from side effects, which we cannot avoid in writing anything useful.
+been developed for various use cases, most notably, type systems.Thanks to strong
+and static type systems along with their implementations, we have solid tools to
+work efficiently on functions that are pure. That being said, we claim that the
+core complexity of programs comes from side effects, or more generally, computational
+effects, which we cannot avoid in writing anything useful.
 
 We need to have a good way for handling computational effects. One of the ways
-to model them, can be done through monads~\cite{moggi}. However, they were
-found to be, to say the least, cumbersome to work with when the number of
-different effects increases. It is perhaps not a coincidence that many
+to model them, can be done through monads~\cite{monads-wadler, moggi}. However,
+they were found to be, to say the least, cumbersome to work with when the number
+of different effects increases. It is perhaps not a coincidence that many
 functional programming languages do not have them, because of the non-composable
 nature of them, or at least not composable in their implementations.
 
@@ -155,23 +146,25 @@ Let's put the following functions
 
 where $m$, $m'$ are monads. Functions $f$, $g$ can be composed using standard
 composition, for $f'$, $g'$ we can use Kleisli composition operator from monad $m$.
-What in case of adding one more effect?
+What in case of adding one more effect, $f''$ and $g''$?
 
 It turns out, that it becomes complex and unpleasent to combine two functors
-together to form a new monad, for which purpose, monad transformers arose in Haskell.
-Most of the common languages avoid this by not expressing computational effects
-in the type system, and instead one may think about functions as being implicitly
-embed in a Kleisli Category over a functor T, where T is a hidden signature over
-all possible side effects that occur in our program.
+together to form a new monad, and for this purpose, monad
+transformers~\cite{monad-transformers}arose in Haskell. Most of the common
+languages avoid this by not expressing computational effects in the type system,
+and instead one may think about functions as being implicitly embed in a Kleisli
+Category over a functor T, where T is a hidden signature over all possible side
+effects that occur in our program.
 
 TODO Think about describing what is Kleisli Category
 
-Not only we would like to bring back effects to our type system, but also do it
-in a way that is composable. This is where algebraic effects comes to the rescue.
-From theoretical point of view, we need to develop equational theory about our
-effects to assert correctness of our langauge as well as to have the right hammer
-to reason about our programs. That is the point where we would like to introduce
-to unfamiliar reader a notion of algebraic effects.
+Not only we would like to bring back effects to our type
+system~\cite{type-and-effect}, but also do it in a way that is composable. This
+is where algebraic effects comes to the rescue.  From theoretical point of view,
+we need to develop equational theory about our effects to assert correctness of
+our langauge as well as to have the right hammer to reason about our programs.
+That is the point where we would like to introduce to unfamiliar reader a notion
+of algebraic effects.
 
 \section{Algebraic Effects}
 
@@ -179,7 +172,7 @@ Algebraic effects can be thought as an public interface for computational effect
 Declarative approach allow us to write programs in which the actual semantic of
 source code is dependent on handler that defines the meaning of a subset of effects.
 
-This is really a breakthrough from practical point of view, as we may substitute
+This is really an incredible feature from practical point of view, as we may substitute
 logic depending on execution environment. As an example, fetching for resources
 can behave differently as we run tests, debug our code, or run it on production.
 In the same manner, they neatly allow us to abstract over implementation details.
@@ -192,17 +185,16 @@ interface. While this is certainly better than having no abstractions at all,
 we need to pass this interface into every function that is going to use it.
 This practice is called dependency injection, and while it sounds like it solves
 some of the issues, we end up in functions that need to carry representants
-of the interfaces, and pass them in every subcall that they make. It also can't
-be ommited that it's not really a substitute, as it's solving only one particular
-issue that algebraic effects address.
+of the interfaces, and pass them in every subcall that they make.
 
-TODO add link to paper with plenty of examples
+TODO maybe example with comparison for these two approaches could be useful here?
 
-- Exceptions
-- Async/await
-- Flipping coin
-- Backtracking?
-- Operating on file
+That being said, it's only one particular issue that algebraic effects address.
+In effects approach, handler may also drop the resumption or invoke it more than
+once. There are many other great sources for getting familiarized with
+effects~\cite{handlers-tutorial, programming-in-eff, koka-tutorial}, so we will
+omit further explainations. More examples can be found in
+Chapter~\ref{chapter:co-effectful-programming}.
 
 \section{Categorical Setting of Universal Algebra}
 
@@ -363,6 +355,8 @@ effects from denotational point of view.
     of productively defining new, possibly enlarged structures. Due to infinity,
     the evaluation should be lazy, whereas in induction it may be eager.
 
+    TODO cite Initial Algebras, Terminal Coalgebras, and the Theory of Fixed Points of Functors
+
     Here is a table that summarizes difference between these two methods of reasoning:
 
     \begin{center}
@@ -406,34 +400,55 @@ effects from denotational point of view.
     machine that is generating the infinite streams, or in more concrete
     scenario, alternation of the external resource that is providing us the data.
 
+    From categorical standpoint, coinduction is formed over a final coalgebra,
+    where corecursion is the mediator between any coalgbra into a final one,
+    and coinductive proof principle corresponds to uniqueness of the mediator.
+    Recall that coalgebraic effects arises from a particular type of a final
+    coalgebra, namely, cofree coalgebra.
+
     TODO Write a coinductive proof for divergent terms using coinductive proof
-    principle.
+    principle. Introdcution to bisim, page 34,35.
 
 \subsection{Coinduction Coalgebra something section}
 
     TODO Rethink this section, back by examples
 
     This is one of the cases where interaction with external resource multiple
-    times, or more specifically in case of algebraic effects, invoking resumption more
-    than once, may lead to unexpected behaviour that would not be expected in standard
-    control flow. This captures the excessive generality of effects, and is the
-    issue that we would like to address with coalgebraic effects.
+    times, or more specifically in case of algebraic effects, invoking resumption
+    more than once, may lead to unexpected behaviour that would not be expected
+    in standard control flow.
 
-    TODO On it's own this snippet a bit dry and of course requires additional examples,
-    for instance the classic one with operating on closed file and/or on
-    streams of data
+    Let's consider the following example
 
+    TODO rethink easter eg
+    \begin{verbatim}
+    handle
+        let fh <- do Open "praise.txt" in
+        let c <- do Choice () in
+        if c then do Write (fh, "Guy Fieri") else do Write (fh, "is cool") ;
+        close fh
+    with {
+        return x -> [x] |
+        choose () k -> return (append (k true) (k false)) |
+    }
+    \end{verbatim}
+
+    Where we open file, and based on nondeterministic choice, we write to file,
+    and then close it. This piece of code looks harmless, however, as we invoke
+    resumption for the second time, we are attempting to write to a closed file,
+    and then close it once again. This captures the excessive generality of
+    effects, and is the issue that we would like to address with coalgebraic
+    effects.
 
 \section{Related Work}
     \subsection{Algebraic Effects}
 
     In fact, libraries for algebraic effects also arose in mainstream languages,
-    such as C or Python. In Python, effects are implemented through generators,
-    using built-in feature of sending value when doing \textit{yield} operation.
-    Resumptions in handlers that are sending value, are one-shot and tail-recursive,
-    therefore we do not need to handle coalgebraic part, at the cost of flexibility.
-
-    TODO add reference to C and Python lib
+    such as C~\cite{leijen-c} or Python~\cite{python-effect}. In Python,
+    effects are implemented through generators~\cite{one-shot}, using built-in
+    feature of sending value when doing \textit{yield} operation. Resumptions in
+    handlers that are sending value, are one-shot and tail-recursive, therefore
+    we do not need to handle coalgebraic part, at the cost of flexibility.
 
     Except from Links language~\cite{handlers-cps}, on which the implementation
     is based, there are currently many other alternatives available. One may take
@@ -450,7 +465,7 @@ effects from denotational point of view.
     Ahman and Bauer~\cite{runners-in-action}
 
 
-\chapter{Potential Solutions}
+\chapter{Potential Solutions}\label{chapter:potential-solutions}
 
 TODO smth smt initialization before finalization.
 
@@ -484,6 +499,11 @@ static analysis to prevent from errors before they occur.
 
 Solve the issue through introduction of linear type system.
 
+TODO cite LINEAR USAGE OF STATE
+
+In fact, there is a bijective translation between algebraic effects and linear
+type theory, and \textit{every monad embeds in a linear state monad}.
+
 TODO Explain it can get complex and unfamiliar for users.
 
 \section{Data-Flow Analysis}
@@ -501,7 +521,7 @@ TODO Propose analysis on imaginary CFG Not sure if it makes sense?
 Simplify semantics by separating coalgebraic effects into a new, restricted
 construct in programming language
 
-\chapter{(Co) Effectful Programming}  % TODO w/o space?
+\chapter{(Co) Effectful Programming}\label{chapter:co-effectful-programming} % TODO w/o space?
 \section{Examples}\label{sec:examples}
 
     In this section we present a few examples to show the capabilities of the language.
@@ -513,7 +533,6 @@ construct in programming language
 
     The first example will be based on modelling (nondeterministic) choice
     in the program. We will make two decisions, which will affect the computation
-
     result:
 
     \begin{verbatim}
@@ -599,7 +618,7 @@ construct in programming language
     As of this day, two implementations are available, one based on the curried
     translation and Appel~\cite{appel-continuations}, and the second one based
     directly on the uncurried translation with continuations as explicit stacks
-    from paper. More details can be found in Section~\ref{sec:implementation}.
+    from paper. More details can be found in Section~\ref{chapter:implementation}.
     All commands are available within \verb!src!  directory.
 
     \subsection{Build and install}
@@ -627,7 +646,7 @@ construct in programming language
         \item Compile, run linter and tests: \verb!make check!
     \end{itemize}
 
-\chapter{Calculus of Freak language}
+\chapter{Calculus of Freak language}\label{chapter:calculus-of-freak-language}
 \section{Syntax}
 
     TODO Extend language with basic constructs for usability
@@ -700,7 +719,7 @@ construct in programming language
 \section{Continuation Passing Style Transformation}
     \ldots
 
-\chapter{Implementation}\label{sec:implementation}
+\chapter{Implementation}\label{chapter:implementation}
 
     The Freak implementation is available at \href{https://github.com/Tomatosoup97/freak}{\underline{https://github.com/Tomatosoup97/freak}},
     written purely in Haskell. While the paper provided a good overview of the
@@ -901,7 +920,7 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     programs/       - Exemplary programs used in tests
     \end{verbatim}
 
-\chapter{Conclusion}
+\chapter{Conclusion}\label{chapter:conclusion}
 \section{Summary}
 
     What was achieved, what was described, what needs to be done or researched.
