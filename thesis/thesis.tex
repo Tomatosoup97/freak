@@ -2,7 +2,6 @@
 
 \usepackage[utf8]{inputenc}
 
-
 \polishtitle{Efekty koalgebraiczne oraz ich kohandlery \fmlinebreak{} w językach programowania}
 \englishtitle{Coalgebraic effects and their cohandlers \fmlinebreak{} in programming languages}
 \polishabstract{
@@ -15,12 +14,11 @@
 \advisor{dr Maciej Piróg}
 \date{1 września 2020}                     % Data zlozenia pracy
 % Dane do oswiadczenia o autorskim wykonaniu
-% \transcriptnum {291480}                     % Numer indeksu
-% \advisorgen    {dr. Macieja Piróga} % Nazwisko promotora w dopelniaczu
+\transcriptnum{291480}                     % Numer indeksu
+\advisorgen{dr. Macieja Piróga} % Nazwisko promotora w dopelniaczu
 %%%%%
 
-
-%%%%% WLASNE DODATKOWE PAKIETY
+% \usepackage[utf8]{inputenc}
 % \usepackage{graphicx,listings,tikz}
 \usepackage{syntax}
 \usepackage{tabularx}
@@ -28,13 +26,16 @@
 \usepackage{mathalfa}
 \usepackage{textcomp}
 \usepackage{stmaryrd}
+\usepackage{bussproofs}
 \usepackage{tikz-cd}
+\usetikzlibrary{babel}
+
+% Disable certain warnings
+% chktex-file 18
 
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{mybib.bib}
-%
-%%%%% WŁASNE DEFINICJE I POLECENIA
-%
+
 \theoremstyle{definition} \newtheorem{definition}{Definition}[chapter]
 \theoremstyle{remark} \newtheorem{remark}[definition]{Observation}
 \theoremstyle{plain} \newtheorem{theorem}[definition]{Theorem}
@@ -55,42 +56,60 @@
 In this thesis we discuss issues with excessive generality of algebraic effects,
 and propose a solution without coalgebraic means along with presentation of
 experimental programming language Freak, which is a language with (co) algebraic
-effects and (co) handlers, where implementaiton is based on Continutation Passing
+effects and (co) handlers, where implementation is based on Continuation Passing
 Style translation.
 
-\section{Problem Statement}
+\section{Problem Statement}\label{sec:problem-statement}
 
 Algebraic effects, while not being a new concept, in the recent years have
-received a lot of attention~\cite{effects-bibliography}, both from theoretical
+received a lot of attention~\cite{effects-bibliography}, both from the theoretical
 and practical side.
 
 They give developer necessary tools for declarative programming and writing
-programs in a way to strive from exposing implementation details by defining
-computational effects as an API\@. In the same time, they preserve a lot of
-flexibility and have strong theoretical background.
+programs in a way to strive from exposing implementation details, by defining
+computational effects as an API\@ in our code. In the same time, they preserve
+a lot of flexibility and have a strong theoretical background.
 
 In fact, that very flexibility can be troublesome. Allowing developer for too
-much freedome may lead to undesired behaviour and incorrect programs, for that
-very reason, we develop type systems, to detect errors before they occur.
+much freedom may lead to undesired behaviour and incorrect programs, for this
+reason, we develop type systems, to detect errors before they occur.
 
-Multi-shot resumptions in effect handlers are a powerful tool to describe
-fairly complex logic in a concise way. That being said, they give rise to
-issues that would not occur in standard control flow, especially when composing
-various effects together.
+Multi-shot resumptions in effect handlers and possibility to drop resumption
+are powerful tools to describe fairly complex logic in a concise way. That being
+said, they give rise to issues that would not occur in standard control flow,
+especially when composing various effects together. Unwanted interaction with
+external resources multiple times or not invoking finalisation code are cases
+that may occur while using algebraic effects and handlers. Let's consider the
+following example:
 
-We will explain this in greater details and think about possible ways to address
-the issue of flexibility of effects in the next sections.
+\begin{verbatim}
+handle
+    let fh <- do Open "praise.txt" in
+    let c <- do Choice () in
+    if c then do Write (fh, "Guy Fieri") else do Write (fh, "is cool") ;
+    close fh
+with {
+    return x -> [x] |
+    choose () k -> return (append (k true) (k false)) |
+}
+\end{verbatim}
 
-TODO actually point out which sections you talk about or maybe even put example
-here
+In the above code we open file, and based on nondeterministic choice, we write
+to the file, and then close it. This piece of code looks harmless, however, as
+we invoke resumption for the second time, we are attempting to write to the
+closed file, and then close it once again. In fact, dropping resumption is also
+considered harmful, as we would not attempt to close the file.
+
+This captures the excessive generality of effects, and is the issue that we
+would like to address with coalgebraic effects.
 
 \section{Thesis Outline}
 
-We start with Chapter~\ref{chapter:background}, which provides a background
-about effects, defines algebraic effects in categorical setting as well as point
+In the following chapter we provide a background
+about effects, define algebraic effects in categorical setting as well as point
 out dual coalgebraic effects and cohandlers, finishing with showing related work
 in this area. Chapter~\ref{chapter:potential-solutions} describes possible ways
-to approach issue of excesive generality,
+to approach issue of excessive generality,
 Chapter~\ref{chapter:co-effectful-programming} shows Freak language by
 examples along with usage guide, and then
 Chapter~\ref{chapter:calculus-of-freak-language} describes the language's syntax,
@@ -107,21 +126,21 @@ Since the rapid development of computational theory in 1930s by A. Turing,
 K. Godel and A. Church, we have a well-established notion of what can and what
 cannot be done through algorithmic means, which we can almost directly translate
 to being computable by our machines. Through next years we have developed
-mainstream languages that are used almost everywhere, with a great success.
+mainstream languages that are used almost everywhere, with great success.
 
 Under these circumstances one may pose a question, why do we still bother with
 development of languages theory, since so much has been done already. Is there
 anything that drives us towards further research? Indeed, one active branch
-revolves around equational theory to asses equality of two programs, which we
-know that in general setting is undecidable. Proof methods may include extensional,
-contextual or logical equality. However, there is no doubt that these formal
-ways of reasoning about programs, while being crucial for assessing correctness,
-do not bring direct benefits for everyday use cases, as they are rarely accessible
-by a common developer.
+revolves around equational theory to assess equality of two programs, which we
+know that in the general setting is undecidable. Proof methods may include
+extensional, contextual or logical equality. However, there is no doubt that
+these formal ways of reasoning about programs, while being crucial for assessing
+correctness, do not bring direct benefits for everyday use cases, as they are
+rarely accessible by a common developer.
 
 Other branch of languages theory, that we shall investigate more in this thesis,
 is about taming complexity of programs. Various methods of static analysis has
-been developed for various use cases, most notably, type systems.Thanks to strong
+been developed for various use cases, most notably, type systems. Thanks to strong
 and static type systems along with their implementations, we have solid tools to
 work efficiently on functions that are pure. That being said, we claim that the
 core complexity of programs comes from side effects, or more generally, computational
@@ -130,10 +149,11 @@ effects, which we cannot avoid in writing anything useful.
 We need to have a good way for handling computational effects. One of the ways
 to model them, can be done through monads~\cite{monads-wadler, moggi}. However,
 they were found to be, to say the least, cumbersome to work with when the number
-of different effects increases. It is perhaps not a coincidence that many
+of different effects increase. It is perhaps not a coincidence that many
 functional programming languages do not have them, because of the non-composable
 nature of them, or at least not composable in their implementations.
 
+\noindent
 Let's put the following functions
 
 \begin{center}
@@ -144,36 +164,39 @@ Let's put the following functions
 
 \end{center}
 
+\noindent
 where $m$, $m'$ are monads. Functions $f$, $g$ can be composed using standard
 composition, for $f'$, $g'$ we can use Kleisli composition operator from monad $m$.
 What in case of adding one more effect, $f''$ and $g''$?
 
-It turns out, that it becomes complex and unpleasent to combine two functors
+It turns out, that it becomes complex and unpleasant to combine two functors
 together to form a new monad, and for this purpose, monad
-transformers~\cite{monad-transformers}arose in Haskell. Most of the common
+transformers~\cite{monad-transformers} arose in Haskell. Most of the common
 languages avoid this by not expressing computational effects in the type system,
 and instead one may think about functions as being implicitly embed in a Kleisli
-Category over a functor T, where T is a hidden signature over all possible side
-effects that occur in our program.
+Category over a functor T~\cite{kleisli-ncatlab}, where T is a hidden signature
+over all possible side effects that occur in our program.
 
-TODO Think about describing what is Kleisli Category
+\noindent
+TODO Reconsider reference to ncatlab on Kleisli Cat, often it's not the best resource
 
 Not only we would like to bring back effects to our type
 system~\cite{type-and-effect}, but also do it in a way that is composable. This
-is where algebraic effects comes to the rescue.  From theoretical point of view,
+is where algebraic effects comes to the rescue. From theoretical point of view,
 we need to develop equational theory about our effects to assert correctness of
-our langauge as well as to have the right hammer to reason about our programs.
-That is the point where we would like to introduce to unfamiliar reader a notion
-of algebraic effects.
+our language as well as to have the right hammer to reason about our programs.
+From practical side, we need to have the way of taming computational effects
+in our programs. That is the point where we would like to introduce to unfamiliar
+readers a notion of algebraic effects.
 
 \section{Algebraic Effects}
 
-Algebraic effects can be thought as an public interface for computational effects.
+Algebraic effects can be thought of as an public interface for computational effects.
 Declarative approach allow us to write programs in which the actual semantic of
 source code is dependent on handler that defines the meaning of a subset of effects.
 
 This is really an incredible feature from practical point of view, as we may substitute
-logic depending on execution environment. As an example, fetching for resources
+logic depending on the execution environment. As an example, fetching for resources
 can behave differently as we run tests, debug our code, or run it on production.
 In the same manner, they neatly allow us to abstract over implementation details.
 
@@ -187,13 +210,14 @@ This practice is called dependency injection, and while it sounds like it solves
 some of the issues, we end up in functions that need to carry representants
 of the interfaces, and pass them in every subcall that they make.
 
+\noindent
 TODO maybe example with comparison for these two approaches could be useful here?
 
 That being said, it's only one particular issue that algebraic effects address.
-In effects approach, handler may also drop the resumption or invoke it more than
+Their handlers may also drop the resumption or invoke it more than
 once. There are many other great sources for getting familiarized with
-effects~\cite{handlers-tutorial, programming-in-eff, koka-tutorial}, so we will
-omit further explainations. More examples can be found in
+effects from practical side~\cite{handlers-tutorial, programming-in-eff, koka-tutorial},
+so we will omit further explanations. More examples can be found in
 Chapter~\ref{chapter:co-effectful-programming}.
 
 \section{Categorical Setting of Universal Algebra}
@@ -201,10 +225,11 @@ Chapter~\ref{chapter:co-effectful-programming}.
 Algebraic effects can be described via operational means, however,
 for the purpose of presenting the duality between algebra and coalgebra,
 we allow ourselves to wander a bit deeper into category theory and describe
-effects from denotational point of view.
+effects from denotational point of view~\cite{bauer-what-is-algebraic}.
 
     \subsection{Algebraic Theories}
 
+    % == begin Signature ==
     \begin{definition}
 
     A \textit{signature $ \Sigma $} is given by a collection of operation
@@ -213,14 +238,18 @@ effects from denotational point of view.
     We will write an operation as $ op_{i} : P_{i} \rightsquigarrow A_{i} $
 
     \end{definition}
+    % == end Signature ==
 
+    % == begin Sigma-terms ==
     \begin{definition}
     Collection of $\mathVar{\Sigma-terms}$ is a free algebra with a generator $X$
     for a functor $ \mu H_{\Sigma} $ that maps objects into trees over a given
     signature $ \Sigma $ and morphisms into folds over trees.
 
     \end{definition}
+    % == end Sigma-terms ==
 
+    % == begin Sigma-equation ==
     \begin{definition}
 
         A $ \mathVar{\Sigma-Equation} $ is an object X and a pair of
@@ -231,15 +260,19 @@ effects from denotational point of view.
         \end{center}
 
     \end{definition}
+    % == end Sigma-equation ==
 
+    % == begin Algebraic Theory ==
     \begin{definition}
 
     An \textit{algebraic theory} $T = (\Sigma_{T}, \mathcal{E}_{T})$, is given
     by a signature $\Sigma_{T}$ and a collection $\mathcal{E}_{T}$ of
-    $\mathVar{\Sigma_{T}-equations}$. For clarity, we will usually omit T subscript.
+    $\mathVar{\Sigma_{T}-equations}$.
 
     \end{definition}
+    % == end Algebraic Theory ==
 
+    % == begin Interpretation ==
     \begin{definition}
 
     An \textit{interpretation $I$ over a given signature $\Sigma$} is given by
@@ -249,13 +282,17 @@ effects from denotational point of view.
     \begin{center}
         $ {\llbracket op_{i} \rrbracket}_I : P_{i} \times{} {|I|}^{A_{i}} \rightarrow |I| $
     \end{center}
+
+    \noindent
     Interpretation may be naturally extended to $\mathVar{\Sigma-terms}$, such
     that a given $\mathVar{\Sigma-term}$ $X \mid t$ is interpreted by a map
     which sends variables into projections from environment and terms into
     map composition over each subterm.
 
     \end{definition}
+    % == end Interpretation ==
 
+    % == begin Model ==
     \begin{definition}
 
     A \textit{model M} of an algebraic theory T is an interpretation of the
@@ -263,23 +300,37 @@ effects from denotational point of view.
     That is, for every equation $X \mid l = r$ the following diagram commutes:
 
     \begin{center}
-    % \begin{tikzcd}[row sep=huge, column sep=large]
-    %     {|M|}^k \arrow[rr, '\phi', bend right] \arrow[rr, '\rrbracket{} X|l', bend left] &  & {|M|}
-    % \end{tikzcd}
-    \end{center}
-
-    TODO this diagram doesn't work
-
-    \begin{center}
-    % \begin{tikzcd}
-    % A \arrow[rd] \arrow[r, '\phi'] & B \\
-    % & C
-    % \end{tikzcd}
+    \begin{tikzcd}[row sep=huge, column sep=large]
+        {|M|}^k \arrow[rr, "\llbracket{} X|r \rrbracket{}"', bend right] \arrow[rr, "\llbracket{} X|l \rrbracket{}", bend left] &  & {|M|}
+    \end{tikzcd}
     \end{center}
 
     \end{definition}
+    % == end Model ==
+
+    % == begin homomophism ==
+    \begin{definition}
+
+    Let L, M be models of a theory T. $ \mathVar{T-homomorphism}$
+    $\varphi : L \rightarrow M$ is a map such that, for every operation symbol
+    $op_{i}$ in T the following diagram commutes:
+
+    \begin{center}
+    \begin{tikzcd}
+        {|L|}^{ar_{i}} \arrow[rr, "{\llbracket{} op_{i} \rrbracket{}}_{L}"] \arrow[dd, "\varphi{}^{ar_{i}}"'] &  & {|L|} \arrow[dd, "\varphi{}"] \\
+                                              &  &                                     \\
+        {|M|}^{ar_{i}} \arrow[rr, "{\llbracket{} op_{i} \rrbracket{}}_{M}"']                 &  & {|M|}
+    \end{tikzcd}
+    \end{center}
+
+    \noindent
+    We denote here $A^{n}$ as $\mathVar{n-ary}$ product of $A$.
+
+    \end{definition}
+    % == end homomophism ==
 
 
+    % == begin Free algebra ==
     \begin{definition}
 
     Free F-algebra on an object A (of generators) in $\mathcal{C}$ is meant an algebra
@@ -289,6 +340,8 @@ effects from denotational point of view.
     $ \varphi_{A} : F A^{\#} \longrightarrow A $
 
     \end{center}
+
+    \noindent
     together with an universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $.
     Universality means that for every algebra $ \beta : F B \longrightarrow B $
     and every morphism $ f : A \longrightarrow B $ in $ \mathcal{C}$, there
@@ -296,33 +349,79 @@ effects from denotational point of view.
     extending f, i.e.\ a unique morphism of $ \mathcal{C}$ for which the diagram
     below commutes:
 
-    TODO we can also say it's an initial algebra over initial object.
-
     \begin{center}
     \begin{tikzcd}[row sep=huge, column sep=large]
-    % F A^{\#} \arrow[d, "F \overline{f}"] \arrow[r, "\varphi_{A}"] & A^{\#} \arrow[d, "\overline{f}"] & A \arrow[l, "\eta_{A}"'] \arrow[ld, "f"] \\
-    % F B \arrow[r, "\beta"']                                       & B                                &
+    F A^{\#} \arrow[d, "F \overline{f}"] \arrow[r, "\varphi_{A}"] & A^{\#} \arrow[d, "\overline{f}"] & A \arrow[l, "\eta_{A}"'] \arrow[ld, "f"] \\
+    F B \arrow[r, "\beta"']                                       & B                                &
     \end{tikzcd}
     \end{center}
 
     \end{definition}
+    % == end Free algebra ==
 
-    \begin{definition} \textit{Free model} is just a model which is free algebra.
-
+    \begin{definition} \textit{Free model} is just a model that is free algebra.
     \end{definition}
 
     \begin{lemma}{Free models form monads}
-
     \end{lemma}
+    \begin{proof}
+        Let $M$ be a free model of an algebraic theory $T$ in category $\mathcal{C}$. We
+        have an endofunctor $ F_{T}$, which takes objects into free model and
+        maps to unique homomorphisms for which the following diagram commutes:
 
-    \begin{definition}
+        \begin{center}
+        \begin{tikzcd}
+        X \arrow[rr, "\eta_{X}"] \arrow[dd, "f"'] &  & F_{T} (X) \arrow[dd, "\overline{f}"] \\
+                                                  &  &                                     \\
+        Y \arrow[rr, "\eta_{Y}"']                 &  & F_{T} (Y)
+        \end{tikzcd}
+        \end{center}
 
-    Let L, M be models of a theory T. A $ \mathVar{T-homomorphism}$
-    $\phi : L \rightarrow M$ is a map such that the following diagram commutes:
+        \noindent
+        which immediately gives us $\eta$ natural transformation for a monad.
+        We can now define $\mu{}$ for a monad as a unique morphism for which
+        the diagram commutes:
 
-    TODO finish definition
+        \begin{center}
+        \begin{tikzcd}[row sep=huge, column sep=large]
+            F_{T} (X) \arrow[r, "\eta_{F_{T} (X)}"] \arrow[rd, "id"'] & F_{T} (F_{T} (X)) \arrow[d, "\mu{}"] \\
+                                                         & F_{T} (Y)
+        \end{tikzcd}
+        \end{center}
+
+        \noindent
+        $F_{T}$ is an endofunctor, therefore it sends $X$ into an object in $\mathcal{C}$.
+        From any object we have a unique map sending an object into model,
+        which is $\eta_{F_{T} (X)}$. From free property of our model we get
+        a unique map $\mu{}$ such that the diagram commutes, therefore we have
+        a monad $(F_{T}, \eta{}, \mu{})$.
+
+    \end{proof}
+
+
+    % == begin handler ==
+    \begin{definition} \textit{Handler} is a $\mathVar{T-homomorphism}$ between
+    free models
+
+        \begin{center}
+        $ H : {| F_{T} (X) |} \rightarrow {| F_{T'} (X') |} $
+        \end{center}
+
+    \noindent
+    that is, a map between carriers that preserves the structure of theory $T$.
 
     \end{definition}
+    % == end handler ==
+
+Concluding from the theory that we have built, algebraic effects are just free
+models over computation trees, where the signature is the set of effects, and
+equational theory is definining rules of rewriting expressions with effects.
+The latter is usually irrelevant from implementation perspective, but may be
+important for reasoning about programs.
+
+Effect handlers on the other hand, are transformations from one computation
+tree over given signature of effects into another one, where handler may serve
+effects and also propagate new ones.
 
 \section{Duality}
     \subsection{Comodels}
@@ -334,28 +433,51 @@ effects from denotational point of view.
     We could end by stating this definition, and everything else would follow
     directly from duality. However, expanding definitions is going to give us
     better intuition, as well as give more solid ground for implementation.
+    For this part, we are going to assume we operate in \textbf{Set} category.
 
     \subsection{Cooperations}
 
-    Derive from Models duality
+    We have defined interpretation of an operation as a map:
+
+    \begin{center}
+        $ {\llbracket op \rrbracket}_M : {|I|}^{A} \rightarrow |I|^{P} $
+    \end{center}
+
+    \noindent
+    Let's now take a look on how it dualizes. In \textbf{Set}, we can think about
+    $A^{B}$ exponentials as $\mathVar{B-ary}$ coproducts over A, where for each
+    argument we select one result. Every arrow in opposite category is reverted,
+    thus coproducts becomes products, our morphism is reverted and model becomes
+    comodel (\textit{world}). Putting this together, we obtain the following map:
+
+    \begin{center}
+        $ {\llbracket op \rrbracket}^W : {|I|} \times {P} \rightarrow  {|I|} \times {A} $
+    \end{center}
+
+    \noindent
+    which is called a \textit{cooperation}. Meaning of that morphism, is that
+    based on coalgebra carrier and a parameter, we obtain new state of the
+    coalgebra and a value generated by coalgebra.
 
     \subsection{Coalgebraic Effects}
 
+\noindent
+TODO \\
+- coalg effects \\
+- cohandlers
+
     \subsection{Coinductive Reasoning}
 
-    Induction and Coinduction
-
     Induction is a way of constructing new structures. Recursion is a way of
-    folding inductively defined structure in an terminating way. Recursive functions
-    should shrink the argument in each call, meaning that it eventually ends up
+    folding inductively defined structure in a terminating way. Recursive
+    functions (not to be confused with recursive computability class), should
+    shrink the argument in each call, meaning that it eventually ends up
     terminating in a base case.
 
     Coinduction is literally a dual notion to induction. We \textit{observe} possibly
-    infinite structures, by doing deconstruction. Corecursion, however, is a way
+    infinite structures, by doing deconstruction. Corecursion, is a way
     of productively defining new, possibly enlarged structures. Due to infinity,
     the evaluation should be lazy, whereas in induction it may be eager.
-
-    TODO cite Initial Algebras, Terminal Coalgebras, and the Theory of Fixed Points of Functors
 
     Here is a table that summarizes difference between these two methods of reasoning:
 
@@ -387,587 +509,637 @@ effects from denotational point of view.
     \end{tabular}
     \end{center}
 
-    Reader that focuses on pragmatism may pose a question, why do we even want
-    to reason about infinite structures? They never appear in practice! In fact,
-    it's very common to operate on never-ending transition systems or streams of
-    data without, wher efinitary means of reasoning are of no use, as we can’t
-    expect an end to stream!
-
-    Simple example of the duality can be expressed through induction over finite
-    list and coinductive observation of infinite streams.
-
-    Doing the latter may involve modification of the internal state of the
-    machine that is generating the infinite streams, or in more concrete
-    scenario, alternation of the external resource that is providing us the data.
-
     From categorical standpoint, coinduction is formed over a final coalgebra,
-    where corecursion is the mediator between any coalgbra into a final one,
-    and coinductive proof principle corresponds to uniqueness of the mediator.
+    where corecursion is the mediator between any coalgebra into a final one,
+    and coinductive proof principle corresponds to the uniqueness of the mediator.
     Recall that coalgebraic effects arises from a particular type of a final
     coalgebra, namely, cofree coalgebra.
 
-    TODO Write a coinductive proof for divergent terms using coinductive proof
-    principle. Introdcution to bisim, page 34,35.
+    \noindent
+    TODO Not sure which paper to cite here for a deeper dive into the upper
+    topic. Book \textit{Initial Algebras, Terminal Coalgebras, and the Theory of Fixed Points of Functors}
+    by Adámek, Milius and S. Moss from which I have studied is no longer available
+    on the internet, as it was a draft under construction.
 
-\subsection{Coinduction Coalgebra something section}
+    Reader that focuses on pragmatism may pose a question, why do we even want
+    to reason about infinite structures? They never appear in practice! In fact,
+    it's very common to operate on never-ending transition systems or streams of
+    data, where finitary means of reasoning are of no use, as we can’t expect
+    an end to stream.
 
-    TODO Rethink this section, back by examples
+    Operating on coinductive structures may involve modification of the internal
+    state of the machine that is generating the infinite streams, or in more
+    concrete scenario, alternation of the external resource that is providing
+    us the data.
 
-    This is one of the cases where interaction with external resource multiple
-    times, or more specifically in case of algebraic effects, invoking resumption
-    more than once, may lead to unexpected behaviour that would not be expected
-    in standard control flow.
+    For a better understanding and intuition, we shall illustrate now the
+    difference based on inductive and coinductive relation. Recall that the set
+    $\Lambda$ of $\mathVar{\lambda-terms}$ is given by the following grammar:
 
-    Let's consider the following example
+    \begin{center}
+        $ e ::= x \;|\; \lambda x.e \;|\; e_{1} e_{2} $
+    \end{center}
 
-    TODO rethink easter eg
-    \begin{verbatim}
-    handle
-        let fh <- do Open "praise.txt" in
-        let c <- do Choice () in
-        if c then do Write (fh, "Guy Fieri") else do Write (fh, "is cool") ;
-        close fh
-    with {
-        return x -> [x] |
-        choose () k -> return (append (k true) (k false)) |
-    }
-    \end{verbatim}
+    \noindent
+    where $\Lambda^{0} \in \Lambda$ is a set of $\mathVar{closed~\lambda-terms}$,
+    meaning, those terms have no free variables. Let's now define an inductive,
+    and coinductive predicate. Relation
+    $\Downarrow{} \subseteq \Lambda^{0} \times \Lambda^{0}$ (convergence) for
+    call-by-value $\mathVar{\lambda-calculus}$ is defined as follows:
 
-    Where we open file, and based on nondeterministic choice, we write to file,
-    and then close it. This piece of code looks harmless, however, as we invoke
-    resumption for the second time, we are attempting to write to a closed file,
-    and then close it once again. This captures the excessive generality of
-    effects, and is the issue that we would like to address with coalgebraic
-    effects.
+    \begin{center}
+        \AxiomC{}
+        \UnaryInfC{$ \lambda x.e \Downarrow{} \lambda x.e $}
+        \DisplayProof{}
+        \quad\quad
+        \AxiomC{$ e_{1} \Downarrow{} \lambda x.e_{0}$}
+        \AxiomC{$e_{0}[e_{2}/x] \Downarrow{} e'$}
+        \BinaryInfC{$ e_{1} e_{2} \Downarrow{} e' $}
+        \DisplayProof{}
+    \end{center}
+
+    \noindent
+    which means that $ \Downarrow{} $ is the \textit{smallest} predicate
+    \textit{closed forward} under the above rules. Relation can be inductively
+    built from empty set and then in a fixed-point manner we can add more terms.
+    Let's now see a relation $ \Uparrow{} \subseteq \Lambda^{0}$ of
+    \textit{divergent} terms, which is coinductively defined as follows:
+
+    \begin{center}
+        \AxiomC{$ e_{1} \Uparrow{} $}
+        \UnaryInfC{$ e_{1} e_{2} \Uparrow{} $}
+        \DisplayProof{}
+        \quad\quad
+        \AxiomC{$ e_{1} \Downarrow{} \lambda x.e_{0}$}
+        \AxiomC{$e_{0}[e_{2}/x] \Uparrow{}$}
+        \BinaryInfC{$ e_{1} e_{2} \Uparrow{}$}
+        \DisplayProof{}
+    \end{center}
+
+    \noindent
+    which means that $\Uparrow$ is the \textit{greatest} predicate
+    \textit{closed backwards} under the above rules, relation can be coinductively
+    obtained by starting with $\Lambda_{0}$, and then by removing elements that
+    do not fit the rules.
+
+    \noindent
+    For more detailed introduction into coinduction and other examples,
+    see~\cite{jacobs-rutten, sangiorgi-intro}.
+
+    \noindent
+    TODO maybe also write coinductive proof based on two relations above?
 
 \section{Related Work}
     \subsection{Algebraic Effects}
+
+    Except from Links language~\cite{handlers-cps}, on which the implementation
+    is based, there are currently many other alternatives available. One may take
+    a look at Frank~\cite{frank}, which provides support for multihandlers,
+    Koka~\cite{leijen-koka}, Helium~\cite{helium} or Eff~\cite{eff}. Except from
+    separate languages, many libraries arose for existing ones like Haskell,
+    Idris, Scala or Multicore OCaml.
 
     In fact, libraries for algebraic effects also arose in mainstream languages,
     such as C~\cite{leijen-c} or Python~\cite{python-effect}. In Python,
     effects are implemented through generators~\cite{one-shot}, using built-in
     feature of sending value when doing \textit{yield} operation. Resumptions in
-    handlers that are sending value, are one-shot and tail-recursive, therefore
-    we do not need to handle coalgebraic part, at the cost of flexibility.
-
-    Except from Links language~\cite{handlers-cps}, on which the implementation
-    is based, there are currently many other alternatives available. One may take
-    a look at Frank~\cite{frank}, which provides a support for multihandlers,
-    Koka~\cite{leijen-koka}, Helium~\cite{helium} or Eff~\cite{eff}. Except from
-    separate languages, many libraries arose for existing ones like Haskell,
-    Idris, Scala or Multicore OCaml.
+    handlers that are sending value are one-shot and tail-recursive, therefore
+    we do not need to handle the coalgebraic part, at the cost of flexibility.
 
     As can be seen in the J. Yallop repository~\cite{effects-bibliography}, algebraic
     effects and handlers are now trending branch in the programming languages theory.
 
     \subsection{Coalgebraic Effects}
 
-    Ahman and Bauer~\cite{runners-in-action}
+    Work that is the closest related to topic of the thesis, is work done by
+    Danel Ahman and Andrej Bauer~\cite{runners-in-action}, as well as their
+    implementation of a $\lambda_{coop}$ language~\cite{coop}, which is a
+    calculus that ensures linear usage of resources as well as execution of
+    code handling finalisation.
 
+\noindent
+TODO Consider those\\
+- From comodels to coalgebras: State and arrays.\\
+- Tensors of comodels and models for operational semantics.\\
+- Stateful runners of effectful computations.
 
 \chapter{Potential Solutions}\label{chapter:potential-solutions}
 
-TODO smth smt initialization before finalization.
-
-It can be seen, that issues lies with the fact, that interacting with coalgebras
-may lead to change of their internal state system. Examples include change
-of state in NFA, taking next element in infinite stream or a closing file.
-
-One of the ways to approach this problem, caused by extensive generality of
-effects, is extension of the calculus with Coalgebraic effects, also named
-coeffects. Difference is that resumptions in coeffects handlers are one-shot
-only, which means that continuation can be invoked at most once.
+It can be seen, that issues lie with the fact, that interacting with coalgebras
+may lead to change of their internal state system. Examples include change of
+state in NFA, taking next element in an infinite stream or a closing file.
+Finalization must occur after initialization, thus we conclude that resumption
+should be called at least once. However, modifying state twice the same way can
+also lead to unwanted behaviour, as it was seen in
+Section~\ref{sec:problem-statement}, therefore it should be invoked exactly
+once.
 
 \begin{lemma}
     Problem of detection whether resumption is called only once is undecidable.
 \end{lemma}
-
 \begin{proof}
-    Follows directly from Rice's Theorem, as checking whether function was called
-    is a nontrivial semantic property of a program.
+    Follows directly from Rice's Theorem, as checking whether given function is
+    going to be called is a nontrivial semantic property of a program.
 \end{proof}
 
+One of the ways to approach this problem, caused by extensive generality of
+effects, is the introduction of dual Coalgebraic effects, also named coeffects,
+for which we shall discuss various methods of implementation.
 
 \section{Dynamic Constraints Checking}
 
-One approach is to dynamically during execution check against contract that
-continuation may only be called once. In this setting we are sure that our
-program will not accidentaly go into wrong state, however by definition we lack
-static analysis to prevent from errors before they occur.
+One approach is to dynamically check against contract that continuation may only
+be called once. In this setting we are sure that our program will not accidentally
+go into wrong state, however by definition we lack static analysis to prevent
+errors before they occur.
 
 \section{Linear Types}
 
-Solve the issue through introduction of linear type system.
+Imposition of a single call of resumption, can be thought in a way that continuation
+is `consumable', such that it's not available after one takes use of it. Putting
+it in that way, it immediately reminds of linear logic~\cite{linear-logic},
+where premises of linear implications are no longer of use in conclusion, and
+in case of linear type theory, binding variable from expression A, disallows
+use of variables in A. Implementation of coalgebraic effects might be simplified
+in languages that already support linear type system, such as Rust~\cite{rust}.
 
-TODO cite LINEAR USAGE OF STATE
+In fact, there is a bijective translation between language with algebraic effects
+and calculus with linear type theory, and \textit{every monad embeds in a linear
+state monad}~\cite{linear-usage-of-state}.
 
-In fact, there is a bijective translation between algebraic effects and linear
-type theory, and \textit{every monad embeds in a linear state monad}.
-
-TODO Explain it can get complex and unfamiliar for users.
+\noindent
+TODO should this section be further extended?
 
 \section{Data-Flow Analysis}
 
 Another static analysis of the program.
 
-TODO Describe what is data-flow analysis \\
-
-TODO Give example for constant folding \\
-
-TODO Propose analysis on imaginary CFG Not sure if it makes sense?
+\noindent
+- TODO Describe what is data-flow analysis \\
+- TODO Give example for constant folding \\
+- TODO Propose analysis for coalgebraic effects. Not sure if that's not too much,
+as it's not the goal of this thesis. Definitealy leave this section for later.
 
 \section{Cohandlers as Separate Constructs}
 
 Simplify semantics by separating coalgebraic effects into a new, restricted
 construct in programming language
 
+\noindent
+TODO muuuch longer explanation of this topic
+
 \chapter{(Co) Effectful Programming}\label{chapter:co-effectful-programming} % TODO w/o space?
-\section{Examples}\label{sec:examples}
+% \section{Examples}\label{sec:examples}
 
-    In this section we present a few examples to show the capabilities of the language.
-    The ideas have been based on~\cite{programming-in-eff}, and thus will not be
-    described in great details. More exemplary programs in Freak language can
-    be found under \\ \href{https://github.com/Tomatosoup97/freak/tree/master/src/programs}{\underline{https://github.com/Tomatosoup97/freak/tree/master/src/programs}}.
+%     In this section we present a few examples to show the capabilities of the language.
+%     The ideas have been based on~\cite{programming-in-eff}, and thus will not be
+%     described in great details. More exemplary programs in Freak language can
+%     be found under \\ \href{https://github.com/Tomatosoup97/freak/tree/master/src/programs}{\underline{https://github.com/Tomatosoup97/freak/tree/master/src/programs}}.
 
-    \subsection{Choice}\label{sec:choice-example}
+%     \subsection{Choice}\label{sec:choice-example}
 
-    The first example will be based on modelling (nondeterministic) choice
-    in the program. We will make two decisions, which will affect the computation
-    result:
+%     The first example will be based on modelling (nondeterministic) choice
+%     in the program. We will make two decisions, which will affect the computation
+%     result:
 
-    \begin{verbatim}
-    let c1 <- do Choice () in
-    let c2 <- do Choice () in
-    let x <- if c1 then return 10 else return 20 in
-    let y <- if c2 then return 0 else return 5 in
-        return x - y
-    \end{verbatim}
-    With that in hand, we may want to define effect handlers:
+%     \begin{verbatim}
+%     let c1 <- do Choice () in
+%     let c2 <- do Choice () in
+%     let x <- if c1 then return 10 else return 20 in
+%     let y <- if c2 then return 0 else return 5 in
+%         return x - y
+%     \end{verbatim}
+%     With that in hand, we may want to define effect handlers:
 
-    \begin{verbatim}
-    handle ... with {
-        Choice p r ->
-            let t <- r 1 in
-            let f <- r 0 in
-            <PLACEHOLDER> |
-        return x -> return x
-    }
-    \end{verbatim}
-    where in the \verb!<PLACEHOLDER>! we can define on what to do with the
-    computation. For example, min-max strategy for picking the minimum value:
+%     \begin{verbatim}
+%     handle ... with {
+%         Choice p r ->
+%             let t <- r 1 in
+%             let f <- r 0 in
+%             <PLACEHOLDER> |
+%         return x -> return x
+%     }
+%     \end{verbatim}
+%     where in the \verb!<PLACEHOLDER>! we can define what to do with the
+%     computation. For example, min-max strategy for picking the minimum value:
 
-    \begin{verbatim}
-    if t < f then return t else return f
-    \end{verbatim}
-    where the code evaluates to \verb!5!. Another example is a handler that
-    collects all possible results, which can be achieved by putting
-    \verb!return (t, f)! in the \verb!<PLACEHOLDER>!, which evaluates to
-    \verb!((10, 5), (20, 15))!.
+%     \begin{verbatim}
+%     if t < f then return t else return f
+%     \end{verbatim}
+%     where the code evaluates to \verb!5!. Another example is a handler that
+%     collects all possible results, which can be achieved by putting
+%     \verb!return (t, f)! in the \verb!<PLACEHOLDER>!, which evaluates to
+%     \verb!((10, 5), (20, 15))!.
 
-    \subsection{Exceptions}
+%     \subsection{Exceptions}
 
-    Exceptions are simply algebraic effect handlers which drop the resumption.
+%     Exceptions are simply algebraic effect handlers which drop the resumption.
 
-    \begin{verbatim}
-    handle
-        if x == 0 then do ZeroDivisionError ()
-                  else return 1/x
-    with {
-        ZeroDivisionError p r -> return 42 |
-        return x -> return x
-    }
-    \end{verbatim}
-    Where we imagine that $x$ variable has been bound previously.
+%     \begin{verbatim}
+%     handle
+%         if x == 0 then do ZeroDivisionError ()
+%                   else return 1/x
+%     with {
+%         ZeroDivisionError p r -> return 42 |
+%         return x -> return x
+%     }
+%     \end{verbatim}
+%     Where we imagine that $x$ variable has been bound previously.
 
-    \subsection{Taming Side effects}
+%     \subsection{Taming Side effects}
 
-    The complexity of the programs and their performance usually comes from side effects.
-    Algebraic effects allow us to define code in a declarative manner, and hence
-    neatly tame the side effects that they produce. This gives us a lot of flexibility
-    in the actual meaning without duplicating the code. Let's consider the following
-    very basic code snippet:
+%     The complexity of the programs and their performance usually comes from side effects.
+%     Algebraic effects allow us to define code in a declarative manner, and hence
+%     neatly tame the side effects that they produce. This gives us a lot of flexibility
+%     in the actual meaning without duplicating the code. Let's consider the following
+%     very basic code snippet:
 
-    \begin{verbatim}
-    let x <- do Fetch () in
-    -- operate on x
-    \end{verbatim}
+%     \begin{verbatim}
+%     let x <- do Fetch () in
+%     -- operate on x
+%     \end{verbatim}
 
-    The code is dependent on a context in which it is executed, which here is
-    the handler that defines the behaviour of the algebraic \verb!Fetch! effect.
-    In the imperative, or even functional approach, we would need to provide
-    the interface for fetching the data by doing dependency injection or even
-    embedding the operation directly. Here we are just stating what operation
-    we are performing, leaving the interpretation up to the execution context,
-    which could do the fetching or mock the external resource.
+%     The code is dependent on a context in which it is executed, which here is
+%     the handler that defines the behaviour of the algebraic \verb!Fetch! effect.
+%     In the imperative, or even functional approach, we would need to provide
+%     the interface for fetching the data by doing dependency injection or even
+%     embedding the operation directly. Here we are just stating what operation
+%     we are performing, leaving the interpretation up to the execution context,
+%     which could do the fetching or mock the external resource.
 
-    TODO subset of this section's content is explained already
+%     \noindent
+%     TODO subset of this section's content is explained already
 
-    These implications are straightforward when looking from a categorical standpoint,
-    where effects are viewed as free models of algebraic theories~\cite{adequacy},
-    and handlers are homomorphisms preserving the model structure~\cite{handlers}.
-    Nevertheless, the results are very exciting for programming use cases. The current
-    Freak implementation does not support I/O.
+%     These implications are straightforward when looking from a categorical standpoint,
+%     where effects are viewed as free models of algebraic theories~\cite{adequacy},
+%     and handlers are homomorphisms preserving the model structure~\cite{handlers}.
+%     Nevertheless, the results are very exciting for programming use cases. The current
+%     Freak implementation does not support I/O.
 
-\section{Coexamples}
+% \section{Coexamples}
 
-    Examples for cohandlers
+%     Examples for cohandlers
 
-\section{Usage guide}
+% \section{Usage guide}
 
-    % Outdated
-    As of this day, two implementations are available, one based on the curried
-    translation and Appel~\cite{appel-continuations}, and the second one based
-    directly on the uncurried translation with continuations as explicit stacks
-    from paper. More details can be found in Section~\ref{chapter:implementation}.
-    All commands are available within \verb!src!  directory.
+%     % Outdated
+%     As of this day, two implementations are available, one based on the curried
+%     translation and Appel~\cite{appel-continuations}, and the second one based
+%     directly on the uncurried translation with continuations as explicit stacks
+%     from paper. More details can be found in Section~\ref{chapter:implementation}.
+%     All commands are available within the \verb!src! directory.
 
-    \subsection{Build and install}
+%     \subsection{Build and install}
 
-    \begin{itemize}
-        \item Install dependencies: \verb!make install!
-        \item Select implementation: \verb!make link-lists! (default) vs \verb!make link-appel!
-        \item Compile: \verb!make build!
-        \item Link to PATH:~\verb!sudo make link!
-        \item Remove artifacts: \verb!make clean!
-    \end{itemize}
+%     \begin{itemize}
+%         \item Install dependencies: \verb!make install!
+%         \item Select implementation: \verb!make link-lists! (default) vs \verb!make link-appel!
+%         \item Compile: \verb!make build!
+%         \item Link to PATH:~\verb!sudo make link!
+%         \item Remove artifacts: \verb!make clean!
+%     \end{itemize}
 
-    After compiling and linking program to PATH, one may evaluate program as
-    follows: \verb!freak programs/choicesList.fk!. The actual code is described in Section~\ref{sec:choice-example}
+%     After compiling and linking program to PATH, one may evaluate program as
+%     follows: \verb!freak programs/choicesList.fk!. The actual code is described in Section~\ref{sec:choice-example}
 
-    \subsection{Running tests}
+%     \subsection{Running tests}
 
-    Test cases are available \href{https://github.com/Tomatosoup97/freak/blob/master/src/Tests.hs}{\underline{here}},
-    they include both inline and file-based tests. For more details about
-    writing tests, one may refer to \textit{HUnit documentation}~\cite{hunit-docs}.
+%     Test cases are available \href{https://github.com/Tomatosoup97/freak/blob/master/src/Tests.hs}{\underline{here}},
+%     they include both inline and file-based tests. For more details about
+%     writing tests, one may refer to \textit{HUnit documentation}~\cite{hunit-docs}.
 
-    \begin{itemize}
-        \item Run tests: \verb!make tests!
-        \item Run code linter: \verb!make lint!
-        \item Compile, run linter and tests: \verb!make check!
-    \end{itemize}
+%     \begin{itemize}
+%         \item Run tests: \verb!make tests!
+%         \item Run code linter: \verb!make lint!
+%         \item Compile, run linter and tests: \verb!make check!
+%     \end{itemize}
 
 \chapter{Calculus of Freak language}\label{chapter:calculus-of-freak-language}
-\section{Syntax}
+% \section{Syntax}
 
-    TODO Extend language with basic constructs for usability
+%     \noindent
+%     TODO Extend language with basic constructs for usability
 
-    The syntax for the calculus is shown below. $nat \; n$ represents an integer $n$,
-    $V \oplus W$ and $V \approx W$ are respectively binary and relational operators,
-    where we support basic arithmetic and comparison operations.
-    \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ is a standard branching
-    statement. The other constructs are just as in Links, with slight syntax
-    modifications. Actual programs in Freak can be found in Section~\ref{sec:examples}.
+%     The syntax for the calculus is shown below. $nat \; n$ represents an integer $n$,
+%     $V \oplus W$ and $V \approx W$ are respectively binary and relational operators,
+%     where we support basic arithmetic and comparison operations.
+%     \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ is a standard branching
+%     statement. The other constructs are just as in Links, with slight syntax
+%     modifications. Actual programs in Freak can be found in Section~\ref{sec:examples}.
 
-    \begin{grammar}
+%     \begin{grammar}
 
-        <Values V, W> $::=$ $ x $ | $nat \; n$ \\
-            | $ \backslash x : A \rightarrow M $ | \textbf{rec} $ g \; x \rightarrow M $\\
-            | $V \oplus W$ | $V \approx W$ \\
-            | <> | $ \{ \ell = V; W\} $  | ${[ \ell \; V]}^{R}$
+%         <Values V, W> $::=$ $ x $ | $nat \; n$ \\
+%             | $ \backslash x : A \rightarrow M $ | \textbf{rec} $ g \; x \rightarrow M $\\
+%             | $V \oplus W$ | $V \approx W$ \\
+%             | <> | $ \{ \ell = V; W\} $  | ${[ \ell \; V]}^{R}$
 
-        <Computations M, N> $::=$ $ V $ $ W $ \\
-            | \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ \\
-            | \textbf{let} $\{\ell  = x; y\} = V$ \textbf{in} $ N $ \\
-            | \textbf{case} $V \{ \ell \; x \rightarrow M; y \rightarrow N\}$ | \textbf{absurd} $ V $ \\
-            | \textbf{return} $V$ | \textbf{let} $ x \leftarrow M $ \textbf{in} $ N $ \\
-            | \textbf{do} $\ell \; V$ | \textbf{handle} $M$ \textbf{with} $ \{ H \} $
+%         <Computations M, N> $::=$ $ V $ $ W $ \\
+%             | \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ \\
+%             | \textbf{let} $\{\ell  = x; y\} = V$ \textbf{in} $ N $ \\
+%             | \textbf{case} $V \{ \ell \; x \rightarrow M; y \rightarrow N\}$ | \textbf{absurd} $ V $ \\
+%             | \textbf{return} $V$ | \textbf{let} $ x \leftarrow M $ \textbf{in} $ N $ \\
+%             | \textbf{do} $\ell \; V$ | \textbf{handle} $M$ \textbf{with} $ \{ H \} $
 
-        <Handlers H> $::=$ \textbf{return} $ x \rightarrow M $ | $ \ell \; p \; r \rightarrow M, H $
+%         <Handlers H> $::=$ \textbf{return} $ x \rightarrow M $ | $ \ell \; p \; r \rightarrow M, H $
 
-        <Binary operators $\oplus$> $::=$ + | $-$ | * | /
+%         <Binary operators $\oplus$> $::=$ + | $-$ | * | /
 
-        <Relational operators $\approx$> $::=$ $ \textless $ | $\leqslant$ | $>$ | $\geqslant$ | == | $!= $
+%         <Relational operators $\approx$> $::=$ $ \textless $ | $\leqslant$ | $>$ | $\geqslant$ | == | $!= $
 
-    \end{grammar}
+%     \end{grammar}
 
-\section{Typing Rules}
-\section{Operational Semantics}
+% \section{Typing Rules}
+% \section{Operational Semantics}
 
-    The source language's dynamics have been described
-    extensively by providing small-step operational semantics,
-    continuation passing style transformation~\cite{handlers-cps} as well
-    as abstract machine~\cite{liberating-effects}, which was proved to coincide
-    with CPS translation. That being said, Freak introduces new basic
-    constructs to the language, for which we shall define the semantics.
+%     The source language's dynamics have been described
+%     extensively by providing small-step operational semantics,
+%     continuation passing style transformation~\cite{handlers-cps} as well
+%     as abstract machine~\cite{liberating-effects}, which was proved to coincide
+%     with CPS translation. That being said, Freak introduces new basic
+%     constructs to the language, for which we shall define the semantics.
 
-    TODO Rewrite here operational semantics from Links paper
+%     \noindent
+%     TODO Rewrite here operational semantics from Links paper
 
-    \begin{flushleft}
-    Extension of the evaluation contexts:
-    \end{flushleft}
+%     \begin{flushleft}
+%     Extension of the evaluation contexts:
+%     \end{flushleft}
 
-    \begin{flushleft}
-    $\mathcal{E} ::= \mathcal{E} \oplus W \; | \; nat \; n \oplus \mathcal{E} \; |$ \textbf{if} $\mathcal{E}$ \textbf{then} $M$ \textbf{else} $N$
-    \end{flushleft}
+%     \begin{flushleft}
+%     $\mathcal{E} ::= \mathcal{E} \oplus W \; | \; nat \; n \oplus \mathcal{E} \; |$ \textbf{if} $\mathcal{E}$ \textbf{then} $M$ \textbf{else} $N$
+%     \end{flushleft}
 
-    \begin{flushleft}
-    Small-step operational semantics:
-    \end{flushleft}
+%     \begin{flushleft}
+%     Small-step operational semantics:
+%     \end{flushleft}
 
-    \begin{flushleft}
-    \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow M \quad \quad $ if $n \neq 0$ \\
-    \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow N \quad \quad $ if $n = 0$
-    \end{flushleft}
+%     \begin{flushleft}
+%     \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow M \quad \quad $ if $n \neq 0$ \\
+%     \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow N \quad \quad $ if $n = 0$
+%     \end{flushleft}
 
-    \begin{flushleft}
-    $nat \; n \oplus nat \; n' \rightsquigarrow n'' \quad \quad $    if $ n'' = n \oplus n' $ \\
-    $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
-    $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
+%     \begin{flushleft}
+%     $nat \; n \oplus nat \; n' \rightsquigarrow n'' \quad \quad $    if $ n'' = n \oplus n' $ \\
+%     $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
+%     $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
 
-    \end{flushleft}
+%     \end{flushleft}
 
-\section{Continuation Passing Style Transformation}
-    \ldots
+% \section{Continuation Passing Style Transformation}
+%     \ldots
 
 \chapter{Implementation}\label{chapter:implementation}
 
-    The Freak implementation is available at \href{https://github.com/Tomatosoup97/freak}{\underline{https://github.com/Tomatosoup97/freak}},
-    written purely in Haskell. While the paper provided a good overview of the
-    language and the translation, the lower-level details were omitted. That
-    being said, two inherently different takes at the implementations were made.
-    The first one is based on curried translation and A. Appel~\cite{appel-continuations}
-    book, and the second one directly on the uncurried translation to target
-    calculus with continuations represented as explicit stacks from the paper.
-    We start by presenting core data structures, and afterwards move to actual
-    translation details.
+%     The Freak implementation is available on github~\cite{freak}, written purely
+%     in Haskell. While the paper provided a good overview of the language and the
+%     translation, the lower-level details were omitted. That being said, two
+%     inherently different takes at implementations were made. The first one
+%     is based on curried translation and A. Appel~\cite{appel-continuations}
+%     book, and the second one directly on the uncurried translation to target
+%     calculus with continuations represented as explicit stacks from the paper.
+%     We start by presenting core data structures, and afterwards move to actual
+%     translation details.
 
-    \section{Abstract Syntax Tree}\label{sec:implementation-ast}
+%     \section{Abstract Syntax Tree}\label{sec:implementation-ast}
 
-    The language's AST is defined without surprises, just as syntax is:
+%     The language's AST is defined without surprises, just as syntax is:
 
-    \begin{verbatim}
-data Value
-    = VVar Var
-    | VNum Integer
-    | VLambda Var ValueType Comp
-    | VFix Var Var Comp
-    | VUnit
-    | VPair Value Value
-    | VRecordRow (RecordRow Value)
-    | VExtendRow Label Value Value
-    | VVariantRow (VariantRow Value)
-    | VBinOp BinaryOp Value Value
+%     \begin{verbatim}
+% data Value
+%     = VVar Var
+%     | VNum Integer
+%     | VLambda Var ValueType Comp
+%     | VFix Var Var Comp
+%     | VUnit
+%     | VPair Value Value
+%     | VRecordRow (RecordRow Value)
+%     | VExtendRow Label Value Value
+%     | VVariantRow (VariantRow Value)
+%     | VBinOp BinaryOp Value Value
 
-data Comp
-    = EVal Value
-    | ELet Var Comp Comp
-    | EApp Value Value
-    | ESplit Label Var Var Value Comp
-    | ECase Value Label Var Comp Var Comp
-    | EReturn Value
-    | EAbsurd Value
-    | EIf Value Comp Comp
-    | EDo Label Value
-    | EHandle Comp Handler
-    \end{verbatim}
-    Similarly for the target calculus data structure. However, as one may notice,
-    for convenience the \textbf{let} translation is homomorphic, as opposed to be
-    to lambda abstracted with immediate application:
+% data Comp
+%     = EVal Value
+%     | ELet Var Comp Comp
+%     | EApp Value Value
+%     | ESplit Label Var Var Value Comp
+%     | ECase Value Label Var Comp Var Comp
+%     | EReturn Value
+%     | EAbsurd Value
+%     | EIf Value Comp Comp
+%     | EDo Label Value
+%     | EHandle Comp Handler
+%     \end{verbatim}
+%     Similarly for the target calculus data structure. However, as one may notice,
+%     for convenience the \textbf{let} translation is homomorphic, as opposed to be
+%     to lambda abstracted with immediate application:
 
-    \begin{verbatim}
-data UValue
-    = UVar Var
-    | UNum Integer
-    | UBool Bool
-    | ULambda Var UComp
-    | UUnit
-    | UPair UValue UValue
-    | ULabel Label
-    | URec Var Var UComp
-    | UBinOp BinaryOp UValue UValue
+%     \begin{verbatim}
+% data UValue
+%     = UVar Var
+%     | UNum Integer
+%     | UBool Bool
+%     | ULambda Var UComp
+%     | UUnit
+%     | UPair UValue UValue
+%     | ULabel Label
+%     | URec Var Var UComp
+%     | UBinOp BinaryOp UValue UValue
 
-data UComp
-    = UVal UValue
-    | UApp UComp UComp
-    | USplit Label Var Var UValue UComp
-    | UCase UValue Label UComp Var UComp
-    | UIf UValue UComp UComp
-    | ULet Var UComp UComp
-    | UAbsurd UValue
+% data UComp
+%     = UVal UValue
+%     | UApp UComp UComp
+%     | USplit Label Var Var UValue UComp
+%     | UCase UValue Label UComp Var UComp
+%     | UIf UValue UComp UComp
+%     | ULet Var UComp UComp
+%     | UAbsurd UValue
 
-    \end{verbatim}
-    The final answer, common to both evaluations, is represented as a \verb!DValue!,
-    where the meaning of the coproduct is as one would expect:
+%     \end{verbatim}
+%     The final answer, common to both evaluations, is represented as a \verb!DValue!,
+%     where the meaning of the coproduct is as one would expect:
 
-    \begin{verbatim}
-type Label = String
-type FuncRecord = [DValue] -> Either Error DValue
-data DValue
-    = DNum Integer
-    | DLambda FuncRecord
-    | DUnit
-    | DPair DValue DValue
-    | DLabel Label
-    \end{verbatim}
+%     \begin{verbatim}
+% type Label = String
+% type FuncRecord = [DValue] -> Either Error DValue
+% data DValue
+%     = DNum Integer
+%     | DLambda FuncRecord
+%     | DUnit
+%     | DPair DValue DValue
+%     | DLabel Label
+%     \end{verbatim}
 
-    \section{Target calculus}
+%     \section{Target calculus}
 
-    \section{Curried translation}
+%     \section{Curried translation}
 
-    The first take was heavily inspired by A. Appel's Compiling with
-    Continuations~\cite{appel-continuations}, which provides a translation for
-    a simplified ML calculus. The calculus was extended and translation adapted to
-    handle algebraic effects and their handlers. The translation is based on the curried
-    first-order translation. That being said, the source code diverged a lot from the
-    paper on which it was based, leading to a different transformation for which the
-    correctness and cohesion with operational semantics should be proved separately.
-    Indeed, while the interpreter worked well on the use cases defined in tests, the
-    evaluation had a part which was not tail-recursive. What's more, nested handlers
-    were not supported, and the implementation was found to be trickier than it should,
-    as it was not obvious on how to adopt the technique proposed in the paper.
+%     The first take was heavily inspired by A. Appel's Compiling with
+%     Continuations~\cite{appel-continuations}, which provides a translation for
+%     a simplified ML calculus. The calculus was extended and translation adapted to
+%     handle algebraic effects and their handlers. The translation is based on the curried
+%     first-order translation. That being said, the source code diverged a lot from the
+%     paper on which it was based, leading to a different transformation for which the
+%     correctness and cohesion with operational semantics should be proved separately.
+%     Indeed, while the interpreter worked well on the use cases defined in tests, the
+%     evaluation had a part which was not tail-recursive. What's more, nested handlers
+%     were not supported, and the implementation was found to be trickier than it should,
+%     as it was not obvious on how to adopt the technique proposed in the paper.
 
-    In terms of improving the performance of the evaluation, uncurried higher-order
-    translation should be adapted, so that administrative redexes are contracted
-    and proper tail-recursion is obtained. The core data structure, into which the
-    source program is transformed, is defined as follows:
+%     In terms of improving the performance of the evaluation, uncurried higher-order
+%     translation should be adapted, so that administrative redexes are contracted
+%     and proper tail-recursion is obtained. The core data structure, into which the
+%     source program is transformed, is defined as follows:
 
-    \begin{verbatim}
-data ContComp
-    = CPSApp CValue [CValue]
-    | CPSResume CValue ContComp
-    | CPSFix Var [Var] ContComp ContComp
-    | CPSBinOp BinaryOp CValue CValue Var ContComp
-    | CPSValue CValue
-    | CPSLet Var CValue ContComp
-    | CPSSplit Label Var Var CValue ContComp
-    | CPSCase CValue Label Var ContComp Var ContComp
-    | CPSIf CValue ContComp ContComp
-    | CPSAbsurd CValue
-    \end{verbatim}
-    Most of the terms at the end have a coinductive reference to itself, which
-    represents the rest of the computation that needs to be done. For more
-    clarification, one may take a look into the book mentioned
-    above~\cite{appel-continuations}. The source code for curried translation and
-    evaluation can be found respectively in \verb!CPSAppel.hs! and
-    \verb!EvalCPS.hs!.
+%     \begin{verbatim}
+% data ContComp
+%     = CPSApp CValue [CValue]
+%     | CPSResume CValue ContComp
+%     | CPSFix Var [Var] ContComp ContComp
+%     | CPSBinOp BinaryOp CValue CValue Var ContComp
+%     | CPSValue CValue
+%     | CPSLet Var CValue ContComp
+%     | CPSSplit Label Var Var CValue ContComp
+%     | CPSCase CValue Label Var ContComp Var ContComp
+%     | CPSIf CValue ContComp ContComp
+%     | CPSAbsurd CValue
+%     \end{verbatim}
+%     Most of the terms at the end have a coinductive reference to itself, which
+%     represents the rest of the computation that needs to be done. For more
+%     clarification, one may take a look into the book mentioned
+%     above~\cite{appel-continuations}. The source code for curried translation and
+%     evaluation can be found respectively in \verb!CPSAppel.hs! and
+%     \verb!EvalCPS.hs!.
 
-    \section{Uncurried translation}
+%     \section{Uncurried translation}
 
-    Having in mind the drawbacks mentioned above, alternative translation was
-    written, that coincides with the translation from the paper. Namely, with
-    the uncurried translation to target calculus with continuations represented
-    as explicit stacks. The target calculus was described in Section~\ref{sec:implementation-ast},
-    for which the evaluation is straightforward. The continuations are represented
-    as \verb!Cont!, with syntactic distinction between pure and effectful computations,
-    which occupy alternating positions in the stack. Explicit distinction gave
-    more control in the source code.
+%     Having in mind the drawbacks mentioned above, alternative translation was
+%     written, that coincides with the translation from the paper. Namely, with
+%     the uncurried translation to target calculus with continuations represented
+%     as explicit stacks. The target calculus was described in Section~\ref{sec:implementation-ast},
+%     for which the evaluation is straightforward. The continuations are represented
+%     as \verb!Cont!, with syntactic distinction between pure and effectful computations,
+%     which occupy alternating positions in the stack. Explicit distinction gave
+%     more control in the source code.
 
-    \begin{verbatim}
-type CPSMonad a = ExceptT Error (State Int) a
+%     \begin{verbatim}
+% type CPSMonad a = ExceptT Error (State Int) a
 
-type ContF = UValue -> [Cont] -> CPSMonad UComp
+% type ContF = UValue -> [Cont] -> CPSMonad UComp
 
-data Cont = Pure ContF
-          | Eff ContF
-    \end{verbatim}
-    Where \verb!CPSMonad! is a monad transformer over \verb!Either! and \verb!State!.
-    \verb!State! was required to generate labels for fresh variables that
-    came from the translation. The core code is split into five functions:
+% data Cont = Pure ContF
+%           | Eff ContF
+%     \end{verbatim}
+%     Where \verb!CPSMonad! is a monad transformer over \verb!Either! and \verb!State!.
+%     \verb!State! was required to generate labels for fresh variables that
+%     came from the translation. The core code is split into five functions:
 
-    \begin{verbatim}
-cps     :: Comp    -> [Cont] -> CPSMonad UComp
-cpsVal  :: Value   -> [Cont] -> CPSMonad UValue
-cpsHRet :: Handler -> Cont
-cpsHOps :: Handler -> Cont
-forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
-    \end{verbatim}
-    Where the first two are implementing cps for computations and values.
-    \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
-    based on a given handler. The last one is responsible for forwarding the
-    computation to the outer handler.
+%     \begin{verbatim}
+% cps     :: Comp    -> [Cont] -> CPSMonad UComp
+% cpsVal  :: Value   -> [Cont] -> CPSMonad UValue
+% cpsHRet :: Handler -> Cont
+% cpsHOps :: Handler -> Cont
+% forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
+%     \end{verbatim}
+%     Where the first two are implementing cps for computations and values.
+%     \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
+%     based on a given handler. The last one is responsible for forwarding the
+%     computation to the outer handler.
 
-    This results in an implementation that finally supports nested handlers,
-    as can be seen by evaluating \verb!programs/complexNestedHandlers.fk! program.
-    Unfortunately, following closely translation from the paper resulted in
-    a behaviour, in which invoked resumption forgets its pure continuation. This means,
-    that the following code, evaluating correctly on the Appel-based translation,
-    returns 0 rather than 1:
+%     This results in an implementation that finally supports nested handlers,
+%     as can be seen by evaluating \verb!programs/complexNestedHandlers.fk! program.
+%     Unfortunately, following closely translation from the paper resulted in
+%     a behaviour, in which invoked resumption forgets its pure continuation. This means,
+%     that the following code, evaluating correctly on the Appel-based translation,
+%     returns 0 rather than 1:
 
-    \begin{verbatim}
-handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
-    \end{verbatim}
-    Nevertheless, working out this issue appears as less demanding than coping with
-    discrepancies created in the first translation. The source code for uncurried
-    translation and evaluation can be found respectively in \verb!CPSLists.hs! and
-    \verb!EvalTarget.hs!.
+%     \begin{verbatim}
+% handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
+%     \end{verbatim}
+%     Nevertheless, working out this issue appears as less demanding than coping with
+%     discrepancies created in the first translation. The source code for uncurried
+%     translation and evaluation can be found respectively in \verb!CPSLists.hs! and
+%     \verb!EvalTarget.hs!.
 
-    TODO Drop of continuations is still an issue
+%     \noindent
+%     TODO Drop of continuations is still an issue
 
-    \section{Cohandlers}
-    \ldots
+%     \section{Cohandlers}
+%     \ldots
 
-    TODO Simple implementation for cohandlers
+%     \noindent
+%     TODO Simple implementation for cohandlers
 
-    \section{Source Code Structure}
+%     \section{Source Code Structure}
 
-    The source code is divided into a number of modules, where the most
-    crucial parts have already been described.
+%     The source code is divided into a number of modules, where the most
+%     crucial parts have already been described.
 
-    \begin{verbatim}
-    AST.hs          - AST data structures
-    CommonCPS.hs    - Common functions for CPS translation
-    CommonEval.hs   - Common functions for evaluation
-    CPSAppel.hs     - Appel-based CPS translation
-    CPSLists.hs     - Uncurried CPS translation
-    EvalCPS.hs      - Evaluation of the Appel's CPS structure
-    EvalTarget.hs   - Evaluation of the target calculus
-    Freak.hs        - API for the language
-    Main.hs         - Main module running evaluator on given filename
-    Parser.hs       - Parser and lexer
-    TargetAST.hs    - AST for the target calculus
-    Tests.hs        - Tests module
-    Types.hs        - Common types definition
-    programs/       - Exemplary programs used in tests
-    \end{verbatim}
+%     \begin{verbatim}
+%     AST.hs          - AST data structures
+%     CommonCPS.hs    - Common functions for CPS translation
+%     CommonEval.hs   - Common functions for evaluation
+%     CPSAppel.hs     - Appel-based CPS translation
+%     CPSLists.hs     - Uncurried CPS translation
+%     EvalCPS.hs      - Evaluation of the Appel's CPS structure
+%     EvalTarget.hs   - Evaluation of the target calculus
+%     Freak.hs        - API for the language
+%     Main.hs         - Main module running evaluator on given filename
+%     Parser.hs       - Parser and lexer
+%     TargetAST.hs    - AST for the target calculus
+%     Tests.hs        - Tests module
+%     Types.hs        - Common types definition
+%     programs/       - Exemplary programs used in tests
+%     \end{verbatim}
 
 \chapter{Conclusion}\label{chapter:conclusion}
-\section{Summary}
+% \section{Summary}
 
-    What was achieved, what was described, what needs to be done or researched.
+%     What was achieved, what was described, what needs to be done or researched.
 
-\section{Future work}
+% \section{Future work}
 
-    \subsection{Abstract machine}
+%     \subsection{Abstract machine}
 
-    The Links language also provides small-step operational semantics and
-    an abstract machine~\cite{liberating-effects}. Implementing another way
-    of evaluation could serve as a way to empirically assert correctness,
-    as opposed to formally.
+%     The Links language also provides small-step operational semantics and
+%     an abstract machine~\cite{liberating-effects}. Implementing another way
+%     of evaluation could serve as a way to empirically assert correctness,
+%     as opposed to formally.
 
-    \subsection{Type inference and row polymorphism}
+%     \subsection{Type inference and row polymorphism}
 
-    The type system as of this day is not implemented, as the focus has been put
-    on CPS transformation. Further work is required here, especially considering
-    the fact that a huge advantage of algebraic effects is that they are explicitly
-    defined in the type of a computation.
+%     The type system as of this day is not implemented, as the focus has been put
+%     on CPS transformation. Further work is required here, especially considering
+%     the fact that a huge advantage of algebraic effects is that they are explicitly
+%     defined in the type of a computation.
 
-    \subsection{Multiple instances of algebraic effects}
+%     \subsection{Multiple instances of algebraic effects}
 
-    The Freak language is limited to a single instance of an effect. We would
-    need to support cases where many instances of the algebraic effects, with
-    the same handler code, could be instantiated. The current state of the
-    art introduces a concept of resources and instances, as in Eff~\cite{programming-in-eff},
-    or instance variables, as in Helium~\cite{binders-labels}.
+%     The Freak language is limited to a single instance of an effect. We would
+%     need to support cases where many instances of the algebraic effects, with
+%     the same handler code, could be instantiated. The current state of the
+%     art introduces a concept of resources and instances, as in Eff~\cite{programming-in-eff},
+%     or instance variables, as in Helium~\cite{binders-labels}.
 
-    \subsection{Selective CPS}
+%     \subsection{Selective CPS}
 
-    Other languages, like Koka~\cite{leijen-koka}, or even the core of the Links, are
-    performing selective CPS translation, which reduces the overhead on code
-    that does not perform algebraic effects. Our current translation is fully
-    embedded in the CPS.\@
+%     Other languages, like Koka~\cite{leijen-koka}, or even the core of the Links, are
+%     performing selective CPS translation, which reduces the overhead on code
+%     that does not perform algebraic effects. Our current translation is fully
+%     embedded in the CPS.\@
 
-    \subsection{Exceptions as separate constructs}
+%     \subsection{Exceptions as separate constructs}
 
-    Exceptions are a trivial example of algebraic effect where the resumption is
-    discarded, and as described in \S 4.5~\cite{handlers-cps}, they can be modeled
-    as a separate construct to improve performance.
+%     Exceptions are a trivial example of algebraic effect where the resumption is
+%     discarded, and as described in \S 4.5~\cite{handlers-cps}, they can be modeled
+%     as a separate construct to improve performance.
 
-    \subsection{Shallow handlers}
+%     \subsection{Shallow handlers}
 
-    Shallow and deep handlers while being able to simulate each other up to
-    administrative reductions, have a very different meaning from a theoretical point
-    of view. Implementing them as defined by Lindley et al.~\cite{shallow-handlers}
-    could be another way of enhancing Freak.
+%     Shallow and deep handlers while being able to simulate each other up to
+%     administrative reductions, have a very different meaning from a theoretical point
+%     of view. Implementing them as defined by Lindley et al.~\cite{shallow-handlers}
+%     could be another way of enhancing Freak.
 
 
 %%%%% BIBLIOGRAPHY
