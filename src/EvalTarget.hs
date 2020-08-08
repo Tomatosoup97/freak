@@ -8,9 +8,9 @@ import Types
 
 eval :: Env -> UComp -> Either Error DValue
 eval env c = case c of
-    USplit l x y pair comp -> do
-        (DPair lv rv) <- eval env (UVal pair)
-        let extEnv = Map.insert y rv (Map.insert x lv env)
+    USplit l x y pair comp ->
+         eval env (UVal pair) >>= \(DPair lv rv) ->
+        let extEnv = Map.insert y rv (Map.insert x lv env) in
         eval extEnv comp
     UApp fnComp argValue -> do
         fnVal <- eval env fnComp
@@ -18,8 +18,8 @@ eval env c = case c of
         case fnVal of
             DLambda fun -> fun [argDValue]
             e -> Left $ EvalError $ "Application of non-lambda term " ++ show e
-    UIf e tC fC -> do
-        (DNum n) <- eval env (UVal e)
+    UIf e tC fC ->
+        eval env (UVal e) >>= \(DNum n) ->
         eval env (if n > 0 then tC else fC)
     UCase label caseLabel tComp y fComp -> do
         l <- eval env (UVal label)
@@ -33,9 +33,9 @@ eval env c = case c of
         eval env' comp
     -- Values
     UVal (UBinOp op e1 e2) -> do
-        (DNum n1) <- eval env (UVal e1)
-        (DNum n2) <- eval env (UVal e2)
-        return $ DNum $ convOp op (n1, n2)
+        eval env (UVal e1) >>= \(DNum n1) ->
+            eval env (UVal e2) >>= \(DNum n2) ->
+            return $ DNum $ convOp op (n1, n2)
     UVal (UVar x) -> case Map.lookup x env of
         Just v -> return v
         Nothing -> unboundVarErr x
