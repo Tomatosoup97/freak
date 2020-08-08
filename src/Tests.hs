@@ -31,6 +31,12 @@ main = hspec $ do
       evalProgram "return 5 / 2" `shouldBe` (Right (DNum 2))
       evalProgram "return 6 / 2" `shouldBe` (Right (DNum 3))
 
+    it "Strings" $ do
+      evalProgram "return \"value\"" `shouldBe` (Right (DStr "value"))
+      evalProgram "return \"x\"" `shouldBe` (Right (DStr "x"))
+      -- evalProgram "return \"this is string\"" `shouldBe` (Right (DStr "this is string"))
+      evalProgram "return \"x1\"" `shouldBe` (Right (DStr "x1"))
+
     it "Order of operations" $ do
       evalProgram "return 2 + 3 * 2" `shouldBe` (Right (DNum 8))
       evalProgram "return 2 * 3 + 2" `shouldBe` (Right (DNum 8))

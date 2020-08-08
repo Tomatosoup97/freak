@@ -39,6 +39,7 @@ cpsVal :: Value -> [Cont] -> CPSMonad UValue
 cpsVal e ks = case e of
     VVar x -> return $ UVar x
     VNum n -> return $ UNum n
+    VStr s -> return $ UStr s  -- todo: write about support for strings
     VRecordRow row -> undefined -- todo: records are constructed using ExtendRow
     VUnit -> return UUnit
     VPair e1 e2 -> do

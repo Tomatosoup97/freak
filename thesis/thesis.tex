@@ -829,15 +829,18 @@ TODO muuuch longer explanation of this topic
     TODO Extend language with basic constructs for usability
 
     The syntax for the calculus is shown below. $nat \; n$ represents an integer $n$,
-    $V \oplus W$ and $V \approx W$ are respectively binary and relational operators,
-    where we support basic arithmetic and comparison operations.
-    \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ is a standard branching
-    statement. The other constructs are just as in Links, with slight syntax
-    modifications. Actual programs in Freak can be found in Section~\ref{sec:examples}.
+    `string' a string value, $V \oplus W$ and $V \approx W$ are respectively
+    binary and relational operators, where we support basic arithmetic and
+    comparison operations. \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$
+    is a standard branching statement. The other constructs are just as in Links,
+    with slight syntax modifications. Actual programs in Freak can be found in
+    Section~\ref{sec:examples}.
 
+    % TODO proper alignment
     \begin{grammar}
 
-        <Values V, W> $::=$ $ x $ | $nat \; n$ \\
+        <Values V, W> $::=$ $ x $ \\
+            | $nat \; n$ | `string'  \\
             | $ \backslash x : A \rightarrow M $ | \textbf{rec} $ g \; x \rightarrow M $\\
             | $V \oplus W$ | $V \approx W$ \\
             | <> | $ \{ \ell = V; W\} $  | ${[ \ell \; V]}^{R}$

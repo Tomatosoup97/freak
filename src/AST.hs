@@ -11,6 +11,7 @@ type RecordRow a = Map.Map Label a -- todo: presence variables?
 data Value
     = VVar Var
     | VNum Integer
+    | VStr String
     | VLambda Var ValueType Comp
     | VFix Var Var Comp
     | VUnit

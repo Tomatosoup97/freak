@@ -7,6 +7,7 @@ import AST
 data UValue
     = UVar Var
     | UNum Integer
+    | UStr String
     | UBool Bool
     | ULambda Var UComp
     | UUnit
@@ -32,6 +33,7 @@ parens s = "(" ++ s ++ ")"
 instance Show UValue where
     show (UBinOp op vL vR) = parens $ show vL ++ show op ++ show vR
     show (UNum n) = show n
+    show (UStr s) = "\"" ++ show s ++ "\""
     show  UUnit = "()"
     show (UPair l r) = parens $ show l ++ ", " ++ show r
     show (ULabel l) = parens $ "L: " ++ show l

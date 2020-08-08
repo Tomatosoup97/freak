@@ -41,12 +41,13 @@ languageDef =
                                      ]
            , Token.reservedOpNames = [
                 "+", "*", "<-", "->", "\\", ":", "(", ")", "|",
-                "<", ">", ">=", "<=", "==", "!=", ","
+                "<", ">", ">=", "<=", "==", "!=", ",", "\""
             ]
            }
 
 lexer = Token.makeTokenParser languageDef
 
+stringL = Token.identifier lexer -- TODO parses a string
 identifier = Token.identifier lexer -- parses an identifier
 reserved   = Token.reserved   lexer -- parses a reserved name
 reservedOp = Token.reservedOp lexer -- parses an operator
@@ -286,6 +287,14 @@ term :: Parser Value
 term =  parens value
     <|> fmap VVar identifier
     <|> fmap VNum integer
+    <|> stringTerm
+
+stringTerm :: Parser Value
+stringTerm = do
+    reservedOp "\""
+    str <- stringL
+    reservedOp "\""
+    return $ VStr str
 
 -- Parser runners
 --

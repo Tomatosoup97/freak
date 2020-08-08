@@ -35,6 +35,7 @@ convOp BNe = boolToInt . uncurry (/=)
 
 data DValue
     = DNum Integer
+    | DStr String
     | DLambda FuncRecord
     | DUnit
     | DPair DValue DValue
@@ -42,6 +43,7 @@ data DValue
 
 instance Show DValue where
     show (DNum n) = show n
+    show (DStr s) = "\"" ++ show s ++ "\""
     show (DLambda _) = "lambda"
     show  DUnit = "()"
     show (DPair l r) = "(" ++ show l ++ ", " ++ show r ++ ")"
@@ -49,6 +51,7 @@ instance Show DValue where
 
 instance Eq DValue where
     DNum n == DNum n' = n == n'
+    DStr s == DStr s' = s == s'
     DUnit == DUnit = True
     DPair a b == DPair a' b' = a == a' && b == b'
     DLabel l == DLabel l' = l == l'

@@ -40,6 +40,7 @@ eval env c = case c of
         Just v -> return v
         Nothing -> unboundVarErr x
     UVal (UNum n) -> return (DNum n)
+    UVal (UStr s) -> return (DStr s)
     UVal (ULambda x c) -> return $ DLambda funcRecord
         where funcRecord [xVal] = let env' = extendEnv env x xVal in eval env' c
     UVal UUnit -> return DUnit
