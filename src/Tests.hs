@@ -1,9 +1,11 @@
 {- HLINT ignore -}
+{-# LANGUAGE LambdaCase #-}
 import Test.Hspec
 import Test.QuickCheck
 import Control.Exception (evaluate)
 import qualified Data.Map as Map
 
+import Control.Monad.Trans.Class
 import Freak
 import Eval
 import CommonEval
@@ -12,12 +14,16 @@ import TargetAST
 
 genRow l n r = DPair (DLabel l) (DPair (DNum n) r)
 
+shouldBeT m b = do
+    r <- m
+    r `shouldBe` b
+
 testFromFile :: String -> Either Error DValue -> IO ()
 testFromFile filename expected = do
     code <- readFile filename
-    evalProgram code `shouldBe` expected
+    evalProgram code `shouldBeT` expected
 
-main :: IO ()
+-- main :: IO ()
 main = hspec $ do
   let row = "{a = 1; {b = 2; ()}}"
   let row' = "{c = 3; " ++ row ++ "}"
@@ -25,116 +31,116 @@ main = hspec $ do
 
   describe "Freak" $ do
     it "Basic arithmetic" $ do
-      evalProgram "return 1" `shouldBe` (Right (DNum 1))
-      evalProgram "return 2 + 3" `shouldBe` (Right (DNum 5))
-      evalProgram "return 2 * 3" `shouldBe` (Right (DNum 6))
-      evalProgram "return 5 - 2" `shouldBe` (Right (DNum 3))
-      evalProgram "return 5 / 2" `shouldBe` (Right (DNum 2))
-      evalProgram "return 6 / 2" `shouldBe` (Right (DNum 3))
+      evalProgram "return 1" `shouldBeT` (Right (DNum 1))
+      evalProgram "return 2 + 3" `shouldBeT` (Right (DNum 5))
+      evalProgram "return 2 * 3" `shouldBeT` (Right (DNum 6))
+      evalProgram "return 5 - 2" `shouldBeT` (Right (DNum 3))
+      evalProgram "return 5 / 2" `shouldBeT` (Right (DNum 2))
+      evalProgram "return 6 / 2" `shouldBeT` (Right (DNum 3))
 
     it "Strings" $ do
-      evalProgram "return \"value\"" `shouldBe` (Right (DStr "value"))
-      evalProgram "return \"x\"" `shouldBe` (Right (DStr "x"))
-      -- evalProgram "return \"this is string\"" `shouldBe` (Right (DStr "this is string"))
-      evalProgram "return \"x1\"" `shouldBe` (Right (DStr "x1"))
+      evalProgram "return \"value\"" `shouldBeT` (Right (DStr "value"))
+      evalProgram "return \"x\"" `shouldBeT` (Right (DStr "x"))
+      -- evalProgram "return \"this is string\"" `shouldBeT` (Right (DStr "this is string"))
+      evalProgram "return \"x1\"" `shouldBeT` (Right (DStr "x1"))
 
     it "Order of operations" $ do
-      evalProgram "return 2 + 3 * 2" `shouldBe` (Right (DNum 8))
-      evalProgram "return 2 * 3 + 2" `shouldBe` (Right (DNum 8))
-      evalProgram "return 2 * (3 + 2)" `shouldBe` (Right (DNum 10))
+      evalProgram "return 2 + 3 * 2" `shouldBeT` (Right (DNum 8))
+      evalProgram "return 2 * 3 + 2" `shouldBeT` (Right (DNum 8))
+      evalProgram "return 2 * (3 + 2)" `shouldBeT` (Right (DNum 10))
 
     it "Undefined variable" $ do
-      evalProgram "return x" `shouldBe` (unboundVarErr "x")
+      evalProgram "return x" `shouldBeT` (Left (unboundVarErr "x"))
 
     it "Absurd" $ do
-      evalProgram "absurd 42" `shouldBe` absurdErr (UNum 42)
-      evalProgram "let x <- absurd 17 in return 42" `shouldBe` absurdErr (UNum 17)
+      evalProgram "absurd 42" `shouldBeT` (Left (absurdErr (UNum 42)))
+      evalProgram "let x <- absurd 17 in return 42" `shouldBeT` (Left (absurdErr (UNum 17)))
 
     it "Let expression" $ do
-      evalProgram "let x <- return 3 in return x + 2" `shouldBe` (Right (DNum 5))
+      evalProgram "let x <- return 3 in return x + 2" `shouldBeT` (Right (DNum 5))
 
     it "Let expression undefined var" $ do
-      evalProgram "let x <- return x in return x + 2" `shouldBe` (unboundVarErr "x")
+      evalProgram "let x <- return x in return x + 2" `shouldBeT` (Left (unboundVarErr "x"))
 
     it "Nested let expression" $ do
-      evalProgram "let x <- return 3 in let y <- return 2 in return x + y" `shouldBe` (Right (DNum 5))
+      evalProgram "let x <- return 3 in let y <- return 2 in return x + y" `shouldBeT` (Right (DNum 5))
 
     it "Variable hiding" $ do
-      evalProgram "let x <- return 3 in let x <- return 2 in return x" `shouldBe` (Right (DNum 2))
+      evalProgram "let x <- return 3 in let x <- return 2 in return x" `shouldBeT` (Right (DNum 2))
 
     it "Static scope" $ do
       testFromFile "programs/staticScope.fk" (Right (DNum 3))
 
     -- it "Row" $ do
-    --   evalProgram ("return "++row) `shouldBe` (Right (genRow "a" 1 (genRow "b" 2 DUnit)))
+    --   evalProgram ("return "++row) `shouldBeT` (Right (genRow "a" 1 (genRow "b" 2 DUnit)))
 
     it "Pair" $ do
-      evalProgram ("return (1, 2)") `shouldBe` (Right (DPair (DNum 1) (DNum 2)))
+      evalProgram ("return (1, 2)") `shouldBeT` (Right (DPair (DNum 1) (DNum 2)))
 
     it "Nested pair" $ do
-      evalProgram ("return ((1, 2), 3)") `shouldBe` (Right (DPair (DPair (DNum 1) (DNum 2)) (DNum 3)))
+      evalProgram ("return ((1, 2), 3)") `shouldBeT` (Right (DPair (DPair (DNum 1) (DNum 2)) (DNum 3)))
 
     -- it "Split" $ do
-    --   evalProgram ("let (b = x; y) = "++row'++" in return 1 + x") `shouldBe` (Right (DNum 3))
-    --   evalProgram ("let (a = x; y) = "++row'++" in return 1 + x") `shouldBe` (Right (DNum 2))
+    --   evalProgram ("let (b = x; y) = "++row'++" in return 1 + x") `shouldBeT` (Right (DNum 3))
+    --   evalProgram ("let (a = x; y) = "++row'++" in return 1 + x") `shouldBeT` (Right (DNum 2))
 
     -- it "Case" $ do
     --   let body = " {a x -> return x; y -> return 42}"
-    --   evalProgram ("case "++variant "a"++body) `shouldBe` (Right (DNum 1))
-    --   evalProgram ("case "++variant "c"++body) `shouldBe` (Right (DNum 42))
+    --   evalProgram ("case "++variant "a"++body) `shouldBeT` (Right (DNum 1))
+    --   evalProgram ("case "++variant "c"++body) `shouldBeT` (Right (DNum 42))
 
     it "Let lambda" $ do
-      evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBe` (Right (DNum 43))
+      evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBeT` (Right (DNum 43))
 
     it "Application" $ do
-      evalProgram "(\\x : int -> return x + 1) 1" `shouldBe` (Right (DNum 2))
+      evalProgram "(\\x : int -> return x + 1) 1" `shouldBeT` (Right (DNum 2))
 
     it "Let application" $ do
-      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return 3" `shouldBe` (Right (DNum 3))
-      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return x + 1" `shouldBe` (Right (DNum 3))
+      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return 3" `shouldBeT` (Right (DNum 3))
+      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return x + 1" `shouldBeT` (Right (DNum 3))
 
     it "Let lambda forget function result" $ do
-      evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBe` (Right (DNum 1))
+      evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBeT` (Right (DNum 1))
 
     -- it "Let lambda forget function result - more verbose" $ do
-    --   evalProgram "let f <- return (\\x : int -> return x + 1) in let x <- f 42 in return 1" `shouldBe` (Right (DNum 1))
+    --   evalProgram "let f <- return (\\x : int -> return x + 1) in let x <- f 42 in return 1" `shouldBeT` (Right (DNum 1))
 
     it "If statement" $ do
-      evalProgram "if 1 then return 1 else return 0" `shouldBe` (Right (DNum 1))
-      evalProgram "if 42 then return 1 else return 0" `shouldBe` (Right (DNum 1))
-      evalProgram "if 0 then return 1 else return 0" `shouldBe` (Right (DNum 0))
+      evalProgram "if 1 then return 1 else return 0" `shouldBeT` (Right (DNum 1))
+      evalProgram "if 42 then return 1 else return 0" `shouldBeT` (Right (DNum 1))
+      evalProgram "if 0 then return 1 else return 0" `shouldBeT` (Right (DNum 0))
 
     it "Lambda application" $ do
-      evalProgram "(\\x : int -> return x + 1) 42" `shouldBe` (Right (DNum 43))
+      evalProgram "(\\x : int -> return x + 1) 42" `shouldBeT` (Right (DNum 43))
 
     it "Relational operators" $ do
-      evalProgram "return 1 >= 1" `shouldBe` (Right (DNum 1))
-      evalProgram "return 1 > 1" `shouldBe` (Right (DNum 0))
-      evalProgram "return 42 >= 17" `shouldBe` (Right (DNum 1))
-      evalProgram "return 42 <= 17" `shouldBe` (Right (DNum 0))
-      evalProgram "return 2 == 2" `shouldBe` (Right (DNum 1))
-      evalProgram "return 2 != 2" `shouldBe` (Right (DNum 0))
-      evalProgram "return 2 < 3" `shouldBe` (Right (DNum 1))
+      evalProgram "return 1 >= 1" `shouldBeT` (Right (DNum 1))
+      evalProgram "return 1 > 1" `shouldBeT` (Right (DNum 0))
+      evalProgram "return 42 >= 17" `shouldBeT` (Right (DNum 1))
+      evalProgram "return 42 <= 17" `shouldBeT` (Right (DNum 0))
+      evalProgram "return 2 == 2" `shouldBeT` (Right (DNum 1))
+      evalProgram "return 2 != 2" `shouldBeT` (Right (DNum 0))
+      evalProgram "return 2 < 3" `shouldBeT` (Right (DNum 1))
 
     it "Branching" $ do
-      evalProgram "if 2 >= 3 then return 1 else return 0" `shouldBe` (Right (DNum 0))
+      evalProgram "if 2 >= 3 then return 1 else return 0" `shouldBeT` (Right (DNum 0))
 
     -- Algebraic effects and handlers tests
 
     it "Trivial handler" $ do
-      evalProgram "handle return 1 with {return x -> return x}" `shouldBe` (Right (DNum 1))
+      evalProgram "handle return 1 with {return x -> return x}" `shouldBeT` (Right (DNum 1))
 
     it "Trivial handler with ops" $ do
-      evalProgram "handle return 1 with {Op p r -> r 2 | return x -> return x }" `shouldBe` (Right (DNum 1))
+      evalProgram "handle return 1 with {Op p r -> r 2 | return x -> return x }" `shouldBeT` (Right (DNum 1))
 
     it "Constant effect handler" $ do
-      evalProgram "handle do Const 1 with {Const p r -> r 42 | return x -> return x }" `shouldBe` (Right (DNum 42))
+      evalProgram "handle do Const 1 with {Const p r -> r 42 | return x -> return x }" `shouldBeT` (Right (DNum 42))
 
     it "Identity effect handler" $ do
-      evalProgram "handle do Id 42 with {Id p r -> r p | return x -> return x }" `shouldBe` (Right (DNum 42))
+      evalProgram "handle do Id 42 with {Id p r -> r p | return x -> return x }" `shouldBeT` (Right (DNum 42))
 
     it "Compose let with do" $ do
-      evalProgram "handle let x <- do Id 1 in return 3 with {Id p r -> r p | return x -> return x }" `shouldBe` (Right (DNum 3))
+      evalProgram "handle let x <- do Id 1 in return 3 with {Id p r -> r p | return x -> return x }" `shouldBeT` (Right (DNum 3))
 
     it "Increment effect handler" $ do
       testFromFile "programs/increment.fk" (Right (DNum 18))
@@ -152,7 +158,7 @@ main = hspec $ do
       testFromFile "programs/deepHandlers.fk" (Right (DNum 7))
 
     it "Unhandled effect" $ do
-      testFromFile "programs/unhandledEffect.fk" (absurdErr (ULabel "Effect"))
+      testFromFile "programs/unhandledEffect.fk" (Left (absurdErr (ULabel "Effect")))
 
     -- it "Drop resumption result" $ do
     --   testFromFile "programs/dropResumption.fk" (Right (DNum 1))

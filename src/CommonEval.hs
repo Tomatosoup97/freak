@@ -1,22 +1,23 @@
 module CommonEval where
 
 import qualified Data.Map as Map
+import Control.Monad.Except
 import AST
 import TargetAST
 import Types
 
-type FuncRecord = [DValue] -> Either Error DValue
+type FuncRecord = [DValue] -> ExceptT Error IO DValue
 
 type Env = Map.Map Var DValue
 
 extendEnv :: Env -> Var -> DValue -> Env
 extendEnv env x v = Map.insert x v env
 
-unboundVarErr :: String -> Either Error DValue
-unboundVarErr x = Left $ EvalError $ "Unbound variable " ++ x
+unboundVarErr :: String -> Error
+unboundVarErr x = EvalError $ "Unbound variable " ++ x
 
-absurdErr :: UValue -> Either Error DValue
-absurdErr v = Left $ EvalError $ "Absurd; divergent term: " ++ show v
+absurdErr :: UValue -> Error
+absurdErr v = EvalError $ "Absurd; divergent term: " ++ show v
 
 boolToInt :: Bool -> Integer
 boolToInt b = if b then 1 else 0
