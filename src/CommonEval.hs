@@ -15,8 +15,8 @@ extendEnv env x v = Map.insert x v env
 unboundVarErr :: String -> Either Error DValue
 unboundVarErr x = Left $ EvalError $ "Unbound variable " ++ x
 
-absurdErr :: Either Error DValue
-absurdErr = Left $ EvalError "Absurd; divergent term"
+absurdErr :: UValue -> Either Error DValue
+absurdErr v = Left $ EvalError $ "Absurd; divergent term: " ++ show v
 
 boolToInt :: Bool -> Integer
 boolToInt b = if b then 1 else 0

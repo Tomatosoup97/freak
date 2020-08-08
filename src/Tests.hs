@@ -8,6 +8,7 @@ import Freak
 import Eval
 import CommonEval
 import Types
+import TargetAST
 
 genRow l n r = DPair (DLabel l) (DPair (DNum n) r)
 
@@ -46,8 +47,8 @@ main = hspec $ do
       evalProgram "return x" `shouldBe` (unboundVarErr "x")
 
     it "Absurd" $ do
-      evalProgram "absurd 42" `shouldBe` absurdErr
-      evalProgram "let x <- absurd 17 in return 42" `shouldBe` absurdErr
+      evalProgram "absurd 42" `shouldBe` absurdErr (UNum 42)
+      evalProgram "let x <- absurd 17 in return 42" `shouldBe` absurdErr (UNum 17)
 
     it "Let expression" $ do
       evalProgram "let x <- return 3 in return x + 2" `shouldBe` (Right (DNum 5))
@@ -151,7 +152,7 @@ main = hspec $ do
       testFromFile "programs/deepHandlers.fk" (Right (DNum 7))
 
     it "Unhandled effect" $ do
-      testFromFile "programs/unhandledEffect.fk" (absurdErr)
+      testFromFile "programs/unhandledEffect.fk" (absurdErr (ULabel "Effect"))
 
     -- it "Drop resumption result" $ do
     --   testFromFile "programs/dropResumption.fk" (Right (DNum 1))

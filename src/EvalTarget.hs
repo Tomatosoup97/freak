@@ -26,7 +26,7 @@ eval env c = case c of
         if l == DLabel caseLabel
         then eval env tComp
         else eval (Map.insert y l env) fComp
-    UAbsurd _ -> absurdErr
+    UAbsurd v -> absurdErr v
     ULet x varComp comp -> do
         varVal <- eval env varComp
         let env' = extendEnv env x varVal
