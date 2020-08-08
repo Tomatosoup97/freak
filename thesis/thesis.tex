@@ -267,7 +267,8 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
 
     An \textit{algebraic theory} $T = (\Sigma_{T}, \mathcal{E}_{T})$, is given
     by a signature $\Sigma_{T}$ and a collection $\mathcal{E}_{T}$ of
-    $\mathVar{\Sigma_{T}-equations}$.
+    $\mathVar{\Sigma_{T}-equations}$. We might omit $T$ subscripts in case
+    our theory of interest is obvious.
 
     \end{definition}
     % == end Algebraic Theory ==
@@ -437,7 +438,14 @@ effects and also propagate new ones.
 
     \subsection{Cooperations}
 
-    We have defined interpretation of an operation as a map:
+    We have defined interpretation of an operation as a morphism:
+
+    \begin{center}
+        $ {\llbracket op \rrbracket}_M : P \times {|I|}^{A} \rightarrow |I| $
+    \end{center}
+
+    \noindent
+    following now straight from Yoneda Lemma we have:
 
     \begin{center}
         $ {\llbracket op \rrbracket}_M : {|I|}^{A} \rightarrow |I|^{P} $
