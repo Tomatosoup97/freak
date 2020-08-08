@@ -1,5 +1,6 @@
 build:
 	ghc Main.hs -o freak
+	ghc Tests.hs -o tests
 
 link:
 	ln -fs $(shell pwd)/freak /usr/local/bin/freak
@@ -19,6 +20,7 @@ link-lists: link-clean
 clean:
 	rm -f freak
 	rm -f Tests
+	rm -f tests
 	find . -name "*.hi" -type f -delete
 	find . -name "*.o" -type f -delete
 
