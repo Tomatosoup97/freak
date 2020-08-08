@@ -25,6 +25,7 @@ data UComp
     | UIf UValue UComp UComp
     | ULet Var UComp UComp
     | UAbsurd UValue
+    | UTopLevelEffect Label
     deriving (Eq)
 
 parens :: String -> String
