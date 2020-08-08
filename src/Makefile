@@ -31,6 +31,8 @@ test:
 check: build lint test
 
 install:
+	cabal install parsec
 	cabal install hlint
 	cabal install HUnit
-	cabal install parsec
+	cabal install QuickCheck
+	cabal install hspec
