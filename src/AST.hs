@@ -57,11 +57,11 @@ data Comp
     | EAbsurd Value
     | EIf Value Comp Comp
     -- Algebraic effects
-    | EDo Label Value
+    | EOp Label Value
     | EHandle Comp Handler
     -- Coalgebraic effects
-    | ECoDo Label Value
-    | ECoHandle Comp Handler
+    | ECoop Label Value
+    | ECohandle Comp Handler
     deriving (Show, Eq)
 
 data Handler

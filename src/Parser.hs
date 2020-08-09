@@ -71,8 +71,8 @@ computation =  letBasedComp
            <|> ifComp
            <|> absurdComp
            <|> retComp
-           <|> doComp
-           <|> coDoComp
+           <|> opComp
+           <|> coopComp
            <|> handleComp
            <|> cohandleComp
            <|> appComp
@@ -148,16 +148,16 @@ retComp = reserved "return"
         >> EReturn <$> value
 
 
-doComp :: Parser Comp
-doComp = do
+opComp :: Parser Comp
+opComp = do
     reserved "do"
-    EDo <$> identifier <*> value
+    EOp <$> identifier <*> value
 
 
-coDoComp :: Parser Comp
-coDoComp = do
+coopComp :: Parser Comp
+coopComp = do
     reserved "observe"
-    ECoDo <$> identifier <*> value
+    ECoop <$> identifier <*> value
 
 
 handleComp :: Parser Comp
@@ -172,7 +172,7 @@ cohandleComp = do
     reserved "cohandle"
     c <- computation
     reserved "through"
-    ECoHandle c <$> handler
+    ECohandle c <$> handler
 
 
 handler :: Parser Handler

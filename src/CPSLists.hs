@@ -117,7 +117,7 @@ cps e ks = case e of
         v <- cpsVal v ks
         return $ UAbsurd v
     -- Algebraic effects
-    EDo l v -> do
+    EOp l v -> do
         let Pure kf:h@(Eff hf):ks' = ks
         x <- freshVar' "rArg"
         pureComp <- kf (UVar x) (h:ks')
