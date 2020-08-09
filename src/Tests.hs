@@ -189,3 +189,6 @@ main = hspec $ do
 
     it "Complex nested handlers" $ do
       testFromFile "programs/complexNestedHandlers.fk" (Right (DNum 15))
+
+    it "File handling" $ do
+      testFromFile "programs/writeToFile.fk" (Right (DStr "one-two-three"))

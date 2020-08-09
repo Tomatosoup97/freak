@@ -32,12 +32,28 @@ eval env c = case c of
     UTopLevelEffect l v -> do
         dVal <- eval env (UVal v)
         let handle
+                -- TODO: Write down in latex this functionality
                 | l == "Print" = do
                     (lift . print) dVal
                     return DUnit
                 | l == "ReadLine" = do
                     input <- lift getLine
                     return $ DStr input
+                | l == "ReadFile" = case dVal of
+                    (DStr filename) -> do
+                        contents <- lift $ readFile filename
+                        return $ DStr contents
+                    _ -> throwError $ EvalError $ l ++ " effect accepts a single filename string"
+                | l == "WriteFile" = case dVal of
+                    (DPair (DStr filename) (DStr contents)) -> do
+                        lift $ writeFile filename contents
+                        return DUnit
+                    _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
+                | l == "AppendFile" = case dVal of
+                    (DPair (DStr filename) (DStr contents)) -> do
+                        lift $ appendFile filename contents
+                        return DUnit
+                    _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
                 | otherwise = throwError $ absurdErr (DPair (DLabel l) dVal)
         handle
     ULet x varComp comp -> do
