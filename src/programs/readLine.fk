@@ -1,0 +1,2 @@
+let x <- do ReadLine () in
+return x

@@ -24,8 +24,12 @@ initialEffCont :: ContF
 initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks
     | effLabel == "Print" = do
         (lift . lift) (print p)
-        return $ UApp (UVal r) (UVal UUnit)
+        resume UUnit
+    | effLabel == "ReadLine" = do
+        input <- (lift . lift) getLine
+        resume $ UStr input
     | otherwise = return $ UTopLevelEffect effLabel p
+    where resume = return . UApp (UVal r) . UVal
 
 initialEffCont v _ = throwError $ CPSError $ "Incorrect value " ++ show v ++ " in effect continuation"
 
