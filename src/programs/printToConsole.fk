@@ -1,5 +1,4 @@
-handle
-    do Print "print"
-with {
-    return x -> return x
-}
+let x <- do Print "one" in
+let x <- do Print "two" in
+let x <- do Print "three" in
+return ()

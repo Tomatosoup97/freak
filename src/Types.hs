@@ -1,5 +1,12 @@
 module Types where
 
+import Control.Monad.Except
+
+-- TODO: Reconsider name
+type EvalMonad a = ExceptT Error IO a
+
+type EvalResMonad a = IO (Either Error a)
+
 type Var = String
 type Label = String
 

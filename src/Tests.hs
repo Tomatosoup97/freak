@@ -165,7 +165,7 @@ main = hspec $ do
 
     it "Print effect" $ do
       evalProgram "do Print \"print\"" `shouldBeT` (Right DUnit)
-      -- evalProgram "let x <- do Print \"print\" in return 1" `shouldBeT` (Right (DNum 1))
+      evalProgram "let x <- do Print \"print\" in return 1" `shouldBeT` (Right (DNum 1))
       testFromFile "programs/printToConsole.fk" (Right DUnit)
 
     -- it "Drop resumption result" $ do

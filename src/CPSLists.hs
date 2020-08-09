@@ -21,7 +21,12 @@ initialPureCont :: ContF
 initialPureCont v ks = (return . UVal) v
 
 initialEffCont :: ContF
-initialEffCont (UPair (ULabel effLabel) (UPair p _)) ks = return $ UTopLevelEffect effLabel p
+initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks
+    | effLabel == "Print" = do
+        (lift . lift) (print p)
+        return $ UApp (UVal r) (UVal UUnit)
+    | otherwise = return $ UTopLevelEffect effLabel p
+
 initialEffCont v _ = throwError $ CPSError $ "Incorrect value " ++ show v ++ " in effect continuation"
 
 initialState :: Int
@@ -137,6 +142,6 @@ forward y p r ks = do
     hf' pair ks'
 
 
-runCPS :: Comp -> Either Error UComp
-runCPS e = evalState (runExceptT cpsTerm) initialState
+runCPS :: Comp -> EvalResMonad UComp
+runCPS e = evalStateT (runExceptT cpsTerm) initialState
     where cpsTerm = cps e [Pure initialPureCont, Eff initialEffCont]

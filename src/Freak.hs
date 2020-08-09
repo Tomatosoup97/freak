@@ -10,13 +10,13 @@ import CommonEval
 import Eval
 import Types
 
-cpsProgram :: String -> Either Error UComp
-cpsProgram s = do
-    ast <- parseString s
-    runCPS ast
+cpsProgram :: String -> EvalResMonad UComp
+cpsProgram s = case parseString s of
+    Right ast -> runCPS ast
+    Left err -> return $ Left err
 
 evalProgram :: String -> EvalResMonad DValue
-evalProgram s = case cpsProgram s of
+evalProgram s = cpsProgram s >>= \case
     Left e -> return $ Left e
     Right c -> runEval c
 

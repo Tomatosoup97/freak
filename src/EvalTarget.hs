@@ -31,9 +31,7 @@ eval env c = case c of
     UAbsurd v -> throwError $ absurdErr v
     UTopLevelEffect l v -> do
         dVal <- eval env (UVal v)
-        let action | l == "Print" = lift (print dVal) >> return DUnit -- TODO: it doesn't call resumption!
-                   | otherwise = throwError $ absurdErr (DPair (DLabel l) dVal)
-        action
+        throwError $ absurdErr (DPair (DLabel l) dVal)
     ULet x varComp comp -> do
         varVal <- eval env varComp
         let env' = extendEnv env x varVal

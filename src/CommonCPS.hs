@@ -1,15 +1,15 @@
 module CommonCPS where
 
 import Control.Monad.Except
-import Control.Monad.State
+import Control.Monad.Trans.State.Lazy
 import Types
 
-type CPSMonad a = ExceptT Error (State Int) a
+type CPSMonad a = ExceptT Error (StateT Int IO) a
 
 freshVar' :: String -> CPSMonad Var
 freshVar' s = do
-    n <- get
-    put (n+1)
+    n <- lift get
+    lift $ put (n+1)
     return $ s ++ show n
 
 freshVar :: CPSMonad Var
