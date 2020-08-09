@@ -25,7 +25,7 @@ data UComp
     | UIf UValue UComp UComp
     | ULet Var UComp UComp
     | UAbsurd UValue
-    | UTopLevelEffect Label
+    | UTopLevelEffect Label UValue
     deriving (Eq)
 
 parens :: String -> String
@@ -49,3 +49,4 @@ instance Show UComp where
     show (UIf v c c') = "if " ++ show v ++ " then " ++ show c ++ " else " ++ show c'
     show (UAbsurd v) = "absurd " ++ show v
     show (ULet x xComp comp) = parens $ "let " ++ show x ++ " = " ++ show xComp ++ " in " ++ show comp
+    show (UTopLevelEffect l p) = show l ++ show p

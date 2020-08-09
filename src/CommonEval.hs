@@ -20,8 +20,8 @@ extendEnv env x v = Map.insert x v env
 unboundVarErr :: String -> Error
 unboundVarErr x = EvalError $ "Unbound variable " ++ x
 
-absurdErr :: UValue -> Error
-absurdErr v = EvalError $ "Absurd; divergent term: " ++ show v
+absurdErr :: Show a => a -> Error
+absurdErr x = EvalError $ "Absurd; divergent term: " ++ show x
 
 boolToInt :: Bool -> Integer
 boolToInt b = if b then 1 else 0
@@ -51,8 +51,8 @@ instance Show DValue where
     show (DStr s) = "\"" ++ show s ++ "\""
     show (DLambda _) = "lambda"
     show  DUnit = "()"
-    show (DPair l r) = "(" ++ show l ++ ", " ++ show r ++ ")"
-    show (DLabel l) = "L: " ++ show l
+    show (DPair l r) = parens $ show l ++ ", " ++ show r
+    show (DLabel l) = parens $ "L: " ++ show l
 
 instance Eq DValue where
     DNum n == DNum n' = n == n'

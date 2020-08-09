@@ -21,7 +21,7 @@ initialPureCont :: ContF
 initialPureCont v ks = (return . UVal) v
 
 initialEffCont :: ContF
-initialEffCont (UPair (ULabel effLabel) _) ks = return $ UTopLevelEffect effLabel
+initialEffCont (UPair (ULabel effLabel) (UPair p _)) ks = return $ UTopLevelEffect effLabel p
 initialEffCont v _ = throwError $ CPSError $ "Incorrect value " ++ show v ++ " in effect continuation"
 
 initialState :: Int

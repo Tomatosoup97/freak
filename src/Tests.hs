@@ -158,7 +158,9 @@ main = hspec $ do
       testFromFile "programs/deepHandlers.fk" (Right (DNum 7))
 
     it "Unhandled effect" $ do
-      testFromFile "programs/unhandledEffect.fk" (Left (absurdErr (ULabel "Effect")))
+      testFromFile "programs/unhandledEffect.fk" (Left (absurdErr (DPair (DLabel "Effect") DUnit)))
+      evalProgram "handle do Nothing 42 with {return x -> return x}" `shouldBeT` (Left (absurdErr (DPair (DLabel "Nothing") (DNum 42))))
+      evalProgram "do Nothing 42" `shouldBeT` (Left (absurdErr (DPair (DLabel "Nothing") (DNum 42))))
 
     -- it "Drop resumption result" $ do
     --   testFromFile "programs/dropResumption.fk" (Right (DNum 1))

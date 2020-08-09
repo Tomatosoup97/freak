@@ -29,7 +29,9 @@ eval env c = case c of
         then eval env tComp
         else eval (Map.insert y l env) fComp
     UAbsurd v -> throwError $ absurdErr v
-    UTopLevelEffect l -> throwError $ absurdErr (ULabel l)
+    UTopLevelEffect l v -> do
+        dVal <- eval env (UVal v)
+        throwError $ absurdErr (DPair (DLabel l) dVal)
     ULet x varComp comp -> do
         varVal <- eval env varComp
         let env' = extendEnv env x varVal
