@@ -44,7 +44,7 @@ data DValue
 
 instance Show DValue where
     show (DNum n) = show n
-    show (DStr s) = "\"" ++ show s ++ "\""
+    show (DStr s) = show s
     show (DLambda _) = "lambda"
     show  DUnit = "()"
     show (DPair l r) = parens $ show l ++ ", " ++ show r
