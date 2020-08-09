@@ -23,7 +23,7 @@ testFromFile filename expected = do
     code <- readFile filename
     evalProgram code `shouldBeT` expected
 
--- main :: IO ()
+main :: IO ()
 main = hspec $ do
   let row = "{a = 1; {b = 2; ()}}"
   let row' = "{c = 3; " ++ row ++ "}"

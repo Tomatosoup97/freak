@@ -31,7 +31,15 @@ eval env c = case c of
     UAbsurd v -> throwError $ absurdErr v
     UTopLevelEffect l v -> do
         dVal <- eval env (UVal v)
-        throwError $ absurdErr (DPair (DLabel l) dVal)
+        let handle
+                | l == "Print" = do
+                    (lift . print) dVal
+                    return DUnit
+                | l == "ReadLine" = do
+                    input <- lift getLine
+                    return $ DStr input
+                | otherwise = throwError $ absurdErr (DPair (DLabel l) dVal)
+        handle
     ULet x varComp comp -> do
         varVal <- eval env varComp
         let env' = extendEnv env x varVal

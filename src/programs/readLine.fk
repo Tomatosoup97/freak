@@ -1,2 +1,4 @@
+let x <- do Print "Input text to print: " in
 let x <- do ReadLine () in
-return x
+let y <- do Print x in
+return y
