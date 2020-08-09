@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Eval where
 
 import qualified Data.Map as Map
@@ -8,7 +8,7 @@ import TargetAST
 import CommonEval
 import Types
 
-eval :: Env -> UComp -> ExceptT Error IO DValue
+eval :: Env -> UComp -> EvalMonad DValue
 eval env c = case c of
     USplit l x y pair comp ->
          eval env (UVal pair) >>= \(DPair lv rv) ->
@@ -53,13 +53,5 @@ eval env c = case c of
         return $ DPair v1 v2
     UVal (ULabel l) -> return $ DLabel l
 
-type EvalMonad = IO (Either Error DValue)
-
--- instance Show EvalMonad where
---     show m = "x"
-
--- instance Eq EvalMonad where
---     m1 == m2 = True
-
-runEval :: UComp -> EvalMonad
+runEval :: UComp -> EvalResMonad DValue
 runEval c = runExceptT (eval Map.empty c)

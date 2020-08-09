@@ -6,6 +6,10 @@ import AST
 import TargetAST
 import Types
 
+type EvalMonad a = ExceptT Error IO DValue
+
+type EvalResMonad a = IO (Either Error a)
+
 type FuncRecord = [DValue] -> ExceptT Error IO DValue
 
 type Env = Map.Map Var DValue

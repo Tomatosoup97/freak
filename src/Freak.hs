@@ -15,7 +15,7 @@ cpsProgram s = do
     ast <- parseString s
     runCPS ast
 
-evalProgram :: String -> IO (Either Error DValue)
+evalProgram :: String -> EvalResMonad DValue
 evalProgram s = case cpsProgram s of
     Left e -> return $ Left e
     Right c -> runEval c
