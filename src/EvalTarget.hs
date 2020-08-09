@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances #-}
 module Eval where
 
 import qualified Data.Map as Map
@@ -7,6 +7,34 @@ import AST
 import TargetAST
 import CommonEval
 import Types
+
+
+handleEffect :: Label -> DValue -> EvalMonad DValue
+handleEffect l v
+    -- TODO: Write down in latex this functionality
+    | l == "Print" = do
+        (lift . print) v
+        return DUnit
+    | l == "ReadLine" = do
+        input <- lift getLine
+        return $ DStr input
+    | l == "ReadFile" = case v of
+        (DStr filename) -> do
+            contents <- lift $ readFile filename
+            return $ DStr contents
+        _ -> throwError $ EvalError $ l ++ " effect accepts a single filename string"
+    | l == "WriteFile" = case v of
+        (DPair (DStr filename) (DStr contents)) -> do
+            lift $ writeFile filename contents
+            return DUnit
+        _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
+    | l == "AppendFile" = case v of
+        (DPair (DStr filename) (DStr contents)) -> do
+            lift $ appendFile filename contents
+            return DUnit
+        _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
+    | otherwise = throwError $ absurdErr (DPair (DLabel l) v)
+
 
 eval :: Env -> UComp -> EvalMonad DValue
 eval env c = case c of
@@ -28,38 +56,13 @@ eval env c = case c of
         if l == DLabel caseLabel
         then eval env tComp
         else eval (Map.insert y l env) fComp
-    UAbsurd v -> throwError $ absurdErr v
-    UTopLevelEffect l v -> do
-        dVal <- eval env (UVal v)
-        let handle
-                -- TODO: Write down in latex this functionality
-                | l == "Print" = do
-                    (lift . print) dVal
-                    return DUnit
-                | l == "ReadLine" = do
-                    input <- lift getLine
-                    return $ DStr input
-                | l == "ReadFile" = case dVal of
-                    (DStr filename) -> do
-                        contents <- lift $ readFile filename
-                        return $ DStr contents
-                    _ -> throwError $ EvalError $ l ++ " effect accepts a single filename string"
-                | l == "WriteFile" = case dVal of
-                    (DPair (DStr filename) (DStr contents)) -> do
-                        lift $ writeFile filename contents
-                        return DUnit
-                    _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
-                | l == "AppendFile" = case dVal of
-                    (DPair (DStr filename) (DStr contents)) -> do
-                        lift $ appendFile filename contents
-                        return DUnit
-                    _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
-                | otherwise = throwError $ absurdErr (DPair (DLabel l) dVal)
-        handle
     ULet x varComp comp -> do
         varVal <- eval env varComp
         let env' = extendEnv env x varVal
         eval env' comp
+    UTopLevelEffect l v ->
+        eval env (UVal v) >>= handleEffect l
+    UAbsurd v -> throwError $ absurdErr v
     -- Values
     UVal (UBinOp op e1 e2) -> do
         eval env (UVal e1) >>= \(DNum n1) ->
@@ -68,16 +71,17 @@ eval env c = case c of
     UVal (UVar x) -> case Map.lookup x env of
         Just v -> return v
         Nothing -> throwError $ unboundVarErr x
-    UVal (UNum n) -> return (DNum n)
-    UVal (UStr s) -> return (DStr s)
-    UVal (ULambda x c) -> return $ DLambda funcRecord
-        where funcRecord [xVal] = let env' = extendEnv env x xVal in eval env' c
-    UVal UUnit -> return DUnit
     UVal (UPair e1 e2) -> do
         v1 <- eval env (UVal e1)
         v2 <- eval env (UVal e2)
         return $ DPair v1 v2
+    UVal (ULambda x c) -> return $ DLambda funcRecord
+        where funcRecord [xVal] = let env' = extendEnv env x xVal in eval env' c
     UVal (ULabel l) -> return $ DLabel l
+    UVal (UNum n) -> return (DNum n)
+    UVal (UStr s) -> return (DStr s)
+    UVal UUnit -> return DUnit
+
 
 runEval :: UComp -> EvalResMonad DValue
 runEval c = runExceptT (eval Map.empty c)

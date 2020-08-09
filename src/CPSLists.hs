@@ -42,20 +42,20 @@ cpsVal e ks = case e of
     VVar x -> return $ UVar x
     VNum n -> return $ UNum n
     VStr s -> return $ UStr s  -- todo: write about support for strings
-    VRecordRow row -> undefined -- todo: records are constructed using ExtendRow
     VUnit -> return UUnit
     VPair e1 e2 -> do
         v1 <- cpsVal e1 ks
         v2 <- cpsVal e2 ks
         return $ UPair v1 v2
-    VExtendRow l v row -> notSupportedErr
-    VVariantRow (VariantRow _ l v) -> notSupportedErr
-    VLambda x _ body -> ULambda x <$> cps body ks
-    VFix g x body -> URec g x <$> cps body ks
     VBinOp op e1 e2 -> do
         v1 <- cpsVal e1 ks
         v2 <- cpsVal e2 ks
         return $ UBinOp op v1 v2
+    VLambda x _ body -> ULambda x <$> cps body ks
+    VFix g x body -> URec g x <$> cps body ks
+    VRecordRow row -> undefined -- todo: records are constructed using ExtendRow
+    VExtendRow l v row -> notSupportedErr
+    VVariantRow (VariantRow _ l v) -> notSupportedErr
 
 cps :: Comp -> [Cont] -> CPSMonad UComp
 cps e ks = case e of
