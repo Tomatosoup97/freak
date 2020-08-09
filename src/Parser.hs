@@ -38,6 +38,9 @@ languageDef =
                                      , "do"
                                      , "handle"
                                      , "with"
+                                     , "observe"
+                                     , "cohandle"
+                                     , "through"
                                      ]
            , Token.reservedOpNames = [
                 "+", "*", "<-", "->", "\\", ":", "(", ")", "|",
@@ -69,7 +72,9 @@ computation =  letBasedComp
            <|> absurdComp
            <|> retComp
            <|> doComp
+           <|> coDoComp
            <|> handleComp
+           <|> cohandleComp
            <|> appComp
 
 
@@ -149,12 +154,25 @@ doComp = do
     EDo <$> identifier <*> value
 
 
+coDoComp :: Parser Comp
+coDoComp = do
+    reserved "observe"
+    ECoDo <$> identifier <*> value
+
+
 handleComp :: Parser Comp
 handleComp = do
     reserved "handle"
     c <- computation
     reserved "with"
     EHandle c <$> handler
+
+cohandleComp :: Parser Comp
+cohandleComp = do
+    reserved "cohandle"
+    c <- computation
+    reserved "through"
+    ECoHandle c <$> handler
 
 
 handler :: Parser Handler

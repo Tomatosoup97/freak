@@ -59,6 +59,9 @@ data Comp
     -- Algebraic effects
     | EDo Label Value
     | EHandle Comp Handler
+    -- Coalgebraic effects
+    | ECoDo Label Value
+    | ECoHandle Comp Handler
     deriving (Show, Eq)
 
 data Handler
