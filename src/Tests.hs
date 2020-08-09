@@ -41,8 +41,9 @@ main = hspec $ do
     it "Strings" $ do
       evalProgram "return \"value\"" `shouldBeT` (Right (DStr "value"))
       evalProgram "return \"x\"" `shouldBeT` (Right (DStr "x"))
-      -- evalProgram "return \"this is string\"" `shouldBeT` (Right (DStr "this is string"))
+      evalProgram "return \"this is string\"" `shouldBeT` (Right (DStr "this is string"))
       evalProgram "return \"x1\"" `shouldBeT` (Right (DStr "x1"))
+      evalProgram "let x <- return \"y\" in return x" `shouldBeT` (Right (DStr "y"))
 
     it "Order of operations" $ do
       evalProgram "return 2 + 3 * 2" `shouldBeT` (Right (DNum 8))
@@ -163,7 +164,8 @@ main = hspec $ do
       evalProgram "do Nothing 42" `shouldBeT` (Left (absurdErr (DPair (DLabel "Nothing") (DNum 42))))
 
     it "Print effect" $ do
-      evalProgram "do Print \"something\"" `shouldBeT` (Right DUnit)
+      evalProgram "do Print \"print\"" `shouldBeT` (Right DUnit)
+      -- evalProgram "let x <- do Print \"print\" in return 1" `shouldBeT` (Right (DNum 1))
       testFromFile "programs/printToConsole.fk" (Right DUnit)
 
     -- it "Drop resumption result" $ do

@@ -1,5 +1,5 @@
 handle
-    do Print "helloworld"
+    do Print "print"
 with {
     return x -> return x
 }
