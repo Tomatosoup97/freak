@@ -1,0 +1,5 @@
+handle
+    do Print "helloworld"
+with {
+    return x -> return x
+}

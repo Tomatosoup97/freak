@@ -162,6 +162,10 @@ main = hspec $ do
       evalProgram "handle do Nothing 42 with {return x -> return x}" `shouldBeT` (Left (absurdErr (DPair (DLabel "Nothing") (DNum 42))))
       evalProgram "do Nothing 42" `shouldBeT` (Left (absurdErr (DPair (DLabel "Nothing") (DNum 42))))
 
+    it "Print effect" $ do
+      evalProgram "do Print \"something\"" `shouldBeT` (Right DUnit)
+      testFromFile "programs/printToConsole.fk" (Right DUnit)
+
     -- it "Drop resumption result" $ do
     --   testFromFile "programs/dropResumption.fk" (Right (DNum 1))
 
