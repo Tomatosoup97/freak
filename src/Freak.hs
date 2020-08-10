@@ -28,6 +28,13 @@ runProgram s = evalProgram s >>= \case
 runFromFile :: String -> IO ()
 runFromFile filename = readFile filename >>= runProgram
 
+parseFile :: String -> IO ()
+parseFile filename = do
+    code <- readFile filename
+    case parseString code of
+        Left e  -> print e >> fail "Parse error"
+        Right r -> return ()
+
 outputResult :: Either Error DValue -> IO ()
 outputResult (Left e) = print $ show e
 outputResult (Right v) = print $ show v

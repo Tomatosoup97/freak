@@ -340,11 +340,3 @@ parseString' str =
   case parseString str of
     Left e  -> error $ show e
     Right r -> r
-
-
-parseFile :: String -> IO Comp
-parseFile file =
-  do code <- readFile file
-     case parse program "" code of
-       Left e  -> print e >> fail "parse error"
-       Right r -> return r

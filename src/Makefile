@@ -30,7 +30,10 @@ lint:
 test:
 	runhaskell Tests.hs
 
-check: build lint test
+validate_programs:
+	find programs -name "*.fk" | xargs -I % sh -c "echo %; freak -p %"
+
+check: build lint validate_programs test
 
 install:
 	cabal install parsec
