@@ -1,0 +1,7 @@
+cohandle
+    observe Inc 17
+through {
+    Id p r -> return p |
+    Inc p r -> return p + 1 |
+    return x -> return x
+}

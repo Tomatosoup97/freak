@@ -1,0 +1,13 @@
+let x <- handle
+    do GetNumber ()
+with {
+    GetNumber p r -> r 5 |
+    return x -> return x
+} in
+let y <- cohandle
+    observe ReadFileContents "filename"
+through {
+    ReadFileContents filename r -> return 10 |
+    return x -> return x
+} in
+return x + y

@@ -1,0 +1,11 @@
+cohandle
+    cohandle
+        let x <- observe Inc 1 in observe Double x
+    through {
+        Inc p r -> let t <- return p + 1 in r t |
+        return x -> return x
+    }
+through {
+    Double p r -> let t <- return p * 2 in r t |
+    return x -> return x
+}

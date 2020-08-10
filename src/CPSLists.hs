@@ -17,6 +17,7 @@ Bugs:
 
 Features:
 1. Syntactic sugar for function definitions
+2. Syntax highlight
 -}
 
 import qualified Data.Map as Map
@@ -31,10 +32,17 @@ type ContF = UValue -> [Cont] -> CPSMonad UComp
 
 data Cont = Pure ContF
           | Eff ContF
+          | Coeff ContF
+
+unfoldCont :: Cont -> ContF
+unfoldCont (Pure c) = c
+unfoldCont (Eff c) = c
+unfoldCont (Coeff c) = c
 
 instance Show Cont where
     show (Pure f) = "Pure"
     show (Eff f) = "Eff"
+    show (Coeff f) = "Coeff"
 
 initialPureCont :: ContF
 initialPureCont v ks = (return . UVal) v
@@ -117,29 +125,49 @@ cps e ks = case e of
         v <- cpsVal v ks
         return $ UAbsurd v
     -- Algebraic effects
-    EOp l v -> do
-        let Pure kf:h@(Eff hf):ks' = ks
-        x <- freshVar' "rArg"
-        pureComp <- kf (UVar x) (h:ks')
-        let resumption = ULambda x pureComp
-        let pair cv = UPair (ULabel l) (UPair cv resumption)
-        cv <- cpsVal v ks
-        hf (pair cv) ks'
-    EHandle body handler -> do
-        let pureCont = cpsHRet (hret handler)
-        let effCont = cpsHOps handler
-        cps body (pureCont:effCont:ks)
+    EOp l v -> case ks of
+        (Pure kf:(Eff hf):ks') -> cpsOp l v ks
+        (Pure kf:(Coeff hf):ks') -> throwError $ CPSError "effect cannot enter world of coeffects!"
+        _ -> throwError $ CPSError $ "Ildefined stack of continuations: " ++ show ks
+    EHandle body handler ->
+        cpsHandle body handler Eff ks
+    -- Coalgebraic effects
+    ECohandle body handler ->
+        cpsHandle body handler Coeff ks
+    ECoop l v -> case ks of
+        (Pure kf:(Coeff hf):ks') -> cpsOp l v ks
+        (Pure kf:(Eff hf):ks') -> throwError $ CPSError "coeffect cannot enter world of effects!"
+        _ -> throwError $ CPSError $ "Ildefined stack of continuations: " ++ show ks
+
+
+cpsHandle :: Comp -> Handler -> (ContF -> Cont) -> [Cont] -> CPSMonad UComp
+cpsHandle body handler effCons ks = do
+    let pureCont = cpsHRet (hret handler)
+    let effCont = cpsHOps effCons handler
+    cps body (pureCont:effCont:ks)
+
+
+cpsOp :: Label -> Value -> [Cont] -> CPSMonad UComp
+cpsOp l v ks = do
+    let Pure kf:h:ks' = ks
+    let hf = unfoldCont h
+    x <- freshVar' "rArg"
+    pureComp <- kf (UVar x) (h:ks')
+    let resumption = ULambda x pureComp
+    let pair cv = UPair (ULabel l) (UPair cv resumption)
+    cv <- cpsVal v ks
+    hf (pair cv) ks'
 
 
 cpsHRet :: Handler -> Cont
 cpsHRet (HRet xVar comp) = Pure (\x ks -> do
-    let Eff hf:ks' = ks
+    let _:ks' = ks
     convComp <- cps comp ks'
     return $ ULet xVar (UVal x) convComp)
 
 
-cpsHOps :: Handler -> Cont
-cpsHOps ops = Eff (\(UPair (ULabel l) (UPair p r)) ks ->
+cpsHOps :: (ContF -> Cont) -> Handler -> Cont
+cpsHOps effCons ops = effCons (\(UPair (ULabel l) (UPair p r)) ks ->
     case hop l ops of
         Just (AlgOp _ pvar rvar comp) -> do
             contComp <- cps comp ks
@@ -149,7 +177,8 @@ cpsHOps ops = Eff (\(UPair (ULabel l) (UPair p r)) ks ->
 
 forward :: Label -> UValue -> UValue -> [Cont] -> CPSMonad UComp
 forward y p r ks = do
-    let k'@(Pure kf'):h'@(Eff hf'):ks' = ks
+    let k'@(Pure kf'):h':ks' = ks
+    let hf' = unfoldCont h'
     x <- freshVar' "rArg"
     pureComp <- kf' (UVar x) (h':ks')
     let resumption = ULambda x pureComp

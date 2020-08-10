@@ -1,0 +1,14 @@
+cohandle
+    observe Arithmetic 2
+through {
+    Arithmetic p r ->
+        cohandle
+            let x <- observe Inc p in
+            let y <- return x * 2 in
+            r y
+        through {
+            Inc p r -> let t <- return p + 1 in r t |
+            return x -> return x
+        } |
+    return x -> return x + 1
+}

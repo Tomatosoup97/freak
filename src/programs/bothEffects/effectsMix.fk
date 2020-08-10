@@ -1,0 +1,11 @@
+cohandle
+    handle
+        observe Open "file"
+    with {
+        Choice p r -> return True |
+        return x -> return x
+    }
+through {
+    Open filename r -> r filename |
+    return x -> return x
+}

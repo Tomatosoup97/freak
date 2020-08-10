@@ -1,0 +1,19 @@
+handle
+    cohandle
+        let fh <- observe Open "praise.txt" in
+        let c <- do Choice () in
+        let x <- if c then
+            observe Write (fh, "Guy Fieri")
+        else
+            observe Write (fh, "is cool") in
+        observe Close fh
+    through {
+        Write args r -> r () |
+        Close fh r -> r () |
+        Open filename r -> r filename |
+        return x -> return x
+    }
+with {
+    Choice p r -> r 1 |
+    return x -> return x
+}

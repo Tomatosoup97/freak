@@ -166,7 +166,7 @@ main = hspec $ do
     it "Print effect" $ do
       evalProgram "do Print \"print\"" `shouldBeT` (Right DUnit)
       evalProgram "let x <- do Print \"print\" in return 1" `shouldBeT` (Right (DNum 1))
-      testFromFile "programs/printToConsole.fk" (Right DUnit)
+      testFromFile "programs/io/printToConsole.fk" (Right DUnit)
 
     -- it "Drop resumption result" $ do
     --   testFromFile "programs/dropResumption.fk" (Right (DNum 1))
@@ -184,6 +184,10 @@ main = hspec $ do
     it "Let handler" $ do
       testFromFile "programs/letHandler.fk" (Right (DNum 14))
 
+    -- TODO: Support named, reusable handlers
+    -- it "Lambda handler" $ do
+    --  testFromFile "programs/lambdaHandler.fk" (Right (DNum 42))
+
     it "Nested handlers" $ do
       testFromFile "programs/nestedHandlers.fk" (Right (DNum 4))
 
@@ -191,4 +195,27 @@ main = hspec $ do
       testFromFile "programs/complexNestedHandlers.fk" (Right (DNum 15))
 
     it "File handling" $ do
-      testFromFile "programs/writeToFile.fk" (Right (DStr "one-two-three"))
+      testFromFile "programs/io/writeToFile.fk" (Right (DStr "one-two-three"))
+
+    -- Coalgebraic effects
+
+    it "[Coalg] Increment coeffect handler" $ do
+      testFromFile "programs/coeffects/increment.fk" (Right (DNum 18))
+
+    it "[Coalg] Nested cohandlers" $ do
+      testFromFile "programs/coeffects/nestedHandlers.fk" (Right (DNum 4))
+
+    it "[Coalg] Deep cohandlers" $ do
+      testFromFile "programs/coeffects/deepHandlers.fk" (Right (DNum 7))
+
+    -- Both effects
+
+    it "[Both] Mixing algebras should result in error" $ do
+      testFromFile "programs/bothEffects/fileOpsMix.fk" (Left (CPSError "effect cannot enter world of coeffects!"))
+      testFromFile "programs/bothEffects/effectsMix.fk" (Left (CPSError "coeffect cannot enter world of effects!"))
+
+    it "[Both] Subset interleave of effects" $ do
+      testFromFile "programs/bothEffects/fileOpsCorrect.fk" (Right DUnit)
+
+    it "[Both] Disjoint interleave of effects" $ do
+      testFromFile "programs/bothEffects/basicCorrectUseCase.fk" (Right (DNum 15))
