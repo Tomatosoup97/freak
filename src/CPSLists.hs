@@ -1,25 +1,5 @@
 module CPS where
 
-{- To Do Plan for implementation
-
-Coeffects:
-1. Cohandlers as a separate construct
-2. Disallow mixing effects with coeffects
-3. Define reusable handler as a variable
-4. Define default effects handler as a citizen in language
-5. Consider doing cohandlers as algebraic effects for easy logic substitution
-6. Consider one-shot tail-recursive handlers
-7. (Probably too hard and time consuming) Consider data-flow analysis for
-detecting whether cont was called once. Issue: data-flow analysis for effects?
-
-Bugs:
-1. Drop continuation result does not work
-
-Features:
-1. Syntactic sugar for function definitions
-2. Syntax highlight
--}
-
 import qualified Data.Map as Map
 import Control.Monad.Except
 import Control.Monad.State
