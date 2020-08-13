@@ -34,12 +34,12 @@ parens s = "(" ++ s ++ ")"
 instance Show UValue where
     show (UBinOp op vL vR) = parens $ show vL ++ show op ++ show vR
     show (UNum n) = show n
-    show (UStr s) = show s
+    show (UStr s) = s
     show  UUnit = "()"
     show (UPair l r) = parens $ show l ++ ", " ++ show r
-    show (ULabel l) = parens $ "L: " ++ show l
-    show (UVar x) = show x
-    show (ULambda x c) = parens $ "\\" ++ show x ++ " -> " ++ show c
+    show (ULabel l) = parens $ "L: " ++ l
+    show (UVar x) = x
+    show (ULambda x c) = parens $ x ++ " -> " ++ show c
 
 instance Show UComp where
     show (UVal v) = show v
@@ -48,5 +48,5 @@ instance Show UComp where
     -- show (UCase v l x c y c') = "case " ++ show v ++ " { " ++ show l ++ " " ++ show x ++ "->" ++ show c ++ "; " ++ show y ++ " " ++ show c'
     show (UIf v c c') = "if " ++ show v ++ " then " ++ show c ++ " else " ++ show c'
     show (UAbsurd v) = "absurd " ++ show v
-    show (ULet x xComp comp) = parens $ "let " ++ show x ++ " = " ++ show xComp ++ " in " ++ show comp
+    show (ULet x xComp comp) = parens $ "let " ++ x ++ " = " ++ show xComp ++ " in " ++ show comp
     show (UTopLevelEffect l p) = show l ++ show p
