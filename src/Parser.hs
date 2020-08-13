@@ -19,7 +19,7 @@ languageDef =
            , Token.commentEnd      = "--)"
            , Token.commentLine     = "--"
            , Token.nestedComments  = True
-           , Token.identStart      = letter
+           , Token.identStart      = letter <|> char '_'
            , Token.identLetter     = alphaNum
            , Token.reservedNames   = [ "in"
                                      , "let"
