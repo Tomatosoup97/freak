@@ -103,8 +103,8 @@ main = hspec $ do
     it "Let lambda forget function result" $ do
       evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBeT` (Right (DNum 1))
 
-    -- it "Let lambda forget function result - more verbose" $ do
-    --   evalProgram "let f <- return (\\x : int -> return x + 1) in let x <- f 42 in return 1" `shouldBeT` (Right (DNum 1))
+    it "Let lambda forget function result - more verbose" $ do
+      testFromFile "programs/letLambda.fk" (Right (DNum 1))
 
     it "If statement" $ do
       evalProgram "if 1 then return 1 else return 0" `shouldBeT` (Right (DNum 1))

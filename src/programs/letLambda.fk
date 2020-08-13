@@ -1,0 +1,3 @@
+let f <- return (\y : int -> return y) in
+let x <- f 42 in
+return 1
