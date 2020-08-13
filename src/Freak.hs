@@ -28,12 +28,17 @@ runProgram s = evalProgram s >>= \case
 runFromFile :: String -> IO ()
 runFromFile filename = readFile filename >>= runProgram
 
-parseFile :: String -> IO ()
-parseFile filename = do
+cpsFromFile :: String -> IO ()
+cpsFromFile filename = readFile filename >>= cpsProgram >>= \case
+    Right cps -> print (show cps)
+    Left err -> print (show err) >> fail "CPS translation error"
+
+parseFile :: String -> Bool -> IO ()
+parseFile filename quiet = do
     code <- readFile filename
     case parseString code of
+        Right r -> if quiet then return () else print r
         Left e  -> print e >> fail "Parse error"
-        Right r -> return ()
 
 outputResult :: Either Error DValue -> IO ()
 outputResult (Left e) = print $ show e
