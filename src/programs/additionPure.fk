@@ -1,0 +1,12 @@
+handle
+    handle
+        let _ <- do Id 1 in
+        let _ <- do Id 1 in
+        do Id 1
+    with {
+        Id p r -> r p |
+        return x -> return x
+    }
+with {
+    return x -> return x + 1
+}

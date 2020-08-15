@@ -143,6 +143,9 @@ main = hspec $ do
     it "Compose let with do" $ do
       evalProgram "handle let x <- do Id 1 in return 3 with {Id p r -> r p | return x -> return x }" `shouldBeT` (Right (DNum 3))
 
+    -- it "Addition in pure computation" $ do
+    --   testFromFile "programs/additionPure.fk" (Right (DNum 2))
+
     it "Increment effect handler" $ do
       testFromFile "programs/increment.fk" (Right (DNum 18))
 
