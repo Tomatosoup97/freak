@@ -66,9 +66,7 @@ cpsVal e ks = case e of
 
 cps :: Comp -> [Cont] -> CPSMonad UComp
 cps e ks = case e of
-    EVal v -> case ks of
-        Pure kf:ks' -> cpsVal v ks' >>= \v -> kf v ks'
-        _ -> cpsVal v ks >>= \v -> initialPureCont v ks
+    EVal v -> cpsVal v ks >>= (return . UVal)
     EApp vF vArg -> do
         f <- cpsVal vF ks
         arg <- cpsVal vArg ks
@@ -100,7 +98,9 @@ cps e ks = case e of
         tC <- cps tComp ks
         fC <- cps fComp ks
         return $ UIf cond tC fC
-    EReturn v -> cps (EVal v) ks
+    EReturn v -> case ks of
+        Pure kf:ks' -> cpsVal v ks' >>= \v -> kf v ks'
+        [Eff _] -> cpsVal v ks >>= \v -> initialPureCont v ks
     EAbsurd v -> do
         v <- cpsVal v ks
         return $ UAbsurd v
@@ -140,8 +140,7 @@ cpsOp l v ks = do
 
 
 cpsHRet :: Handler -> Cont
-cpsHRet (HRet xVar comp) = Pure (\x ks -> do
-    let _:ks' = ks
+cpsHRet (HRet xVar comp) = Pure (\x (_:ks') -> do
     convComp <- cps comp ks'
     return $ ULet xVar (UVal x) convComp)
 
