@@ -1,0 +1,16 @@
+handle
+    cohandle
+        handle
+            do Choice ()
+        with {
+            Effect p r -> r p |
+            return x -> return x
+        }
+    through {
+        Open filename r -> r filename |
+        return x -> return x
+    }
+with {
+    Choice p r -> return 1 |
+    return x -> return x
+}

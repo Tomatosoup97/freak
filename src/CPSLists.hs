@@ -107,7 +107,7 @@ cps e ks = case e of
     -- Algebraic effects
     EOp l v -> case ks of
         (Pure kf:(Eff hf):ks') -> cpsOp l v ks
-        (Pure kf:(Coeff hf):ks') -> throwError $ CPSError "effect cannot enter world of coeffects!"
+        (Pure kf:(Coeff hf):ks') -> throwError $ CPSError "Effect cannot go pass cohandler!"
         _ -> throwError $ CPSError $ "Ildefined stack of continuations: " ++ show ks
     EHandle body handler ->
         cpsHandle body handler Eff ks
@@ -115,8 +115,7 @@ cps e ks = case e of
     ECohandle body handler ->
         cpsHandle body handler Coeff ks
     ECoop l v -> case ks of
-        (Pure kf:(Coeff hf):ks') -> cpsOp l v ks
-        (Pure kf:(Eff hf):ks') -> throwError $ CPSError "coeffect cannot enter world of effects!"
+        (Pure kf:h:ks') -> cpsOp l v ks
         _ -> throwError $ CPSError $ "Ildefined stack of continuations: " ++ show ks
 
 
@@ -156,6 +155,7 @@ cpsHOps effCons ops = effCons (\(UPair (ULabel l) (UPair p r)) ks ->
 
 forward :: Label -> UValue -> UValue -> [Cont] -> CPSMonad UComp
 forward y p r ks = do
+    -- TODO: forwarding should not let effects go pass cohandler
     let k'@(Pure kf'):h':ks' = ks
     let hf' = unfoldCont h'
     x <- freshVar' "rArg"

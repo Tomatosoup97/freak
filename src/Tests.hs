@@ -213,12 +213,16 @@ main = hspec $ do
 
     -- Both effects
 
-    it "[Both] Mixing algebras should result in error" $ do
-      testFromFile "programs/bothEffects/fileOpsMix.fk" (Left (CPSError "effect cannot enter world of coeffects!"))
-      testFromFile "programs/bothEffects/effectsMix.fk" (Left (CPSError "coeffect cannot enter world of effects!"))
+    it "[Both] Effect should not escape cohandler" $ do
+      testFromFile "programs/bothEffects/fileOpsMix.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
+      testFromFile "programs/bothEffects/effectsMixIncorrect.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
+      testFromFile "programs/bothEffects/mixingNestedHandlers.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
+
+    it "[Both] Coeffect may escape handler" $ do
+      testFromFile "programs/bothEffects/effectsMixCorrect.fk" (Right (DStr "contents"))
 
     it "[Both] Subset interleave of effects" $ do
       testFromFile "programs/bothEffects/fileOpsCorrect.fk" (Right DUnit)
 
-    it "[Both] Disjoint interleave of effects" $ do
-      testFromFile "programs/bothEffects/basicCorrectUseCase.fk" (Right (DNum 15))
+    -- it "[Both] Disjoint interleave of effects" $ do
+    --   testFromFile "programs/bothEffects/basicCorrectUseCase.fk" (Right (DNum 15))

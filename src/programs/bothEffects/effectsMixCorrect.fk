@@ -1,0 +1,11 @@
+cohandle
+    handle
+        observe Read "file"
+    with {
+        Choice p r -> return True |
+        return x -> return x
+    }
+through {
+    Read filename r -> r "contents" |
+    return x -> return x
+}
