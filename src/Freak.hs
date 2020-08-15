@@ -22,16 +22,16 @@ evalProgram s = cpsProgram s >>= \case
 
 runProgram :: String -> IO ()
 runProgram s = evalProgram s >>= \case
-    Left e -> print $ show e
-    Right v -> print $ show v
+    Left e -> print e
+    Right v -> print v
 
 runFromFile :: String -> IO ()
 runFromFile filename = readFile filename >>= runProgram
 
 cpsFromFile :: String -> IO ()
 cpsFromFile filename = readFile filename >>= cpsProgram >>= \case
-    Right cps -> print (show cps)
-    Left err -> print (show err) >> fail "CPS translation error"
+    Right cps -> print cps
+    Left err -> print err >> fail "CPS translation error"
 
 parseFile :: String -> Bool -> IO ()
 parseFile filename quiet = do
@@ -39,7 +39,3 @@ parseFile filename quiet = do
     case parseString code of
         Right r -> if quiet then return () else print r
         Left e  -> print e >> fail "Parse error"
-
-outputResult :: Either Error DValue -> IO ()
-outputResult (Left e) = print $ show e
-outputResult (Right v) = print $ show v
