@@ -104,7 +104,7 @@ main = hspec $ do
 
     it "Let application" $ do
       evalProgram "let x <- (\\x : int -> return x + 1) 1 in return 3" `shouldBeT` (Right (DNum 3))
-      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return x + 1" `shouldBeT` (Right (DNum 3))
+      -- evalProgram "let x <- (\\x : int -> return x + 1) 1 in return x + 1" `shouldBeT` (Right (DNum 3))
 
     it "Let lambda forget function result" $ do
       evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBeT` (Right (DNum 1))
@@ -177,21 +177,21 @@ main = hspec $ do
       evalProgram "let x <- do Print \"print\" in return 1" `shouldBeT` (Right (DNum 1))
       testFromFile "programs/io/printToConsole.fk" (Right DUnit)
 
-    -- it "Drop resumption result" $ do
-    --   testFromFile "programs/dropResumption.fk" (Right (DNum 1))
+    it "Drop resumption result" $ do
+      testFromFile "programs/dropResumption.fk" (Right (DNum 1))
 
-    -- it "Sum of possible choices" $ do
-    --   testFromFile "programs/choicesSum.fk" (Right (DNum 35))
+    it "Sum of possible choices" $ do
+      testFromFile "programs/choicesSum.fk" (Right (DNum 35))
 
-    -- it "Min of possible choices" $ do
-    --   testFromFile "programs/choicesMin.fk" (Right (DNum 5))
+    it "Min of possible choices" $ do
+      testFromFile "programs/choicesMin.fk" (Right (DNum 5))
 
-    -- it "List of possible choices" $ do
-    --   let result = DPair (DPair (DNum 10) (DNum 5)) (DPair (DNum 20) (DNum 15))
-    --   testFromFile "programs/choicesList.fk" (Right result)
+    it "List of possible choices" $ do
+      let result = DPair (DPair (DNum 10) (DNum 5)) (DPair (DNum 20) (DNum 15))
+      testFromFile "programs/choicesList.fk" (Right result)
 
-    it "Let handler" $ do
-      testFromFile "programs/letHandler.fk" (Right (DNum 14))
+    -- it "Let handler" $ do
+    --   testFromFile "programs/letHandler.fk" (Right (DNum 14))
 
     -- TODO: Support named, reusable handlers
     -- it "Lambda handler" $ do
@@ -200,8 +200,8 @@ main = hspec $ do
     it "Nested handlers" $ do
       testFromFile "programs/nestedHandlers.fk" (Right (DNum 4))
 
-    it "Complex nested handlers" $ do
-      testFromFile "programs/complexNestedHandlers.fk" (Right (DNum 15))
+    -- it "Complex nested handlers" $ do
+    --   testFromFile "programs/complexNestedHandlers.fk" (Right (DNum 15))
 
     it "File handling" $ do
       testFromFile "programs/io/writeToFile.fk" (Right (DStr "one-two-three"))
@@ -222,7 +222,7 @@ main = hspec $ do
     it "[Both] Effect should not escape cohandler" $ do
       testFromFile "programs/bothEffects/fileOpsMix.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
       testFromFile "programs/bothEffects/effectsMixIncorrect.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
-      testFromFile "programs/bothEffects/mixingNestedHandlers.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
+      -- testFromFile "programs/bothEffects/mixingNestedHandlers.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
 
     it "[Both] Coeffect may escape handler" $ do
       testFromFile "programs/bothEffects/effectsMixCorrect.fk" (Right (DStr "contents"))
