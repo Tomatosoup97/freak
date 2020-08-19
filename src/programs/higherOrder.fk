@@ -1,0 +1,3 @@
+let f <- return (\x : int -> return (\y:int -> return x + y)) in
+let g <- f 2 in
+g 3

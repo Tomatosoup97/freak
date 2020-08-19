@@ -96,6 +96,9 @@ main = hspec $ do
     it "Let lambda" $ do
       evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBeT` (Right (DNum 43))
 
+    it "Higher order function" $ do
+      testFromFile "programs/higherOrder.fk" (Right (DNum 5))
+
     it "Application" $ do
       evalProgram "(\\x : int -> return x + 1) 1" `shouldBeT` (Right (DNum 2))
 
