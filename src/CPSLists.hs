@@ -24,6 +24,12 @@ instance Show Cont where
     show (Eff f) = "Eff"
     show (Coeff f) = "Coeff"
 
+instance Eq Cont where
+    Pure _ == Pure _ = True
+    Eff _ == Eff _ = True
+    Coeff _ == Coeff _ = True
+    _ == _ = False
+
 initialPureCont :: ContF
 initialPureCont v ks = (return . UVal) v
 
