@@ -20,7 +20,7 @@ languageDef =
            , Token.commentLine     = "--"
            , Token.nestedComments  = True
            , Token.identStart      = letter <|> char '_'
-           , Token.identLetter     = alphaNum
+           , Token.identLetter     = alphaNum <|> char '\''
            , Token.reservedNames   = [ "in"
                                      , "let"
                                      , "return"

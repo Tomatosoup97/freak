@@ -53,6 +53,9 @@ main = hspec $ do
     it "Undefined variable" $ do
       evalProgram "return x" `shouldBeT` (Left (unboundVarErr "x"))
 
+    it "Variable with prim" $ do
+      evalProgram "let x' <- return 1 in return x'" `shouldBeT` (Right (DNum 1))
+
     it "Absurd" $ do
       evalProgram "absurd 42" `shouldBeT` (Left (absurdErr (UNum 42)))
       evalProgram "let x <- absurd 17 in return 42" `shouldBeT` (Left (absurdErr (UNum 17)))
