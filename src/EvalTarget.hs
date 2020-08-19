@@ -47,7 +47,7 @@ eval env c = case c of
         argDValue <- eval env argValue
         case fnVal of
             DLambda fun -> fun [argDValue]
-            e -> throwError $ EvalError $ "Application of non-lambda term " ++ show e
+            e -> throwError $ EvalError $ "Application of non-lambda term " ++ show e ++ " in " ++ show c
     UIf e tC fC ->
         eval env (UVal e) >>= \(DNum n) ->
         eval env (if n > 0 then tC else fC)
