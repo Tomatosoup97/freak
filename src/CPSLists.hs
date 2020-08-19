@@ -85,10 +85,13 @@ cps :: Comp -> [Cont] -> CPSMonad UComp
 cps e ks = case e of
     EVal v -> cpsVal v ks >>= (return . UVal)
     EApp vF vArg -> do
+        let k@(Pure kf):ks' = ks
         f <- cpsVal vF ks
         arg <- cpsVal vArg ks
-        return $ UApp (UVal f) (UVal arg)
-    -- todo: This ELet fails on Drop resumption result test
+        let app = UApp (UVal f) (UVal arg)
+        freshX <- freshVar' "appArg"
+        resume <- kf (UVar freshX) ks'
+        return $ ULet freshX app resume
     ELet x varComp comp -> do
         let k:ks' = ks
         let cont varVal ks'' = do
