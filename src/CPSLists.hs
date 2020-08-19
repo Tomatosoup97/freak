@@ -30,6 +30,17 @@ instance Eq Cont where
     Coeff _ == Coeff _ = True
     _ == _ = False
 
+showCont :: Cont -> CPSMonad ()
+showCont k = case k of
+    Pure f -> printCont f "Pure cont"
+    Eff f -> printCont f "Eff cont"
+    Coeff f -> printCont f "Coeff cont"
+    where printCont f repr = do
+            v <- freshVar' repr
+            (liftIO . putStrLn) $ "-- Start " ++ v
+            res <- f (UVar "[-]") (cycle [Pure initialPureCont, Eff initialEffCont])
+            (liftIO . putStrLn) $ "-- End Pure " ++ v ++ " " ++ show res
+
 initialPureCont :: ContF
 initialPureCont v ks = (return . UVal) v
 
