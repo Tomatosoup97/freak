@@ -92,7 +92,7 @@ cps e ks = case e of
     ELet x varComp comp -> do
         let k:ks' = ks
         let cont varVal ks'' = do
-            body <- cps comp (k:ks')
+            body <- cps comp (k:ks'')
             return $ ULet x (UVal varVal) body
         cps varComp (Pure cont:ks')
     -- todo: This ELet fails on Simulate exceptions test
