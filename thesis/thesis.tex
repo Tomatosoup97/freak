@@ -549,7 +549,7 @@ TODO \\
     \end{center}
 
     \noindent
-    where $\Lambda^{0} \in \Lambda$ is a set of $\mathVar{closed~\lambda-terms}$,
+    where $\Lambda^{0} \subseteq \Lambda$ is a set of $\mathVar{closed~\lambda-terms}$,
     meaning, those terms have no free variables. Let's now define an inductive,
     and coinductive predicate. Relation
     $\Downarrow{} \subseteq \Lambda^{0} \times \Lambda^{0}$ (convergence) for
@@ -903,14 +903,13 @@ TODO muuuch longer explanation of this topic
 \chapter{Implementation}\label{chapter:implementation}
 
     The Freak implementation is available on github~\cite{freak}, written purely
-    in Haskell. While the paper provided a good overview of the language and the
-    translation, the lower-level details were omitted. That being said, two
-    inherently different takes at implementations were made. The first one
-    is based on curried translation and A. Appel~\cite{appel-continuations}
-    book, and the second one directly on the uncurried translation to target
-    calculus with continuations represented as explicit stacks from the paper.
-    We start by presenting core data structures, and afterwards move to actual
-    translation details.
+    in Haskell.Two inherently different takes at implementations were made. The
+    first one is based on curried translation from A. Appel~\cite{appel-continuations}
+    book, and the second one on Links language~\cite{handlers-cps, handlers-cps-journal},
+    on the uncurried translation to target calculus with continuations represented
+    as explicit stacks. We start by presenting core data structures, and
+    afterwards move to actual translation details. Development of the former
+    version is now suspended.
 
     \section{Abstract Syntax Tree}\label{sec:implementation-ast}
 
@@ -920,6 +919,7 @@ TODO muuuch longer explanation of this topic
 data Value
     = VVar Var
     | VNum Integer
+    | VStr String
     | VLambda Var ValueType Comp
     | VFix Var Var Comp
     | VUnit
@@ -938,9 +938,15 @@ data Comp
     | EReturn Value
     | EAbsurd Value
     | EIf Value Comp Comp
+    -- Algebraic effects
     | EOp Label Value
     | EHandle Comp Handler
+    -- Coalgebraic effects
+    | ECoop Label Value
+    | ECohandle Comp Handler
     \end{verbatim}
+
+    \noindent
     Similarly for the target calculus data structure. However, as one may notice,
     for convenience the \textbf{let} translation is homomorphic, as opposed to be
     to lambda abstracted with immediate application:
@@ -949,6 +955,7 @@ data Comp
 data UValue
     = UVar Var
     | UNum Integer
+    | UStr String
     | UBool Bool
     | ULambda Var UComp
     | UUnit
@@ -965,23 +972,47 @@ data UComp
     | UIf UValue UComp UComp
     | ULet Var UComp UComp
     | UAbsurd UValue
+    | UTopLevelEffect Label UValue
 
     \end{verbatim}
+
+    \noindent
     The final answer, common to both evaluations, is represented as a \verb!DValue!,
     where the meaning of the coproduct is as one would expect:
 
     \begin{verbatim}
 type Label = String
+
 type FuncRecord = [DValue] -> Either Error DValue
+
 data DValue
     = DNum Integer
+    | DStr String
     | DLambda FuncRecord
     | DUnit
     | DPair DValue DValue
     | DLabel Label
     \end{verbatim}
 
-    \section{Target calculus}
+    \noindent
+    Evaluation of target calculus is typical to call-by-value with syntactic
+    distinction between values and computations. For more details, refer
+    to~\cite{handlers-cps-journal}. That being said, there is one part
+    that requires more attention, namely, \verb!UTopLevelEffect Label UValue!,
+    which represents an unhandled algebraic effect along with it's parameter.
+    Even in case language has coalgebraic effects, special treatment is required
+    for doing IO\@. For that reason, we define default handling for a few effects
+    for printing to console and handling files, where semantic is just as one
+    would expect from naming:
+
+    \begin{verbatim}
+    type Filename = String
+    Print :: String -> ()
+    ReadLine :: () -> String
+    ReadFile :: Filename -> String
+    WriteFile :: (Filename, String) -> ()
+    AppendFile :: (Filename, String) -> ()
+    \end{verbatim}
 
     \section{Curried translation}
 
@@ -1034,52 +1065,53 @@ data ContComp
     more control in the source code.
 
     \begin{verbatim}
-type CPSMonad a = ExceptT Error (State Int) a
+type CPSMonad a = ExceptT Error (StateT Int IO) a
 
 type ContF = UValue -> [Cont] -> CPSMonad UComp
 
 data Cont = Pure ContF
           | Eff ContF
+          | Coeff ContF
+
+initialPureCont :: ContF
+initialPureCont v ks = (return . UVal) v
+
+initialEffCont :: ContF
+initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks =
+    return . UApp (UVal r) $ UTopLevelEffect effLabel p
+
     \end{verbatim}
-    Where \verb!CPSMonad! is a monad transformer over \verb!Either! and \verb!State!.
-    \verb!State! was required to generate labels for fresh variables that
-    came from the translation. The core code is split into five functions:
+    Where \verb!CPSMonad! is a monad transformer over \verb!Either!, \verb!State!
+    and \verb!IO!. \verb!State! is required to generate labels for fresh variables
+    that came from the translation, \verb!Either! for handling exceptions that
+    may occur during translations, and \verb!IO! for handling input output of the
+    source language. Initial pure continuation is lifting values into computations,
+    and effectful one is propagating previously mentioned \verb!UTopLevelEffect!.
+    The core code is split into a few functions:
 
     \begin{verbatim}
 cps     :: Comp    -> [Cont] -> CPSMonad UComp
 cpsVal  :: Value   -> [Cont] -> CPSMonad UValue
+cpsOp   :: Label -> Value -> [Cont] -> CPSMonad UComp
 cpsHRet :: Handler -> Cont
-cpsHOps :: Handler -> Cont
+cpsHOps :: (ContF -> Cont) -> Handler -> Cont
 forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
+runCPS  :: Comp -> EvalResMonad UComp
     \end{verbatim}
-    Where the first two are implementing cps for computations and values.
-    \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
-    based on a given handler. The last one is responsible for forwarding the
-    computation to the outer handler.
-
-    This results in an implementation that finally supports nested handlers,
-    as can be seen by evaluating \verb!programs/complexNestedHandlers.fk! program.
-    Unfortunately, following closely translation from the paper resulted in
-    a behaviour, in which invoked resumption forgets its pure continuation. This means,
-    that the following code, evaluating correctly on the Appel-based translation,
-    returns 0 rather than 1:
-
-    \begin{verbatim}
-handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
-    \end{verbatim}
-    Nevertheless, working out this issue appears as less demanding than coping with
-    discrepancies created in the first translation. The source code for uncurried
-    translation and evaluation can be found respectively in \verb!CPSLists.hs! and
-    \verb!EvalTarget.hs!.
 
     \noindent
-    TODO Drop of continuations is still an issue
+    Where the first two are implementing cps for computations and values.
+    \verb!cpsOp! is doing translation for an (co) effect that occured in program,
+    \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
+    based on a given handler. \verb!forward! is responsible for forwarding the
+    computation to the outer handler, and the last one for running the
+    translation, where evaluation result is represented by\\
+    \verb!type EvalResMonad a = IO (Either Error a)!. This results in an
+    implementation that finally supports nested handlers, which can be seen by
+    running tests.
 
     \section{Cohandlers}
     \ldots
-
-    \noindent
-    TODO Simple implementation for cohandlers
 
     \section{Source Code Structure}
 
@@ -1090,9 +1122,7 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     AST.hs          - AST data structures
     CommonCPS.hs    - Common functions for CPS translation
     CommonEval.hs   - Common functions for evaluation
-    CPSAppel.hs     - Appel-based CPS translation
     CPSLists.hs     - Uncurried CPS translation
-    EvalCPS.hs      - Evaluation of the Appel's CPS structure
     EvalTarget.hs   - Evaluation of the target calculus
     Freak.hs        - API for the language
     Main.hs         - Main module running evaluator on given filename
@@ -1100,7 +1130,10 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     TargetAST.hs    - AST for the target calculus
     Tests.hs        - Tests module
     Types.hs        - Common types definition
-    programs/       - Exemplary programs used in tests
+    programs/       - Exemplary programs covered in tests
+
+    CPSAppel.hs     - [deprecated] Appel-based CPS translation
+    EvalCPS.hs      - [deprecated] Evaluation of the Appel's CPS structure
     \end{verbatim}
 
 \chapter{Conclusion}\label{chapter:conclusion}
@@ -1112,17 +1145,19 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
 
     \subsection{Abstract machine}
 
-    The Links language also provides small-step operational semantics and
-    an abstract machine~\cite{liberating-effects}. Implementing another way
-    of evaluation could serve as a way to empirically assert correctness,
-    as opposed to formally.
+    The Links language, on which CPS translation Freak was based, also provides
+    small-step operational semantics~\cite{handlers-cps} and an abstract
+    machine~\cite{liberating-effects}. Implementing another way of evaluation
+    could serve as a way to empirically assert correctness, as opposed to formally.
+    Abstract machine would need to be extended to incorporate coeffects.
 
     \subsection{Type inference and row polymorphism}
 
     The type system as of this day is not implemented, as the focus has been put
-    on CPS transformation. Further work is required here, especially considering
-    the fact that a huge advantage of algebraic effects is that they are explicitly
-    defined in the type of a computation.
+    on CPS transformation and dynamics of the calculus with effects and coeffects.
+    Further work is required here, especially considering the fact that a huge
+    advantage of algebraic effects is that they are explicitly defined in the
+    type of a computation.
 
     \subsection{Multiple instances of algebraic effects}
 
@@ -1130,16 +1165,17 @@ handle do Drop () with { Drop p r -> let t <- r 0 in return 1}
     need to support cases where many instances of the algebraic effects, with
     the same handler code, could be instantiated. The current state of the
     art introduces a concept of resources and instances, as in Eff~\cite{programming-in-eff},
-    or instance variables, as in Helium~\cite{binders-labels}.
+    or instance variables, as in Helium~\cite{binders-labels}. Another part is
+    to research on how this area combines with coalgebraic part.
 
     \subsection{Selective CPS}
 
-    Other languages, like Koka~\cite{leijen-koka}, or even the core of the Links, are
-    performing selective CPS translation, which reduces the overhead on code
+    Other languages, like Koka~\cite{leijen-koka}, or even the core of the Links,
+    are performing selective CPS translation, which reduces the overhead on code
     that does not perform algebraic effects. Our current translation is fully
-    embedded in the CPS.\@
+    embedded in CPS transformation.
 
-    \subsection{Exceptions as separate constructs}
+    \subsection{Exceptions and signals}
 
     Exceptions are a trivial example of algebraic effect where the resumption is
     discarded, and as described in \S 4.5~\cite{handlers-cps}, they can be modeled
