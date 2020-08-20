@@ -28,6 +28,7 @@
 \usepackage{stmaryrd}
 \usepackage{bussproofs}
 \usepackage{tikz-cd}
+\usepackage{fancyvrb}
 \usetikzlibrary{babel}
 
 % Disable certain warnings
@@ -82,17 +83,18 @@ external resources multiple times or not invoking finalisation code are cases
 that may occur while using algebraic effects and handlers. Let's consider the
 following example:
 
-\begin{verbatim}
-handle
-    let fh <- do Open "praise.txt" in
-    let c <- do Choice () in
-    if c then do Write (fh, "Guy Fieri") else do Write (fh, "is cool") ;
-    close fh
-with {
-    return x -> [x] |
-    choose () k -> return (append (k true) (k false)) |
-}
+\vbox{\begin{verbatim}
+    handle
+        let fh <- do Open "praise.txt" in
+        let c <- do Choice () in
+        if c then do Write (fh, "Guy Fieri") else do Write (fh, "is cool");
+        close fh
+    with {
+        return x -> [x] |
+        choose () k -> return (append (k true) (k false)) |
+    }
 \end{verbatim}
+}
 
 In the above code we open file, and based on nondeterministic choice, we write
 to the file, and then close it. This piece of code looks harmless, however, as
@@ -702,7 +704,7 @@ TODO muuuch longer explanation of this topic
     In this section we present a few examples to show the capabilities of the language.
     The ideas have been based on~\cite{programming-in-eff}, and thus will not be
     described in great details. More exemplary programs in Freak language can
-    be found under \\ \href{https://github.com/Tomatosoup97/freak/tree/master/src/programs}{\underline{https://github.com/Tomatosoup97/freak/tree/master/src/programs}}.
+    be found in \verb!src/programs! directory~\cite{freak}.
 
     \subsection{Choice}\label{sec:choice-example}
 
@@ -710,16 +712,16 @@ TODO muuuch longer explanation of this topic
     in the program. We will make two decisions, which will affect the computation
     result:
 
-    \begin{verbatim}
+\begin{verbatim}
     let c1 <- do Choice () in
     let c2 <- do Choice () in
     let x <- if c1 then return 10 else return 20 in
     let y <- if c2 then return 0 else return 5 in
         return x - y
-    \end{verbatim}
+\end{verbatim}
     With that in hand, we may want to define effect handlers:
 
-    \begin{verbatim}
+\begin{verbatim}
     handle ... with {
         Choice p r ->
             let t <- r 1 in
@@ -727,13 +729,13 @@ TODO muuuch longer explanation of this topic
             <PLACEHOLDER> |
         return x -> return x
     }
-    \end{verbatim}
+\end{verbatim}
     where in the \verb!<PLACEHOLDER>! we can define what to do with the
     computation. For example, min-max strategy for picking the minimum value:
 
-    \begin{verbatim}
+\begin{verbatim}
     if t < f then return t else return f
-    \end{verbatim}
+\end{verbatim}
     where the code evaluates to \verb!5!. Another example is a handler that
     collects all possible results, which can be achieved by putting
     \verb!return (t, f)! in the \verb!<PLACEHOLDER>!, which evaluates to
@@ -743,7 +745,7 @@ TODO muuuch longer explanation of this topic
 
     Exceptions are simply algebraic effect handlers which drop the resumption.
 
-    \begin{verbatim}
+\begin{verbatim}
     handle
         if x == 0 then do ZeroDivisionError ()
                   else return 1/x
@@ -751,7 +753,7 @@ TODO muuuch longer explanation of this topic
         ZeroDivisionError p r -> return 42 |
         return x -> return x
     }
-    \end{verbatim}
+\end{verbatim}
     Where we imagine that $x$ variable has been bound previously.
 
     \subsection{Taming Side effects}
@@ -762,10 +764,10 @@ TODO muuuch longer explanation of this topic
     in the actual meaning without duplicating the code. Let's consider the following
     very basic code snippet:
 
-    \begin{verbatim}
+\begin{verbatim}
     let x <- do Fetch () in
     -- operate on x
-    \end{verbatim}
+\end{verbatim}
 
     The code is dependent on a context in which it is executed, which here is
     the handler that defines the behaviour of the algebraic \verb!Fetch! effect.
@@ -871,31 +873,22 @@ TODO muuuch longer explanation of this topic
     constructs to the language, for which we shall define the semantics.
 
     \noindent
-    TODO Rewrite here operational semantics from Links paper
-
-    \begin{flushleft}
     Extension of the evaluation contexts:
-    \end{flushleft}
 
-    \begin{flushleft}
+    \noindent
     $\mathcal{E} ::= \mathcal{E} \oplus W \; | \; nat \; n \oplus \mathcal{E} \; |$ \textbf{if} $\mathcal{E}$ \textbf{then} $M$ \textbf{else} $N$
-    \end{flushleft}
 
-    \begin{flushleft}
+    \noindent
     Small-step operational semantics:
-    \end{flushleft}
 
-    \begin{flushleft}
+    \noindent
     \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow M \quad \quad $ if $n \neq 0$ \\
     \textbf{if} $nat \; n$ \textbf{then} $M$ \textbf{else} $N \rightsquigarrow N \quad \quad $ if $n = 0$
-    \end{flushleft}
 
-    \begin{flushleft}
+    \noindent
     $nat \; n \oplus nat \; n' \rightsquigarrow n'' \quad \quad $    if $ n'' = n \oplus n' $ \\
     $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
     $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
-
-    \end{flushleft}
 
 \section{Continuation Passing Style Transformation}
     \ldots
@@ -903,7 +896,7 @@ TODO muuuch longer explanation of this topic
 \chapter{Implementation}\label{chapter:implementation}
 
     The Freak implementation is available on github~\cite{freak}, written purely
-    in Haskell.Two inherently different takes at implementations were made. The
+    in Haskell. Two inherently different takes at implementations were made. The
     first one is based on curried translation from A. Appel~\cite{appel-continuations}
     book, and the second one on Links language~\cite{handlers-cps, handlers-cps-journal},
     on the uncurried translation to target calculus with continuations represented
@@ -915,84 +908,83 @@ TODO muuuch longer explanation of this topic
 
     The language's AST is defined without surprises, just as syntax is:
 
-    \begin{verbatim}
-data Value
-    = VVar Var
-    | VNum Integer
-    | VStr String
-    | VLambda Var ValueType Comp
-    | VFix Var Var Comp
-    | VUnit
-    | VPair Value Value
-    | VRecordRow (RecordRow Value)
-    | VExtendRow Label Value Value
-    | VVariantRow (VariantRow Value)
-    | VBinOp BinaryOp Value Value
+\begin{verbatim}
+    data Value
+        = VVar Var
+        | VNum Integer
+        | VStr String
+        | VLambda Var ValueType Comp
+        | VFix Var Var Comp
+        | VUnit
+        | VPair Value Value
+        | VRecordRow (RecordRow Value)
+        | VExtendRow Label Value Value
+        | VVariantRow (VariantRow Value)
+        | VBinOp BinaryOp Value Value
 
-data Comp
-    = EVal Value
-    | ELet Var Comp Comp
-    | EApp Value Value
-    | ESplit Label Var Var Value Comp
-    | ECase Value Label Var Comp Var Comp
-    | EReturn Value
-    | EAbsurd Value
-    | EIf Value Comp Comp
-    -- Algebraic effects
-    | EOp Label Value
-    | EHandle Comp Handler
-    -- Coalgebraic effects
-    | ECoop Label Value
-    | ECohandle Comp Handler
-    \end{verbatim}
+    data Comp
+        = EVal Value
+        | ELet Var Comp Comp
+        | EApp Value Value
+        | ESplit Label Var Var Value Comp
+        | ECase Value Label Var Comp Var Comp
+        | EReturn Value
+        | EAbsurd Value
+        | EIf Value Comp Comp
+        -- Algebraic effects
+        | EOp Label Value
+        | EHandle Comp Handler
+        -- Coalgebraic effects
+        | ECoop Label Value
+        | ECohandle Comp Handler
+\end{verbatim}
 
     \noindent
     Similarly for the target calculus data structure. However, as one may notice,
     for convenience the \textbf{let} translation is homomorphic, as opposed to be
     to lambda abstracted with immediate application:
 
-    \begin{verbatim}
-data UValue
-    = UVar Var
-    | UNum Integer
-    | UStr String
-    | UBool Bool
-    | ULambda Var UComp
-    | UUnit
-    | UPair UValue UValue
-    | ULabel Label
-    | URec Var Var UComp
-    | UBinOp BinaryOp UValue UValue
+\begin{verbatim}
+    data UValue
+        = UVar Var
+        | UNum Integer
+        | UStr String
+        | UBool Bool
+        | ULambda Var UComp
+        | UUnit
+        | UPair UValue UValue
+        | ULabel Label
+        | URec Var Var UComp
+        | UBinOp BinaryOp UValue UValue
 
-data UComp
-    = UVal UValue
-    | UApp UComp UComp
-    | USplit Label Var Var UValue UComp
-    | UCase UValue Label UComp Var UComp
-    | UIf UValue UComp UComp
-    | ULet Var UComp UComp
-    | UAbsurd UValue
-    | UTopLevelEffect Label UValue
-
-    \end{verbatim}
+    data UComp
+        = UVal UValue
+        | UApp UComp UComp
+        | USplit Label Var Var UValue UComp
+        | UCase UValue Label UComp Var UComp
+        | UIf UValue UComp UComp
+        | ULet Var UComp UComp
+        | UAbsurd UValue
+        | UTopLevelEffect Label UValue
+\end{verbatim}
 
     \noindent
     The final answer, common to both evaluations, is represented as a \verb!DValue!,
     where the meaning of the coproduct is as one would expect:
 
-    \begin{verbatim}
-type Label = String
+\begin{verbatim}
+    type Label = String
 
-type FuncRecord = [DValue] -> Either Error DValue
+    type FuncRecord = [DValue] -> Either Error DValue
 
-data DValue
-    = DNum Integer
-    | DStr String
-    | DLambda FuncRecord
-    | DUnit
-    | DPair DValue DValue
-    | DLabel Label
-    \end{verbatim}
+    data DValue
+        = DNum Integer
+        | DStr String
+        | DLambda FuncRecord
+        | DUnit
+        | DPair DValue DValue
+        | DLabel Label
+\end{verbatim}
 
     \noindent
     Evaluation of target calculus is typical to call-by-value with syntactic
@@ -1005,14 +997,14 @@ data DValue
     for printing to console and handling files, where semantic is just as one
     would expect from naming:
 
-    \begin{verbatim}
+\begin{verbatim}
     type Filename = String
     Print :: String -> ()
     ReadLine :: () -> String
     ReadFile :: Filename -> String
     WriteFile :: (Filename, String) -> ()
     AppendFile :: (Filename, String) -> ()
-    \end{verbatim}
+\end{verbatim}
 
     \section{Curried translation}
 
@@ -1033,19 +1025,19 @@ data DValue
     and proper tail-recursion is obtained. The core data structure, into which the
     source program is transformed, is defined as follows:
 
-    \begin{verbatim}
-data ContComp
-    = CPSApp CValue [CValue]
-    | CPSResume CValue ContComp
-    | CPSFix Var [Var] ContComp ContComp
-    | CPSBinOp BinaryOp CValue CValue Var ContComp
-    | CPSValue CValue
-    | CPSLet Var CValue ContComp
-    | CPSSplit Label Var Var CValue ContComp
-    | CPSCase CValue Label Var ContComp Var ContComp
-    | CPSIf CValue ContComp ContComp
-    | CPSAbsurd CValue
-    \end{verbatim}
+\begin{verbatim}
+    data ContComp
+        = CPSApp CValue [CValue]
+        | CPSResume CValue ContComp
+        | CPSFix Var [Var] ContComp ContComp
+        | CPSBinOp BinaryOp CValue CValue Var ContComp
+        | CPSValue CValue
+        | CPSLet Var CValue ContComp
+        | CPSSplit Label Var Var CValue ContComp
+        | CPSCase CValue Label Var ContComp Var ContComp
+        | CPSIf CValue ContComp ContComp
+        | CPSAbsurd CValue
+\end{verbatim}
     Most of the terms at the end have a coinductive reference to itself, which
     represents the rest of the computation that needs to be done. For more
     clarification, one may take a look into the book mentioned
@@ -1064,23 +1056,22 @@ data ContComp
     which occupy alternating positions in the stack. Explicit distinction gave
     more control in the source code.
 
-    \begin{verbatim}
-type CPSMonad a = ExceptT Error (StateT Int IO) a
+\begin{verbatim}
+    type CPSMonad a = ExceptT Error (StateT Int IO) a
 
-type ContF = UValue -> [Cont] -> CPSMonad UComp
+    type ContF = UValue -> [Cont] -> CPSMonad UComp
 
-data Cont = Pure ContF
-          | Eff ContF
-          | Coeff ContF
+    data Cont = Pure ContF
+              | Eff ContF
+              | Coeff ContF
 
-initialPureCont :: ContF
-initialPureCont v ks = (return . UVal) v
+    initialPureCont :: ContF
+    initialPureCont v ks = (return . UVal) v
 
-initialEffCont :: ContF
-initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks =
-    return . UApp (UVal r) $ UTopLevelEffect effLabel p
-
-    \end{verbatim}
+    initialEffCont :: ContF
+    initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks =
+        return . UApp (UVal r) $ UTopLevelEffect effLabel p
+\end{verbatim}
     Where \verb!CPSMonad! is a monad transformer over \verb!Either!, \verb!State!
     and \verb!IO!. \verb!State! is required to generate labels for fresh variables
     that came from the translation, \verb!Either! for handling exceptions that
@@ -1089,7 +1080,7 @@ initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks =
     and effectful one is propagating previously mentioned \verb!UTopLevelEffect!.
     The core code is split into a few functions:
 
-    \begin{verbatim}
+\begin{verbatim}
 cps     :: Comp    -> [Cont] -> CPSMonad UComp
 cpsVal  :: Value   -> [Cont] -> CPSMonad UValue
 cpsOp   :: Label -> Value -> [Cont] -> CPSMonad UComp
@@ -1097,7 +1088,7 @@ cpsHRet :: Handler -> Cont
 cpsHOps :: (ContF -> Cont) -> Handler -> Cont
 forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
 runCPS  :: Comp -> EvalResMonad UComp
-    \end{verbatim}
+\end{verbatim}
 
     \noindent
     Where the first two are implementing cps for computations and values.
@@ -1118,7 +1109,7 @@ runCPS  :: Comp -> EvalResMonad UComp
     The source code is divided into a number of modules, where the most
     crucial parts have already been described.
 
-    \begin{verbatim}
+\begin{verbatim}
     AST.hs          - AST data structures
     CommonCPS.hs    - Common functions for CPS translation
     CommonEval.hs   - Common functions for evaluation
@@ -1134,7 +1125,7 @@ runCPS  :: Comp -> EvalResMonad UComp
 
     CPSAppel.hs     - [deprecated] Appel-based CPS translation
     EvalCPS.hs      - [deprecated] Evaluation of the Appel's CPS structure
-    \end{verbatim}
+\end{verbatim}
 
 \chapter{Conclusion}\label{chapter:conclusion}
 \section{Summary}
