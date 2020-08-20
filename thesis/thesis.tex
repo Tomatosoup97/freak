@@ -777,27 +777,24 @@ TODO muuuch longer explanation of this topic
     we are performing, leaving the interpretation up to the execution context,
     which could do the fetching or mock the external resource.
 
-    \noindent
-    TODO subset of this section's content is explained already
-
     These implications are straightforward when looking from a categorical standpoint,
     where effects are viewed as free models of algebraic theories~\cite{adequacy},
     and handlers are homomorphisms preserving the model structure~\cite{handlers}.
-    Nevertheless, the results are very exciting for programming use cases. The current
-    Freak implementation does not support I/O.
+    Nevertheless, the results are very exciting for programming use cases.
 
 \section{Coexamples}
 
-    Examples for cohandlers
+    TODO Examples for cohandlers
 
 \section{Usage guide}
 
     % Outdated
     As of this day, two implementations are available, one based on the curried
-    translation and Appel~\cite{appel-continuations}, and the second one based
-    directly on the uncurried translation with continuations as explicit stacks
-    from paper. More details can be found in Section~\ref{chapter:implementation}.
-    All commands are available within the \verb!src! directory.
+    translation from Appel~\cite{appel-continuations}, and the second one based
+    directly on the uncurried translation with continuations as explicit
+    stacks~\cite{handlers-cps-journal}. More details can be found in
+    Section~\ref{chapter:implementation}. All commands are available within the
+    \verb!src! directory.
 
     \subsection{Build and install}
 
@@ -810,7 +807,7 @@ TODO muuuch longer explanation of this topic
     \end{itemize}
 
     After compiling and linking program to PATH, one may evaluate program as
-    follows: \verb!freak programs/choicesList.fk!. The actual code is described in Section~\ref{sec:choice-example}
+    follows: \verb!freak programs/choicesList.fk! The actual code is described in Section~\ref{sec:choice-example}
 
     \subsection{Running tests}
 
@@ -827,16 +824,15 @@ TODO muuuch longer explanation of this topic
 \chapter{Calculus of Freak language}\label{chapter:calculus-of-freak-language}
 \section{Syntax}
 
-    \noindent
-    TODO Extend language with basic constructs for usability
-
     The syntax for the calculus is shown below. $nat \; n$ represents an integer $n$,
     `string' a string value, $V \oplus W$ and $V \approx W$ are respectively
     binary and relational operators, where we support basic arithmetic and
     comparison operations. \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$
-    is a standard branching statement. The other constructs are just as in Links,
-    with slight syntax modifications. Actual programs in Freak can be found in
-    Section~\ref{sec:examples}.
+    is a standard branching statement. The other constructs are just as in
+    Links~\cite{handlers-cps-journal}, with slight syntax modifications.
+    Actual programs in Freak can be found in Section~\ref{sec:examples}.
+
+    TODO cohandlers
 
     % TODO proper alignment
     \begin{grammar}
@@ -862,15 +858,15 @@ TODO muuuch longer explanation of this topic
 
     \end{grammar}
 
-\section{Typing Rules}
-\section{Operational Semantics}
+\section{Dynamics}
 
-    The source language's dynamics have been described
-    extensively by providing small-step operational semantics,
-    continuation passing style transformation~\cite{handlers-cps} as well
-    as abstract machine~\cite{liberating-effects}, which was proved to coincide
-    with CPS translation. That being said, Freak introduces new basic
-    constructs to the language, for which we shall define the semantics.
+    Semantic of Freak is heavily based on Links langauge~\cite{handlers-cps-journal},
+    for which the source language's dynamics have been described extensively by
+    providing small-step operational semantics, continuation passing style
+    transformation~\cite{handlers-cps} as well as abstract
+    machine~\cite{liberating-effects}, which was proved to coincide with CPS
+    translation. That being said, Freak introduces new basic constructs to the
+    language, for which we shall define the semantics.
 
     \noindent
     Extension of the evaluation contexts:
@@ -890,8 +886,7 @@ TODO muuuch longer explanation of this topic
     $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
     $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
 
-\section{Continuation Passing Style Transformation}
-    \ldots
+    TODO cohandlers
 
 \chapter{Implementation}\label{chapter:implementation}
 
@@ -902,7 +897,7 @@ TODO muuuch longer explanation of this topic
     on the uncurried translation to target calculus with continuations represented
     as explicit stacks. We start by presenting core data structures, and
     afterwards move to actual translation details. Development of the former
-    version is now suspended.
+    Appel's version is now suspended.
 
     \section{Abstract Syntax Tree}\label{sec:implementation-ast}
 
@@ -995,7 +990,8 @@ TODO muuuch longer explanation of this topic
     Even in case language has coalgebraic effects, special treatment is required
     for doing IO\@. For that reason, we define default handling for a few effects
     for printing to console and handling files, where semantic is just as one
-    would expect from naming:
+    would expect from naming. We abuse haskell's notation to define types for
+    algebraic effects living in Freak langauge:
 
 \begin{verbatim}
     type Filename = String
@@ -1043,17 +1039,18 @@ TODO muuuch longer explanation of this topic
     clarification, one may take a look into the book mentioned
     above~\cite{appel-continuations}. The source code for curried translation and
     evaluation can be found respectively in \verb!CPSAppel.hs! and
-    \verb!EvalCPS.hs!.
+    \verb!EvalCPS.hs!. Development of this version of translation is discontinued.
 
     \section{Uncurried translation}
 
     Having in mind the drawbacks mentioned above, alternative translation was
-    written, that coincides with the translation from the paper. Namely, with
-    the uncurried translation to target calculus with continuations represented
-    as explicit stacks. The target calculus was described in Section~\ref{sec:implementation-ast},
-    for which the evaluation is straightforward. The continuations are represented
-    as \verb!Cont!, with syntactic distinction between pure and effectful computations,
-    which occupy alternating positions in the stack. Explicit distinction gave
+    written, that coincides with the translation from~\cite{handlers-cps-journal}.
+    Namely, with the uncurried translation to target calculus with continuations
+    represented as explicit stacks. The target calculus was described in
+    Section~\ref{sec:implementation-ast}. The continuations are represented as
+    \verb!Cont!, with syntactic distinction between pure, effectful and
+    coeffectful computations. Pure and (co) effectful continuations occupy
+    alternating positions in the stack. Explicit distinction was made to provide
     more control in the source code.
 
 \begin{verbatim}
@@ -1064,21 +1061,33 @@ TODO muuuch longer explanation of this topic
     data Cont = Pure ContF
               | Eff ContF
               | Coeff ContF
+\end{verbatim}
 
+    \noindent
+    Where \verb!CPSMonad! is a monad transformer over \verb!Either!, \verb!State!
+    and \verb!IO!. \verb!State! is required to generate labels for fresh variables
+    that came from the translation, \verb!Either! for handling exceptions that
+    may occur during translations, and \verb!IO! for handling input output of the
+    source language.
+
+\begin{verbatim}
     initialPureCont :: ContF
     initialPureCont v ks = (return . UVal) v
 
     initialEffCont :: ContF
     initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks =
         return . UApp (UVal r) $ UTopLevelEffect effLabel p
+
+    initialContStack :: [Cont]
+    initialContStack = [Pure initialPureCont, Eff initialEffCont]
 \end{verbatim}
-    Where \verb!CPSMonad! is a monad transformer over \verb!Either!, \verb!State!
-    and \verb!IO!. \verb!State! is required to generate labels for fresh variables
-    that came from the translation, \verb!Either! for handling exceptions that
-    may occur during translations, and \verb!IO! for handling input output of the
-    source language. Initial pure continuation is lifting values into computations,
+
+    \noindent
+    Initial pure continuation is lifting values into computations,
     and effectful one is propagating previously mentioned \verb!UTopLevelEffect!.
-    The core code is split into a few functions:
+    Notice that \verb!initialContStack! does not have initial cohandler,
+    as handling of default coeffects is embed in evaluator. The core code is
+    split into a few functions:
 
 \begin{verbatim}
 cps     :: Comp    -> [Cont] -> CPSMonad UComp
@@ -1099,7 +1108,9 @@ runCPS  :: Comp -> EvalResMonad UComp
     translation, where evaluation result is represented by\\
     \verb!type EvalResMonad a = IO (Either Error a)!. This results in an
     implementation that finally supports nested handlers, which can be seen by
-    running tests.
+    running tests. Links language~\cite{handlers-cps-journal} also supports
+    shallow handlers~\cite{shallow-handlers}, whereas our langauge implements
+    only deep ones.
 
     \section{Cohandlers}
     \ldots
