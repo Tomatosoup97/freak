@@ -433,10 +433,11 @@ effects and also propagate new ones.
         Comodel in $\mathcal{C}$ is just a Model in $ \mathcal{C}^{op} $.
     \end{definition}
 
-    We could end by stating this definition, and everything else would follow
-    directly from duality. However, expanding definitions is going to give us
-    better intuition, as well as give more solid ground for implementation.
-    For this part, we are going to assume we operate in \textbf{Set} category.
+    We could end by stating this definition of comodels~\cite{comodels}, and
+    everything else would follow directly from duality. However, expanding
+    definitions is going to give us better intuition, as well as give more solid
+    ground for implementation. For this part, we are going to assume we operate
+    in \textbf{Set} category.
 
     \subsection{Cooperations}
 
@@ -624,7 +625,8 @@ TODO \\
     Work that is the closest related to topic of the thesis, is work done by
     Danel Ahman and Andrej Bauer~\cite{runners-in-action}, as well as their
     implementation of a $\lambda_{coop}$ language~\cite{coop}, which is a
-    calculus that ensures linear usage of resources as well as execution of
+    calculus with runners of coalgebraic effects~\cite{runners-uustalu}
+    that ensures linear usage of resources as well as execution of
     code handling finalisation.
 
 \noindent
@@ -1141,7 +1143,7 @@ runCPS  :: Comp -> EvalResMonad UComp
 \chapter{Conclusion}\label{chapter:conclusion}
 \section{Summary}
 
-    What was achieved, what was described, what needs to be done or researched.
+    TODO What was achieved, what was described, what needs to be done or researched.
 
 \section{Future work}
 
