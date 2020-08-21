@@ -81,6 +81,20 @@ main = hspec $ do
     it "Pair" $ do
       evalProgram ("return (1, 2)") `shouldBeT` (Right (DPair (DNum 1) (DNum 2)))
 
+    it "First projection" $ do
+      evalProgram ("return fst (1, 2)") `shouldBeT` (Right (DNum 1))
+      evalProgram ("return fst 1") `shouldBeT` (Left (EvalError "First projection on expression that is not a pair: 1"))
+
+    it "Second projection" $ do
+      evalProgram ("return snd (1, 2)") `shouldBeT` (Right (DNum 2))
+      evalProgram ("return snd 1") `shouldBeT` (Left (EvalError "Second projection on expression that is not a pair: 1"))
+
+    it "Projections" $ do
+      evalProgram ("return fst fst ((1, 2), (3, 4))") `shouldBeT` (Right (DNum 1))
+      evalProgram ("return snd fst ((1, 2), (3, 4))") `shouldBeT` (Right (DNum 2))
+      evalProgram ("return fst snd ((1, 2), (3, 4))") `shouldBeT` (Right (DNum 3))
+      evalProgram ("return snd snd ((1, 2), (3, 4))") `shouldBeT` (Right (DNum 4))
+
     it "Nested pair" $ do
       evalProgram ("return ((1, 2), 3)") `shouldBeT` (Right (DPair (DPair (DNum 1) (DNum 2)) (DNum 3)))
 

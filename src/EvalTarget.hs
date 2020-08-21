@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, LambdaCase #-}
 module Eval where
 
 import qualified Data.Map as Map
@@ -75,6 +75,12 @@ eval env c = case c of
         v1 <- eval env (UVal e1)
         v2 <- eval env (UVal e2)
         return $ DPair v1 v2
+    UVal (UFst e) -> eval env (UVal e) >>= \case
+        DPair v1 _ -> return v1
+        v -> throwError $ EvalError $ "First projection on expression that is not a pair: " ++ show v
+    UVal (USnd e) -> eval env (UVal e) >>= \case
+        DPair _ v2 -> return v2
+        v -> throwError $ EvalError $ "Second projection on expression that is not a pair: " ++ show v
     UVal (ULambda x c) -> return $ DLambda funcRecord
         where funcRecord [xVal] = let env' = extendEnv env x xVal in eval env' c
     UVal (ULabel l) -> return $ DLabel l

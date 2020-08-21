@@ -23,6 +23,8 @@ data Value
     | VExtendRow Label Value Value
     | VVariantRow (VariantRow Value)
     | VBinOp BinaryOp Value Value
+    | VFst Value
+    | VSnd Value
     deriving (Show, Eq)
 
 data BinaryOp

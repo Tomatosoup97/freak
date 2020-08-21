@@ -74,6 +74,8 @@ cpsVal e ks = case e of
         v1 <- cpsVal e1 ks
         v2 <- cpsVal e2 ks
         return $ UPair v1 v2
+    VFst e -> UFst <$> cpsVal e ks
+    VSnd e -> USnd <$> cpsVal e ks
     VBinOp op e1 e2 -> do
         v1 <- cpsVal e1 ks
         v2 <- cpsVal e2 ks

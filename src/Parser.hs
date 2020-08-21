@@ -43,6 +43,8 @@ languageDef =
                                      , "through"
                                      , "using"
                                      , "at"
+                                     , "fst"
+                                     , "snd"
                                      ]
            , Token.reservedOpNames = [
                 "+", "*", "<-", "->", "\\", ":", "(", ")", "|",
@@ -311,6 +313,19 @@ term =  parens value
     <|> fmap VVar identifier
     <|> fmap VNum integer
     <|> stringTerm
+    <|> fstProjection
+    <|> sndProjection
+
+
+fstProjection :: Parser Value
+fstProjection = do
+    reserved "fst"
+    VFst <$> value
+
+sndProjection :: Parser Value
+sndProjection = do
+    reserved "snd"
+    VSnd <$> value
 
 escape :: Parser String
 escape = do
