@@ -88,10 +88,10 @@ following example:
         let fh <- do Open "praise.txt" in
         let c <- do Choice () in
         if c then do Write (fh, "Guy Fieri") else do Write (fh, "is cool");
-        close fh
+        do Close fh
     with {
         return x -> [x] |
-        choose () k -> return (append (k true) (k false)) |
+        Choose _ k -> return (append (k true) (k false)) |
     }
 \end{verbatim}
 }
@@ -595,10 +595,8 @@ TODO \\
 
     \noindent
     For more detailed introduction into coinduction and other examples,
-    see~\cite{jacobs-rutten, sangiorgi-intro}.
-
-    \noindent
-    TODO maybe also write coinductive proof based on two relations above?
+    see~\cite{jacobs-rutten, sangiorgi-intro} or for a deeper
+    dive~\cite{sangiorgi-advanced}.
 
 \section{Related Work}
     \subsection{Algebraic Effects}
@@ -719,7 +717,7 @@ TODO muuuch longer explanation of this topic
     let c2 <- do Choice () in
     let x <- if c1 then return 10 else return 20 in
     let y <- if c2 then return 0 else return 5 in
-        return x - y
+    return x - y
 \end{verbatim}
     With that in hand, we may want to define effect handlers:
 
