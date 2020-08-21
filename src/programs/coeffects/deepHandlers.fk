@@ -1,8 +1,8 @@
-cohandle
+cohandle Algebra using () at
     observe Arithmetic 2
 through {
     Arithmetic p r ->
-        cohandle
+        cohandle Nat using 0 at
             let x <- observe Inc p in
             let y <- return x * 2 in
             r y

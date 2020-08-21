@@ -1,5 +1,5 @@
 handle
-    cohandle
+    cohandle Nondet using () at
         do Choice ()
     through {
         Open filename r -> r filename |

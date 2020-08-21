@@ -4,7 +4,7 @@ with {
     GetNumber p r -> r 5 |
     return x -> return x
 } in
-let y <- cohandle
+let y <- cohandle IO using () at
     observe ReadFileContents "filename"
 through {
     ReadFileContents filename r -> return 10 |

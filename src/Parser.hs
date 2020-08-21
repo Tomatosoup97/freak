@@ -41,6 +41,8 @@ languageDef =
                                      , "observe"
                                      , "cohandle"
                                      , "through"
+                                     , "using"
+                                     , "at"
                                      ]
            , Token.reservedOpNames = [
                 "+", "*", "<-", "->", "\\", ":", "(", ")", "|",
@@ -170,9 +172,13 @@ handleComp = do
 cohandleComp :: Parser Comp
 cohandleComp = do
     reserved "cohandle"
+    algTheoryName <- identifier
+    reserved "using"
+    v <- value
+    reserved "at"
     c <- computation
     reserved "through"
-    ECohandle c <$> handler
+    ECohandleIR algTheoryName v c <$> handler
 
 
 handler :: Parser Handler

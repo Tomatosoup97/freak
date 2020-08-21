@@ -1,4 +1,4 @@
-cohandle
+cohandle IO using () at
     handle
         observe Open "file"
     with {

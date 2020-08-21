@@ -1,5 +1,5 @@
 handle
-    cohandle
+    cohandle IO using () at
         let fh <- observe Open "praise.txt" in
         let c <- do Choice () in
         let x <- if c then

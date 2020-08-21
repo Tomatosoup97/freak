@@ -1,5 +1,5 @@
-cohandle
-    cohandle
+cohandle Doble using 0 at
+    cohandle Nat using 0 at
         let x <- observe Inc 1 in observe Double x
     through {
         Inc p r -> let t <- return p + 1 in r t |

@@ -8,6 +8,8 @@ data VariantRow a = VariantRow RowType Label a
 
 type RecordRow a = Map.Map Label a -- todo: presence variables?
 
+type AlgTheoryName = String
+
 data Value
     = VVar Var
     | VNum Integer
@@ -62,6 +64,8 @@ data Comp
     -- Coalgebraic effects
     | ECoop Label Value
     | ECohandle Comp Handler
+    -- Intermediate representation for a cohandler
+    | ECohandleIR AlgTheoryName Value Comp Handler
     deriving (Show, Eq)
 
 data Handler

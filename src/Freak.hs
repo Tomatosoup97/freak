@@ -9,10 +9,12 @@ import CPS
 import CommonEval
 import Eval
 import Types
+import Transform
+
 
 cpsProgram :: String -> EvalResMonad UComp
 cpsProgram s = case parseString s of
-    Right ast -> runCPS ast
+    Right ast -> runCPS $ transform ast
     Left err -> return $ Left err
 
 evalProgram :: String -> EvalResMonad DValue

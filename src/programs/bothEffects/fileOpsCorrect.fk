@@ -1,6 +1,6 @@
 handle
     let c <- do Choice () in
-    cohandle
+    cohandle IO using () at
         let fh <- observe Open "praise.txt" in
         let x <- if c then
             observe Write (fh, "Guy Fieri")
