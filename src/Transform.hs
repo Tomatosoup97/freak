@@ -1,32 +1,41 @@
 module Transform where
 
 import AST
+import Types
+import qualified Data.Map as Map
 
-coopTransV :: Value -> Value
-coopTransV v = case v of
-    VLambda x t c -> VLambda x t (coopTrans c)
-    VFix g x c -> VFix g x (coopTrans c)
-    VPair v1 v2 -> VPair (coopTransV v1) (coopTransV v2)
-    VBinOp op v1 v2 -> VBinOp op (coopTransV v1) (coopTransV v2)
+type AlgSignMap = Map.Map Label AlgTheoryName
+
+coopTransV :: AlgSignMap -> Value -> Value
+coopTransV m v = case v of
+    VLambda x t c -> VLambda x t (coopTrans m c)
+    VFix g x c -> VFix g x (coopTrans m c)
+    VPair v1 v2 -> VPair (coopTransV m v1) (coopTransV m v2)
+    VBinOp op v1 v2 -> VBinOp op (coopTransV m v1) (coopTransV m v2)
     v -> v
 
-coopTransHandler :: Handler -> Handler
-coopTransHandler (HRet v c) = HRet v (coopTrans c)
-coopTransHandler (HOps (AlgOp l p r c) h) =
-    HOps (AlgOp l p r (coopTrans c)) (coopTransHandler h)
+coopTransHandler :: AlgSignMap -> Handler -> Handler
+coopTransHandler m (HRet v c) = HRet v (coopTrans m c)
+coopTransHandler m (HOps (AlgOp l p r c) h) =
+    HOps (AlgOp l p r (coopTrans m c)) (coopTransHandler m h)
 
-coopTrans :: Comp -> Comp
-coopTrans c = case c of
-    EVal v -> EVal (coopTransV v)
-    ELet x varC bC -> ELet x (coopTrans varC) (coopTrans bC)
-    EApp v1 v2 -> EApp (coopTransV v1) (coopTransV v2)
-    EReturn v -> EReturn (coopTransV v)
-    EAbsurd v -> EAbsurd (coopTransV v)
-    EIf v tC fC -> EIf (coopTransV v) (coopTrans tC) (coopTrans fC)
-    EOp l v -> EOp l (coopTransV v)
-    EHandle c h -> EHandle (coopTrans c) (coopTransHandler h)
-    ECoop l v -> ECoop l (coopTransV v)
-    ECohandleIR algTheoryName initV c h -> ECohandle (coopTrans c) (coopTransHandler h)
+coopTrans :: AlgSignMap -> Comp -> Comp
+coopTrans m c = case c of
+    EVal v -> EVal (coopTransV m v)
+    ELet x varC bC -> ELet x (coopTrans m varC) (coopTrans m bC)
+    EApp v1 v2 -> EApp (coopTransV m v1) (coopTransV m v2)
+    EReturn v -> EReturn (coopTransV m v)
+    EAbsurd v -> EAbsurd (coopTransV m v)
+    EIf v tC fC -> EIf (coopTransV m v) (coopTrans m tC) (coopTrans m fC)
+    EOp l v -> EOp l (coopTransV m v)
+    EHandle c h -> EHandle (coopTrans m c) (coopTransHandler m h)
+    ECoop l v -> case Map.lookup l m of
+        Just algT -> ECoop l (coopTransV m v)
+        Nothing -> ECoop l (coopTransV m v)
+    ECohandleIR algTheoryName initV c h ->
+        let sign = hopsL h in
+        let m' = foldl (\m s -> Map.insert s algTheoryName m) m sign in
+        ECohandle (coopTrans m' c) (coopTransHandler m' h)
 
 transform :: Comp -> Comp
-transform = coopTrans
+transform = coopTrans Map.empty

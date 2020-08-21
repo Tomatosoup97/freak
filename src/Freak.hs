@@ -39,5 +39,5 @@ parseFile :: String -> Bool -> IO ()
 parseFile filename quiet = do
     code <- readFile filename
     case parseString code of
-        Right r -> if quiet then return () else print r
+        Right r -> if quiet then return () else print $ transform r
         Left e  -> print e >> fail "Parse error"

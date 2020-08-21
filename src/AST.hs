@@ -9,6 +9,7 @@ data VariantRow a = VariantRow RowType Label a
 type RecordRow a = Map.Map Label a -- todo: presence variables?
 
 type AlgTheoryName = String
+type Signature = [Label]
 
 data Value
     = VVar Var
@@ -87,6 +88,12 @@ hops :: Handler -> [AlgebraicOp] -- todo: make it a set
 hops = aux []
     where aux acc (HRet _ _) = acc
           aux acc (HOps op h) = aux (op:acc) h
+
+opL :: AlgebraicOp -> Label
+opL (AlgOp l _ _ _) = l
+
+hopsL :: Handler -> Signature
+hopsL h = map opL (hops h)
 
 hop :: Label -> Handler -> Maybe AlgebraicOp
 hop _ (HRet _ _) = Nothing
