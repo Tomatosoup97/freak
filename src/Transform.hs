@@ -4,7 +4,7 @@ import AST
 import Types
 import qualified Data.Map as Map
 
-type AlgSignMap = Map.Map Label AlgTheoryName
+type AlgSignMap = Map.Map Label (AlgTheoryName, Value)
 
 coopTransV :: AlgSignMap -> Value -> Value
 coopTransV m v = case v of
@@ -30,15 +30,15 @@ coopTrans m c = case c of
     EOp l v -> EOp l (coopTransV m v)
     EHandle c h -> EHandle (coopTrans m c) (coopTransHandler m h)
     ECoop l v -> case Map.lookup l m of
-        Just algT ->
-            let conf = VUnit in
+        Just (algT, initV) ->
+            let conf = initV in
             let coop = ECoop l (VPair conf (coopTransV m v)) in
             let cont = EReturn (VSnd (VVar algT)) in
             ELet algT coop cont
         Nothing -> ECoop l (coopTransV m v)
     ECohandleIR algTheoryName initV c h ->
         let sign = hopsL h in
-        let m' = foldl (\m s -> Map.insert s algTheoryName m) m sign in
+        let m' = foldl (\m s -> Map.insert s (algTheoryName, initV) m) m sign in
         ECohandle (coopTrans m' c) (coopTransHandler m' h)
 
 transform :: Comp -> Comp

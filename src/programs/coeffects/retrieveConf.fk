@@ -1,0 +1,6 @@
+cohandle AlgTheory using () at
+    observe Coalg 0
+through {
+    Coalg p r -> r (fst p, fst p) |
+    return x -> return x
+}

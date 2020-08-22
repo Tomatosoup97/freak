@@ -215,6 +215,9 @@ main = hspec $ do
     it "[Coalg] Deep cohandlers" $ do
       testFromFile "programs/coeffects/deepHandlers.fk" (Right (DNum 7))
 
+    it "[Coalg] Retrieve configuration" $ do
+      testFromFile "programs/coeffects/retrieveConf.fk" (Right DUnit)
+
     -- Both effects
 
     it "[Both] Effect should not escape cohandler" $ do
