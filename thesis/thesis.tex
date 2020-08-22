@@ -33,6 +33,7 @@
 
 % Disable certain warnings
 % chktex-file 18
+% chktex-file 36
 
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{mybib.bib}
@@ -54,34 +55,33 @@
     they have crept in everywhere anonymously. $\sim{}$Emmy Noether
 }
 
-In this thesis we discuss issues with excessive generality of algebraic effects,
-and propose a solution without coalgebraic means along with presentation of
-experimental programming language Freak, which is a language with (co) algebraic
-effects and (co) handlers, where implementation is based on Continuation Passing
-Style translation.
+In this thesis we discuss issues arising from combining algebraic effects
+and handlers wiht resource management, and present a solution through coalgebraic
+means along with presentation of experimental programming language Freak, which
+is a language with (co)algebraic effects and (co)handlers, where implementation
+is based on Continuation Passing Style translation.
 
 \section{Problem Statement}\label{sec:problem-statement}
 
-Algebraic effects, while not being a new concept, in the recent years have
-received a lot of attention~\cite{effects-bibliography}, both from the theoretical
+Algebraic effects, while not a new concept, have received a lot of
+attention~\cite{effects-bibliography} in recent years, both from the theoretical
 and practical side.
 
-They give developer necessary tools for declarative programming and writing
-programs in a way to strive from exposing implementation details, by defining
-computational effects as an API\@ in our code. In the same time, they preserve
-a lot of flexibility and have a strong theoretical background.
+They give the developer necessary tools for declarative programming with
+computational effects on a high level of abstraction, by defining
+effects as an API\@ in the code. At the same time, algebraic effects preserve
+a lot of flexibility and have a strong theoretical foundations.
 
 In fact, that very flexibility can be troublesome. Allowing developer for too
-much freedom may lead to undesired behaviour and incorrect programs, for this
-reason, we develop type systems, to detect errors before they occur.
+much freedom may lead to undesired behaviour and incorrect programs.
 
-Multi-shot resumptions in effect handlers and possibility to drop resumption
-are powerful tools to describe fairly complex logic in a concise way. That being
-said, they give rise to issues that would not occur in standard control flow,
-especially when composing various effects together. Unwanted interaction with
-external resources multiple times or not invoking finalisation code are cases
-that may occur while using algebraic effects and handlers. Let's consider the
-following example:
+In particular, multi-shot resumptions in effect handlers and the possibility to
+drop the resumption allow one to express fairly complex logic in a concise way,
+but at the same time, they give rise to issues that would not occur in standard
+control flow, especially when composing various effects together. Unwanted
+interaction with external resources multiple times or not invoking finalisation
+code are cases that may occur while using algebraic effects and handlers. Let's
+consider the following example:
 
 \vbox{\begin{verbatim}
     handle
@@ -107,18 +107,17 @@ would like to address with coalgebraic effects.
 
 \section{Thesis Outline}
 
-In the following chapter we provide a background
-about effects, define algebraic effects in categorical setting as well as point
-out dual coalgebraic effects and cohandlers, finishing with showing related work
-in this area. Chapter~\ref{chapter:potential-solutions} describes possible ways
-to approach issue of excessive generality,
-Chapter~\ref{chapter:co-effectful-programming} shows Freak language by
-examples along with usage guide, and then
+In the following chapter we provide a background about effects, define algebraic
+effects in the categorical setting as well as point out dual coalgebraic effects
+and cohandlers, finishing with showing related work in this area.
+Chapter~\ref{chapter:potential-solutions} describes possible ways to approach
+the issue of excessive generality, Chapter~\ref{chapter:co-effectful-programming}
+shows the Freak language by examples along with a usage guide, and then
 Chapter~\ref{chapter:calculus-of-freak-language} describes the language's syntax,
-operational semantics and CPS translation. In next one,
+operational semantics and CPS translation. In the next one,
 Chapter~\ref{chapter:implementation}, implementation details are revealed.
-We conclude in Chapter~\ref{chapter:conclusion} by stating what are the possible
-augmentations, that are intended to be made in the future.
+We conclude in Chapter~\ref{chapter:conclusion} by stating what the possible
+augmentations are, which are intended to be made in the future.
 
 \chapter{Background}\label{chapter:background}
 
@@ -508,7 +507,7 @@ TODO \\
     functions shape     & inductive domain     & coinductive codomain \\
     \midrule
 
-    (co) recursive calls& shrinks the argument & grows the result     \\
+    (co)recursive calls& shrinks the argument & grows the result     \\
     \midrule
 
     functions feature   & terminating          & productive           \\
@@ -698,7 +697,7 @@ construct in programming language
 \noindent
 TODO muuuch longer explanation of this topic
 
-\chapter{(Co) Effectful Programming}\label{chapter:co-effectful-programming} % TODO w/o space?
+\chapter{(Co)Effectful Programming}\label{chapter:co-effectful-programming}
 \section{Examples}\label{sec:examples}
 
     In this section we present a few examples to show the capabilities of the language.
@@ -1049,7 +1048,7 @@ TODO muuuch longer explanation of this topic
     represented as explicit stacks. The target calculus was described in
     Section~\ref{sec:implementation-ast}. The continuations are represented as
     \verb!Cont!, with syntactic distinction between pure, effectful and
-    coeffectful computations. Pure and (co) effectful continuations occupy
+    coeffectful computations. Pure and (co)effectful continuations occupy
     alternating positions in the stack. Explicit distinction was made to provide
     more control in the source code.
 
@@ -1101,7 +1100,7 @@ runCPS  :: Comp -> EvalResMonad UComp
 
     \noindent
     Where the first two are implementing cps for computations and values.
-    \verb!cpsOp! is doing translation for an (co) effect that occured in program,
+    \verb!cpsOp! is doing translation for an (co)effect that occured in program,
     \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
     based on a given handler. \verb!forward! is responsible for forwarding the
     computation to the outer handler, and the last one for running the
