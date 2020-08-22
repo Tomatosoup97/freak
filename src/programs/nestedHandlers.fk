@@ -1,6 +1,8 @@
 handle
     handle
-        let x <- do Inc 1 in do Double x
+        let x <- do Inc 1 in
+        let z <- do Double x in
+        return 100
     with {
         Inc p r -> let t <- return p + 1 in r t |
         return x -> return x

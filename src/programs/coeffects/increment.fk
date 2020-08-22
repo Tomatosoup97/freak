@@ -1,7 +1,8 @@
 cohandle Nat using 0 at
     observe Inc 17
 through {
-    Id p r -> return p |
-    Inc p r -> return p + 1 |
+    Inc p r ->
+        let x <- return snd p in
+        r (fst p, x + 1) |
     return x -> return x
 }

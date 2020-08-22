@@ -30,7 +30,11 @@ coopTrans m c = case c of
     EOp l v -> EOp l (coopTransV m v)
     EHandle c h -> EHandle (coopTrans m c) (coopTransHandler m h)
     ECoop l v -> case Map.lookup l m of
-        Just algT -> ECoop l (coopTransV m v)
+        Just algT ->
+            let conf = VUnit in
+            let coop = ECoop l (VPair conf (coopTransV m v)) in
+            let cont = EReturn (VSnd (VVar algT)) in
+            ELet algT coop cont
         Nothing -> ECoop l (coopTransV m v)
     ECohandleIR algTheoryName initV c h ->
         let sign = hopsL h in

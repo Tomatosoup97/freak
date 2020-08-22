@@ -84,6 +84,7 @@ main = hspec $ do
     it "First projection" $ do
       evalProgram ("return fst (1, 2)") `shouldBeT` (Right (DNum 1))
       evalProgram ("return fst 1") `shouldBeT` (Left (EvalError "First projection on expression that is not a pair: 1"))
+      evalProgram ("return fst (1, 2) + 3") `shouldBeT` (Right (DNum 4))
 
     it "Second projection" $ do
       evalProgram ("return snd (1, 2)") `shouldBeT` (Right (DNum 2))

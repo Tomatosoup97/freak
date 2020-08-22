@@ -8,8 +8,8 @@ handle
             observe Write (fh, "is cool") in
         observe Close fh
     through {
-        Write args r -> r () |
-        Close fh r -> r () |
+        Write args r -> r (fst args, ()) |
+        Close fh r -> r (fst fh, ()) |
         Open filename r -> r filename |
         return x -> return x
     }

@@ -7,7 +7,7 @@ with {
 let y <- cohandle IO using () at
     observe ReadFileContents "filename"
 through {
-    ReadFileContents filename r -> return 10 |
+    ReadFileContents filename r -> return (fst filename, 10) |
     return x -> return x
 } in
 return x + y

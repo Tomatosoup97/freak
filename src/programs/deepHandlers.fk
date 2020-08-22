@@ -1,14 +1,14 @@
 handle
-    do Arithmetic 2
+do Arithmetic 2
 with {
-    Arithmetic p r ->
-        handle
-            let x <- do Inc p in
-            let y <- return x * 2 in
-            r y
-        with {
-            Inc p r -> let t <- return p + 1 in r t |
-            return x -> return x
-        } |
-    return x -> return x + 1
+Arithmetic p r ->
+    handle
+        let x <- do Inc p in
+        let y <- return x * 2 in
+        r y
+    with {
+        Inc p r -> let t <- return p + 1 in r t |
+        return x -> return x
+    } |
+return x -> return x + 1
 }

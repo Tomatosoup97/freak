@@ -1,11 +1,17 @@
-cohandle Doble using 0 at
+cohandle Double using 0 at
     cohandle Nat using 0 at
-        let x <- observe Inc 1 in observe Double x
+        let x <- observe Inc 1 in
+        observe Double x
     through {
-        Inc p r -> let t <- return p + 1 in r t |
+        Inc p r ->
+            let x <- return snd p in
+            r (fst p, x + 1) |
+        Double p r -> observe Double snd p |
         return x -> return x
     }
 through {
-    Double p r -> let t <- return p * 2 in r t |
+    Double p r ->
+        let x <- return snd p in
+        r (1, x * 2) |
     return x -> return x
 }
