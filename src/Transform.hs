@@ -8,12 +8,11 @@ type AlgSignMap = Map.Map Label AlgTheoryName
 
 getCoalgebra :: AlgTheoryName -> Comp -> Comp
 getCoalgebra algT = (ELet algT . EReturn . VVar) algT
+-- getCoalgebra algT = ELet algT (EOp (algT ++ "Get") VUnit)
 
-putCoalgebra :: AlgTheoryName -> Comp -> Comp
-putCoalgebra algT = (ELet algT . EReturn . VVar) algT
-
-initCoalgebra :: AlgTheoryName -> Value -> Comp -> Comp
-initCoalgebra algT = ELet algT . EReturn
+putCoalgebra :: AlgTheoryName -> Value -> Comp -> Comp
+putCoalgebra algT = ELet algT . EReturn
+-- putCoalgebra algT = ELet algT . EOp (algT ++ "Put")
 
 coopTransV :: AlgSignMap -> Value -> Value
 coopTransV m v = case v of
@@ -44,15 +43,16 @@ coopTrans m c = case c of
             let coop = ECoop l (VPair (VVar algT) (coopTransV m v)) in
             let bindResult = ELet algTRes coop in
             let contComp = EReturn (VSnd (VVar algTRes)) in
-            (getCoalgebra algT . bindResult . putCoalgebra algT) contComp
+            (getCoalgebra algT . bindResult . putCoalgebra algT (VVar algT)) contComp
         Nothing -> ECoop l (coopTransV m v)
     ECohandleIR algTheoryName initV c h ->
         let algTVar = "#" ++ algTheoryName in
         let sign = hopsL h in
         let m' = foldl (\m s -> Map.insert s algTVar m) m sign in
+        -- TODO: Add handling for #AlgTheoryPut and #AlgTheoryGet effects
         let h' = coopTransHandler m' h in
         let cohandle = (`ECohandle` h') in
-        (cohandle . initCoalgebra algTVar initV . coopTrans m') c
+        (cohandle . putCoalgebra algTVar initV . coopTrans m') c
 
 transform :: Comp -> Comp
 transform = coopTrans Map.empty
