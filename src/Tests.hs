@@ -12,8 +12,6 @@ import CommonEval
 import Types
 import TargetAST
 
-genRow l n r = DPair (DLabel l) (DPair (DNum n) r)
-
 shouldBeT m b = do
     r <- m
     r `shouldBe` b
@@ -25,9 +23,6 @@ testFromFile filename expected = do
 
 main :: IO ()
 main = hspec $ do
-  let row = "{a = 1; {b = 2; ()}}"
-  let row' = "{c = 3; " ++ row ++ "}"
-  let variant s = "["++s++" 1 ] : row"
 
   describe "Freak" $ do
     it "Basic arithmetic" $ do
@@ -75,9 +70,6 @@ main = hspec $ do
     it "Static scope" $ do
       testFromFile "programs/staticScope.fk" (Right (DNum 3))
 
-    -- it "Row" $ do
-    --   evalProgram ("return "++row) `shouldBeT` (Right (genRow "a" 1 (genRow "b" 2 DUnit)))
-
     it "Pair" $ do
       evalProgram ("return (1, 2)") `shouldBeT` (Right (DPair (DNum 1) (DNum 2)))
 
@@ -98,15 +90,6 @@ main = hspec $ do
 
     it "Nested pair" $ do
       evalProgram ("return ((1, 2), 3)") `shouldBeT` (Right (DPair (DPair (DNum 1) (DNum 2)) (DNum 3)))
-
-    -- it "Split" $ do
-    --   evalProgram ("let (b = x; y) = "++row'++" in return 1 + x") `shouldBeT` (Right (DNum 3))
-    --   evalProgram ("let (a = x; y) = "++row'++" in return 1 + x") `shouldBeT` (Right (DNum 2))
-
-    -- it "Case" $ do
-    --   let body = " {a x -> return x; y -> return 42}"
-    --   evalProgram ("case "++variant "a"++body) `shouldBeT` (Right (DNum 1))
-    --   evalProgram ("case "++variant "c"++body) `shouldBeT` (Right (DNum 42))
 
     it "Let lambda" $ do
       evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBeT` (Right (DNum 43))
