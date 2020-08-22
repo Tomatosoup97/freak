@@ -42,8 +42,8 @@ instance Show UValue where
     show (ULabel l) = parens $ "L: " ++ l
     show (UVar x) = x
     show (ULambda x c) = parens $ x ++ " -> " ++ show c
-    show (UFst v) = "fst" ++ show v
-    show (USnd v) = "snd" ++ show v
+    show (UFst v) = "fst " ++ show v
+    show (USnd v) = "snd " ++ show v
 
 instance Show UComp where
     show (UVal v) = show v
