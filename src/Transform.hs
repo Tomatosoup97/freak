@@ -4,7 +4,16 @@ import AST
 import Types
 import qualified Data.Map as Map
 
-type AlgSignMap = Map.Map Label (AlgTheoryName, Value)
+type AlgSignMap = Map.Map Label AlgTheoryName
+
+getCoalgebra :: AlgTheoryName -> Comp -> Comp
+getCoalgebra algT = (ELet algT . EReturn . VVar) algT
+
+putCoalgebra :: AlgTheoryName -> Comp -> Comp
+putCoalgebra algT = (ELet algT . EReturn . VVar) algT
+
+initCoalgebra :: AlgTheoryName -> Value -> Comp -> Comp
+initCoalgebra algT = ELet algT . EReturn
 
 coopTransV :: AlgSignMap -> Value -> Value
 coopTransV m v = case v of
@@ -30,16 +39,20 @@ coopTrans m c = case c of
     EOp l v -> EOp l (coopTransV m v)
     EHandle c h -> EHandle (coopTrans m c) (coopTransHandler m h)
     ECoop l v -> case Map.lookup l m of
-        Just (algT, initV) ->
-            let conf = initV in
-            let coop = ECoop l (VPair conf (coopTransV m v)) in
-            let cont = EReturn (VSnd (VVar algT)) in
-            ELet algT coop cont
+        Just algT ->
+            let algTRes = algT ++ "Res" in
+            let coop = ECoop l (VPair (VVar algT) (coopTransV m v)) in
+            let bindResult = ELet algTRes coop in
+            let contComp = EReturn (VSnd (VVar algTRes)) in
+            (getCoalgebra algT . bindResult . putCoalgebra algT) contComp
         Nothing -> ECoop l (coopTransV m v)
     ECohandleIR algTheoryName initV c h ->
+        let algTVar = "#" ++ algTheoryName in
         let sign = hopsL h in
-        let m' = foldl (\m s -> Map.insert s (algTheoryName, initV) m) m sign in
-        ECohandle (coopTrans m' c) (coopTransHandler m' h)
+        let m' = foldl (\m s -> Map.insert s algTVar m) m sign in
+        let h' = coopTransHandler m' h in
+        let cohandle = (`ECohandle` h') in
+        (cohandle . initCoalgebra algTVar initV . coopTrans m') c
 
 transform :: Comp -> Comp
 transform = coopTrans Map.empty
