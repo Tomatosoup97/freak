@@ -102,11 +102,15 @@ consider the following example:
     handle
         let fh <- do Open "praise.txt" in
         let c <- do Choice () in
-        if c then do Write (fh, "Guy Fieri") else do Write (fh, "is cool");
+        let text <- if c then return "Guy Fieri" else return "is cool" in
+        let _ <- do Write (fh, text) in
         do Close fh
     with {
-        return x -> [x] |
-        Choose _ k -> return (append (k true) (k false)) |
+        Choose _ k ->
+            let t <- r 1 in
+            let f <- r 0 in
+            return (t, f) |
+        return x -> return x
     }
 \end{verbatim}
 }
