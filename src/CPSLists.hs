@@ -10,9 +10,15 @@ import Types
 
 type ContF = UValue -> [Cont] -> CPSMonad UComp
 
+data EffT = EffT | CoeffT
+
 data Cont = Pure ContF
           | Eff ContF
           | Coeff ContF
+
+getEffCons :: EffT -> (ContF -> Cont)
+getEffCons EffT = Eff
+getEffCons CoeffT = Coeff
 
 unfoldCont :: Cont -> ContF
 unfoldCont (Pure c) = c
@@ -130,24 +136,19 @@ cps e ks = case e of
         v <- cpsVal v ks
         return $ UAbsurd v
     -- Algebraic effects
-    EOp l v -> case ks of
-        (Pure kf:(Eff hf):ks') -> cpsOp l v ks
-        (Pure kf:(Coeff hf):ks') -> throwError $ CPSError "Effect cannot go pass cohandler!"
-        _ -> throwError $ CPSError $ "Ildefined stack of continuations: " ++ show ks
+    EOp l v -> cpsOp l v ks
     EHandle body handler ->
-        cpsHandle body handler Eff ks
+        cpsHandle body handler EffT ks
     -- Coalgebraic effects
     ECohandle body handler ->
-        cpsHandle body handler Coeff ks
-    ECoop l v -> case ks of
-        (Pure kf:h:ks') -> cpsOp l v ks
-        _ -> throwError $ CPSError $ "Ildefined stack of continuations: " ++ show ks
+        cpsHandle body handler CoeffT ks
+    ECoop l v -> cpsOp l v ks
 
 
-cpsHandle :: Comp -> Handler -> (ContF -> Cont) -> [Cont] -> CPSMonad UComp
-cpsHandle body handler effCons ks = do
+cpsHandle :: Comp -> Handler -> EffT -> [Cont] -> CPSMonad UComp
+cpsHandle body handler effT ks = do
     let pureCont = cpsHRet (hret handler)
-    let effCont = cpsHOps effCons handler
+    let effCont = cpsHOps effT handler
     cps body (pureCont:effCont:ks)
 
 
@@ -169,18 +170,19 @@ cpsHRet (HRet xVar comp) = Pure (\x (_:ks') -> do
     return $ ULet xVar (UVal x) convComp)
 
 
-cpsHOps :: (ContF -> Cont) -> Handler -> Cont
-cpsHOps effCons ops = effCons (\(UPair (UEffLabel l) (UPair p r)) ks ->
-    case hop l ops of
-        Just (AlgOp _ pvar rvar comp) -> do
-            contComp <- cps comp ks
-            return $ ULet pvar (UVal p) (ULet rvar (UVal r) contComp)
-        Nothing -> forward l p r ks)
+cpsHOps :: EffT -> Handler -> Cont
+cpsHOps effT ops = getEffCons effT (\(UPair (UEffLabel l) (UPair p r)) ks ->
+    case (l, effT) of
+        (EffL l, CoeffT) -> throwError $ CPSError "Effect cannot go pass cohandler!"
+        _ -> case hop l ops of
+            Just (AlgOp _ pvar rvar comp) -> do
+                contComp <- cps comp ks
+                return $ ULet pvar (UVal p) (ULet rvar (UVal r) contComp)
+            Nothing -> forward l p r ks)
 
 
 forward :: EffLabel -> UValue -> UValue -> [Cont] -> CPSMonad UComp
 forward y p r ks = do
-    -- TODO: forwarding should not let effects go pass cohandler
     let k'@(Pure kf'):h':ks' = ks
     let hf' = unfoldCont h'
     x <- freshVar' "rArg"

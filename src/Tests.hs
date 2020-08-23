@@ -223,7 +223,7 @@ main = hspec $ do
     it "[Both] Effect should not escape cohandler" $ do
       testFromFile "programs/bothEffects/fileOpsMix.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
       testFromFile "programs/bothEffects/effectsMixIncorrect.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
-      -- testFromFile "programs/bothEffects/mixingNestedHandlers.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
+      testFromFile "programs/bothEffects/mixingNestedHandlers.fk" (Left (CPSError "Effect cannot go pass cohandler!"))
 
     it "[Both] Coeffect may escape handler" $ do
       testFromFile "programs/bothEffects/effectsMixCorrect.fk" (Right (DStr "contents"))
