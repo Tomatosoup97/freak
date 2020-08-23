@@ -126,6 +126,7 @@ would like to address with coalgebraic effects.
 
 \section{Thesis Outline}
 
+
 In the following chapter we provide a background about effects, define algebraic
 effects in the categorical setting as well as point out dual coalgebraic effects
 and cohandlers, finishing with showing related work in this area.
@@ -229,9 +230,6 @@ we need to pass this interface into every function that is going to use it.
 This practice is called dependency injection, and while it sounds like it solves
 some of the issues, we end up in functions that need to carry representants
 of the interfaces, and pass them in every subcall that they make.
-
-\noindent
-TODO maybe example with comparison for these two approaches could be useful here?
 
 That being said, it's only one particular issue that algebraic effects address.
 Their handlers may also drop the resumption or invoke it more than
@@ -477,7 +475,6 @@ effects and also propagate new ones.
     where for each argument we select one result:
 
     \begin{center}
-        % TODO: a in A under prod
         {$\displaystyle {\llbracket op \rrbracket}_M : \prod_{a \in A}{|I|} \rightarrow \prod_{p \in P}{|I|} $}
     \end{center}
 
@@ -834,7 +831,64 @@ TODO muuuch longer explanation of this topic
 
 \section{Coexamples}
 
-    TODO Examples for cohandlers
+    TODO Introduction into coeffects from Freak side
+
+    \subsection{File handling}
+
+    The first example we are going to show is file handling. As per
+    Section~\ref{sec:problem-statement}, we do not want to expose file handle
+    to the user, thus we hide it behind carrier of FileIO coalgebraic theory,
+    for which the signature is composed of Open, Write and Close operations.
+
+\begin{verbatim}
+    cohandle FileIO using "filename.txt" at
+        let _ <- observe Open () in
+        let _ <- observe Write "Karma Chameleon" in
+        let _ <- observe Close () in
+        return 42
+    through {
+        Open p r ->
+            let filename <- return fst p in
+            let fh <- do OpenBI filename in
+            r (fh, ()) |
+        Write p r ->
+            let fh <- return fst p in
+            let _ <- do WriteBI fh in
+            r (fh, ()) |
+        Close p r ->
+            let fh <- return fst p in
+            let _ <- do CloseBI fh in
+            r ((), ()) |
+        return x -> return x
+    }
+\end{verbatim}
+
+    In the above code, we initialize the coalgebra carrier with filename that
+    we want to handle, we open file, write to it once and then close it. Notice
+    that file handle is not present in the user code, but only accessible in
+    the runner of FileIO as a first element of a pair.
+
+    \subsection{Nondeterministic Finite Automata}
+
+    This example shows how one can implement NFA using coeffects. We abstract
+    over internal state of the automata, and based on letters from the alphabet,
+    we change automata configuration and return whether word is accepted or not.
+    The code below returns whether given NFA accepts word "abba".
+
+\begin{verbatim}
+    cohandle Automata using 0 at
+        let _ <- observe NFA a in
+        let _ <- observe NFA b in
+        let _ <- observe NFA b in
+        observe NFA a
+    through {
+        NFA p r ->
+            let state <- return fst p in
+            let letter <- return snd p in
+            <code transitions here> |
+        return x -> return x
+    }
+\end{verbatim}
 
 \section{Usage guide}
 
