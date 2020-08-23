@@ -4,7 +4,7 @@ import AST
 import Types
 import qualified Data.Map as Map
 
-type AlgSignMap = Map.Map Label AlgTheoryName
+type AlgSignMap = Map.Map EffLabel AlgTheoryName
 
 getCoalgebra :: AlgTheoryName -> Comp -> Comp
 getCoalgebra algT = (ELet algT . EReturn . VVar) algT

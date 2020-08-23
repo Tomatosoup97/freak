@@ -9,8 +9,8 @@ import CommonEval
 import Types
 
 
-handleEffect :: Label -> DValue -> EvalMonad DValue
-handleEffect l v
+handleEffect :: EffLabel -> DValue -> EvalMonad DValue
+handleEffect (EffL l) v
     -- TODO: Write down in latex this functionality
     | l == "Print" = do
         (lift . print) v
@@ -84,6 +84,8 @@ eval env c = case c of
     UVal (ULambda x c) -> return $ DLambda funcRecord
         where funcRecord [xVal] = let env' = extendEnv env x xVal in eval env' c
     UVal (ULabel l) -> return $ DLabel l
+    UVal (UEffLabel (EffL l)) -> return $ DLabel l
+    UVal (UEffLabel (CoeffL l)) -> return $ DLabel l
     UVal (UNum n) -> return (DNum n)
     UVal (UStr s) -> return (DStr s)
     UVal UUnit -> return DUnit

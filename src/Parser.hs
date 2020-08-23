@@ -155,13 +155,15 @@ retComp = reserved "return"
 opComp :: Parser Comp
 opComp = do
     reserved "do"
-    EOp <$> identifier <*> value
+    l <- identifier
+    EOp (EffL l) <$> value
 
 
 coopComp :: Parser Comp
 coopComp = do
     reserved "observe"
-    ECoop <$> identifier <*> value
+    l <- identifier
+    ECoop (CoeffL l) <$> value
 
 
 handleComp :: Parser Comp
@@ -169,7 +171,7 @@ handleComp = do
     reserved "handle"
     c <- computation
     reserved "with"
-    EHandle c <$> handler
+    EHandle c <$> handler EffL
 
 cohandleComp :: Parser Comp
 cohandleComp = do
@@ -180,36 +182,36 @@ cohandleComp = do
     reserved "at"
     c <- computation
     reserved "through"
-    ECohandleIR algTheoryName v c <$> handler
+    ECohandleIR algTheoryName v c <$> handler CoeffL
 
 
-handler :: Parser Handler
-handler = do
+handler :: (Label -> EffLabel) -> Parser Handler
+handler labelCons = do
     reservedOp "{"
-    h <- handlerBody
+    h <- handlerBody labelCons
     reservedOp "}"
     return h
 
 
-handlerBody :: Parser Handler
-handlerBody =  parseHret
-           <|> parseHops
+handlerBody :: (Label -> EffLabel) -> Parser Handler
+handlerBody labelCons = parseHret
+                     <|> parseHops labelCons
 
 
-parseHops :: Parser Handler
-parseHops = do
-    op <- parseAlgOp
+parseHops :: (Label -> EffLabel) -> Parser Handler
+parseHops labelCons = do
+    op <- parseAlgOp labelCons
     reservedOp "|"
-    HOps op <$> handlerBody
+    HOps op <$> handlerBody labelCons
 
 
-parseAlgOp :: Parser AlgebraicOp
-parseAlgOp = do
+parseAlgOp :: (Label -> EffLabel) -> Parser AlgebraicOp
+parseAlgOp labelCons = do
     l <- identifier
     p <- identifier
     r <- identifier
     reservedOp "->"
-    AlgOp l p r <$> computation
+    AlgOp (labelCons l) p r <$> computation
 
 
 parseHret :: Parser Handler

@@ -45,8 +45,8 @@ initialPureCont :: ContF
 initialPureCont v ks = (return . UVal) v
 
 initialEffCont :: ContF
-initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks =
-    return . UApp (UVal r) $ UTopLevelEffect effLabel p
+initialEffCont (UPair (UEffLabel l) (UPair p r)) ks =
+    return . UApp (UVal r) $ UTopLevelEffect l p
 initialEffCont v _ = throwError $ CPSError $ "Incorrect value " ++ show v ++ " in effect continuation"
 
 initialContStack :: [Cont]
@@ -151,14 +151,14 @@ cpsHandle body handler effCons ks = do
     cps body (pureCont:effCont:ks)
 
 
-cpsOp :: Label -> Value -> [Cont] -> CPSMonad UComp
+cpsOp :: EffLabel -> Value -> [Cont] -> CPSMonad UComp
 cpsOp l v ks = do
     let Pure kf:h:ks' = ks
     let hf = unfoldCont h
     x <- freshVar' "rArg"
     pureComp <- kf (UVar x) (h:ks')
     let resumption = ULambda x pureComp
-    let pair cv = UPair (ULabel l) (UPair cv resumption)
+    let pair cv = UPair (UEffLabel l) (UPair cv resumption)
     cv <- cpsVal v ks
     hf (pair cv) ks'
 
@@ -170,7 +170,7 @@ cpsHRet (HRet xVar comp) = Pure (\x (_:ks') -> do
 
 
 cpsHOps :: (ContF -> Cont) -> Handler -> Cont
-cpsHOps effCons ops = effCons (\(UPair (ULabel l) (UPair p r)) ks ->
+cpsHOps effCons ops = effCons (\(UPair (UEffLabel l) (UPair p r)) ks ->
     case hop l ops of
         Just (AlgOp _ pvar rvar comp) -> do
             contComp <- cps comp ks
@@ -178,7 +178,7 @@ cpsHOps effCons ops = effCons (\(UPair (ULabel l) (UPair p r)) ks ->
         Nothing -> forward l p r ks)
 
 
-forward :: Label -> UValue -> UValue -> [Cont] -> CPSMonad UComp
+forward :: EffLabel -> UValue -> UValue -> [Cont] -> CPSMonad UComp
 forward y p r ks = do
     -- TODO: forwarding should not let effects go pass cohandler
     let k'@(Pure kf'):h':ks' = ks
@@ -186,7 +186,7 @@ forward y p r ks = do
     x <- freshVar' "rArg"
     pureComp <- kf' (UVar x) (h':ks')
     let resumption = ULambda x pureComp
-    let pair = UPair (ULabel y) (UPair p resumption)
+    let pair = UPair (UEffLabel y) (UPair p resumption)
     hf' pair ks'
 
 

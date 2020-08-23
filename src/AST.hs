@@ -9,7 +9,7 @@ data VariantRow a = VariantRow RowType Label a
 type RecordRow a = Map.Map Label a -- todo: presence variables?
 
 type AlgTheoryName = String
-type Signature = [Label]
+type Signature = [EffLabel]
 
 data Value
     = VVar Var
@@ -62,10 +62,10 @@ data Comp
     | EAbsurd Value
     | EIf Value Comp Comp
     -- Algebraic effects
-    | EOp Label Value
+    | EOp EffLabel Value
     | EHandle Comp Handler
     -- Coalgebraic effects
-    | ECoop Label Value
+    | ECoop EffLabel Value
     | ECohandle Comp Handler
     -- Intermediate representation for a cohandler
     | ECohandleIR AlgTheoryName Value Comp Handler
@@ -76,7 +76,7 @@ data Handler
     | HOps AlgebraicOp Handler
     deriving (Show, Eq)
 
-data AlgebraicOp = AlgOp Label Var Var Comp
+data AlgebraicOp = AlgOp EffLabel Var Var Comp
     deriving (Show, Eq)
 
 -- todo: generalize these with Functor and catamorphism
@@ -91,13 +91,13 @@ hops = aux []
     where aux acc (HRet _ _) = acc
           aux acc (HOps op h) = aux (op:acc) h
 
-opL :: AlgebraicOp -> Label
+opL :: AlgebraicOp -> EffLabel
 opL (AlgOp l _ _ _) = l
 
 hopsL :: Handler -> Signature
 hopsL h = map opL (hops h)
 
-hop :: Label -> Handler -> Maybe AlgebraicOp
+hop :: EffLabel -> Handler -> Maybe AlgebraicOp
 hop _ (HRet _ _) = Nothing
 hop l (HOps op@(AlgOp l' _ _ _) h)
     | l == l' = return op

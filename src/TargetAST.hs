@@ -13,6 +13,7 @@ data UValue
     | UUnit
     | UPair UValue UValue
     | ULabel Label
+    | UEffLabel EffLabel
     | URec Var Var UComp
     | UBinOp BinaryOp UValue UValue
     | UFst UValue
@@ -27,7 +28,7 @@ data UComp
     | UIf UValue UComp UComp
     | ULet Var UComp UComp
     | UAbsurd UValue
-    | UTopLevelEffect Label UValue
+    | UTopLevelEffect EffLabel UValue
     deriving (Eq)
 
 parens :: String -> String
@@ -40,6 +41,8 @@ instance Show UValue where
     show  UUnit = "()"
     show (UPair l r) = parens $ show l ++ ", " ++ show r
     show (ULabel l) = parens $ "L: " ++ l
+    show (UEffLabel (EffL l)) = parens $ "Eff: " ++ l
+    show (UEffLabel (CoeffL l)) = parens $ "Coeff: " ++ l
     show (UVar x) = x
     show (ULambda x c) = parens $ x ++ " -> " ++ show c
     show (UFst v) = "fst " ++ show v

@@ -10,6 +10,10 @@ type EvalResMonad a = IO (Either Error a)
 type Var = String
 type Label = String
 
+data EffLabel = EffL String
+              | CoeffL String
+              deriving (Eq, Ord, Show)
+
 data Error
     = EvalError String
     | CPSError String
