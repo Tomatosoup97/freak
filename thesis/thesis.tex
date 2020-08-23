@@ -5,10 +5,25 @@
 \polishtitle{Efekty koalgebraiczne oraz ich kohandlery \fmlinebreak{} w językach programowania}
 \englishtitle{Coalgebraic effects and their cohandlers \fmlinebreak{} in programming languages}
 \polishabstract{
-    \ldots
+    Efekty algebraiczne są dobrym rozwiązaniem na modelowanie efektów
+    obliczeniowych, w sposób który dobrze się składa. Niemniej, powstają przy
+    nich problemy z idiomatycznym zarządzaniem zasobami. Z matematycznej
+    strony, tworzą one wolne modele nad teoriami algebraicznymi, a ich handlery
+    homomorfizmy zachowujące strukturę modelu. Dualnym pojęciem są komodele,
+    które okazały się odpowiednim narzędziem do wyrażania w kodzie przejść z
+    przekazywaniem stanu. Prezentujemy rachunek z efektami algebraicznymi i
+    koalgebraicznymi, aby zaadresować problemy z zarządzaniem zewnętrznym stanem.
 }
 \englishabstract{
-    \ldots
+    Algebraic effects are a great way to model computational effects in a
+    composable way. Nonetheless, they give rise to issues with idiomatic
+    resource management. From mathematical side, they form
+    free models over algebraic theories, with handlers being homomorphisms
+    preserving the model structure. Dualizing this notion gives us comodels,
+    which turned out to be suitable for expressing state-passing transitions
+    in the code. We present a calculus with algebraic and coalgebraic effects,
+    to address the issues with external state management and provide abstraction
+    over resources.
 }
 \author{Mateusz Urbańczyk}
 \advisor{dr Maciej Piróg}
@@ -56,7 +71,7 @@
 }
 
 In this thesis we discuss issues arising from combining algebraic effects
-and handlers wiht resource management, and present a solution through coalgebraic
+and handlers with resource management, and present a solution through coalgebraic
 means along with presentation of experimental programming language Freak, which
 is a language with (co)algebraic effects and (co)handlers, where implementation
 is based on Continuation Passing Style translation.
