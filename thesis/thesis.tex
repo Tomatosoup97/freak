@@ -442,7 +442,7 @@ Effect handlers on the other hand, are transformations from one computation
 tree over given signature of effects into another one, where handler may serve
 effects and also propagate new ones.
 
-\section{Duality}
+\section{Duality}\label{sec:duality}
     \subsection{Comodels}
 
     \begin{definition}
@@ -729,21 +729,46 @@ TODO should this section be further extended?
 
 \section{Data-Flow Analysis}
 
-Another static analysis of the program.
+Robust resource management could be also achieved by developing a static
+analysis for checking whether resumption is called only once and that
+configuration is properly passed.
 
-\noindent
-- TODO Describe what is data-flow analysis \\
-- TODO Give example for constant folding \\
-- TODO Propose analysis for coalgebraic effects. Not sure if that's not too much,
-as it's not the goal of this thesis. Definitealy leave this section for later.
+Data-flow analysis may be the right tool for detecting such anomalies, however,
+further work in this area is reserved for future.
 
 \section{Cohandlers as Separate Constructs}
 
-Simplify semantics by separating coalgebraic effects into a new, restricted
-construct in programming language
+% Simplify semantics by separating coalgebraic effects into a new, restricted
+% construct in programming language
 
-\noindent
-TODO muuuch longer explanation of this topic
+Having observed in Section~\ref{sec:duality} that cooperations correspond to
+state-passing transitions, we propose a calculus which exactly achieves this
+semantic. We divide the solution into three parts, discussed below.
+
+\subsection{State passing}
+
+State passing can be done by embeding given coalgebraic theory in a state monad
+over configurations, which in simpler words means, that for a set of coeffects
+that we handle, we are going to store current configuration in a state.
+Configuration is retrieved before performing a coeffect, and new configuration
+is saved after one is handled. Passing of configuration does not leak to the
+user, which creates a handy abstraction over operations that manage external
+state.
+
+\subsection{Linear usage}
+
+Linear usage of resumptions is not going to be addressed by crafting operational
+semantic that ensures that, as in~\cite{runners-in-action}, but rather on a
+syntactic level where we verify that resumptions in cohandlers are one-shot and
+tail recursive.
+
+\subsection{Combining effects with coeffects}
+
+Despite of the above means, algebraic effects that occur in the source code may
+drop the resumption and thus finalization code is not going to be executed.
+We address this issue by not allowing effects to escape the cohandler, which
+means that we are not going to discard the execution of cohandler.
+
 
 \chapter{(Co)Effectful Programming}\label{chapter:co-effectful-programming}
 \section{Examples}\label{sec:examples}
