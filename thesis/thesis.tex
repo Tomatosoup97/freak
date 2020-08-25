@@ -528,7 +528,7 @@ effects and also propagate new ones.
     resources, where based on current configuration and some parameter, we
     obtain new configuration along with it's result.
 
-    \subsection{Coinductive Reasoning}
+    \subsection{Coinductive Reasoning}\label{subsec:coinduction}
 
     Induction is a way of constructing new structures. Recursion is a way of
     folding inductively defined structure in a terminating way. Recursive
@@ -736,7 +736,7 @@ configuration is properly passed.
 Data-flow analysis may be the right tool for detecting such anomalies, however,
 further work in this area is reserved for future.
 
-\section{Cohandlers as Separate Constructs}
+\section{Cohandlers as Separate Constructs}\label{sec:cohandlers-solution}
 
 % Simplify semantics by separating coalgebraic effects into a new, restricted
 % construct in programming language
@@ -854,9 +854,28 @@ means that we are not going to discard the execution of cohandler.
     and handlers are homomorphisms preserving the model structure~\cite{handlers}.
     Nevertheless, the results are very exciting for programming use cases.
 
-\section{Coexamples}
+\section{Coexamples}\label{sec:coexamples}
 
-    TODO Introduction into coeffects from Freak side
+    We are going to give here informal introduction to programming with
+    coeffects in Freak, based on what we have stated in
+    Section~\ref{sec:duality} and Section~\ref{sec:cohandlers-solution}.
+    Elimination of effects has the following syntax:
+
+\begin{verbatim}
+    cohandle <Algebraic Theory> using <Initial state> at
+        <computation>
+    through <handler>
+\end{verbatim}
+
+    Where algebraic theory is a name for signature of coeffects that we
+    handle, with initial coalgebra carrier holding \verb!<Initial state>! value.
+    Handler is syntactically same as in the case of standard algebraic effects,
+    however, the parameter passed to cohandler is always a pair of
+    current configuration and actual argument passed by user to effect.
+
+    Introduction rule for coeffects is written as \verb!observe Coeffect p!,
+    which references observations from coinduction described in
+    Subsection~\ref{subsec:coinduction}.
 
     \subsection{File handling}
 
@@ -961,23 +980,29 @@ means that we are not going to discard the execution of cohandler.
     Links~\cite{handlers-cps-journal}, with slight syntax modifications.
     Actual programs in Freak can be found in Section~\ref{sec:examples}.
 
-    TODO cohandlers
+    Cohandlers are as they were introduced in Section~\ref{sec:coexamples},
+    where $AlgTheory$ is an identifier representing our signature.
 
     % TODO proper alignment
     \begin{grammar}
 
         <Values V, W> $::=$ $ x $ \\
             | $nat \; n$ | `string'  \\
-            | $ \backslash x : A \rightarrow M $ | \textbf{rec} $ g \; x \rightarrow M $\\
+            | $ \backslash x : A \rightarrow M $ \\
+            | \textbf{rec} $ g \; x \rightarrow M $\\
             | $V \oplus W$ | $V \approx W$ \\
-            | <> | $ \{ \ell = V; W\} $  | ${[ \ell \; V]}^{R}$
+            | () | ($V$, $W$) \\
+            | \textbf{fst} $V$ | \textbf{snd} $V$
 
         <Computations M, N> $::=$ $ V $ $ W $ \\
             | \textbf{if} $V$ \textbf{then} $M$ \textbf{else} $N$ \\
-            | \textbf{let} $\{\ell  = x; y\} = V$ \textbf{in} $ N $ \\
-            | \textbf{case} $V \{ \ell \; x \rightarrow M; y \rightarrow N\}$ | \textbf{absurd} $ V $ \\
-            | \textbf{return} $V$ | \textbf{let} $ x \leftarrow M $ \textbf{in} $ N $ \\
-            | \textbf{do} $\ell \; V$ | \textbf{handle} $M$ \textbf{with} $ \{ H \} $
+            | \textbf{return} $V$ \\
+            | \textbf{absurd} $ V $ \\
+            | \textbf{let} $ x \leftarrow M $ \textbf{in} $ N $ \\
+            | \textbf{do} $\ell \; V$ \\
+            | \textbf{handle} $M$ \textbf{with} $ \{ H \} $ \\
+            | \textbf{observe} $\ell \; V$ \\
+            | \textbf{cohandle} $AlgTheory$ \textbf{using} $V$ \textbf{at} $M$ \textbf{through} $ \{ H \} $
 
         <Handlers H> $::=$ \textbf{return} $ x \rightarrow M $ | $ \ell \; p \; r \rightarrow M, H $
 
@@ -1014,6 +1039,8 @@ means that we are not going to discard the execution of cohandler.
     $nat \; n \oplus nat \; n' \rightsquigarrow n'' \quad \quad $    if $ n'' = n \oplus n' $ \\
     $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
     $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
+
+    \subsection{Cohandlers}
 
     TODO cohandlers
 
@@ -1242,7 +1269,28 @@ runCPS  :: Comp -> EvalResMonad UComp
     only deep ones.
 
     \section{Cohandlers}
-    \ldots
+
+    Similarly as in Section~\ref{sec:cohandlers-solution}, we are going to
+    divide this into three parts.
+
+    \subsection{State passing}
+
+    TODO Describe the transformation here.
+
+    \subsection{Linear usage}
+
+    TODO it's not implemented yet. Be more clear what's happening here
+
+    Linear usages of resumptions is asserted by analyzing parsed AST tree,
+    where in every leaf there must be a return statement. It's value is then
+    passed into continuation of a cohandler.
+
+    \subsection{Combining effects with coeffects}
+
+    Guards for not letting effect pass cohandler is implemented in CPS
+    translation, more specifically, code that translates cohandler ensures that
+    argument passed in resumption is not an effect. This is done on a static
+    level before evaluation, which is a desired behaviour.
 
     \section{Source Code Structure}
 
