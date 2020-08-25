@@ -24,7 +24,7 @@ initialPureCont v ks = (return . UVal) v
 
 initialEffCont :: ContF
 initialEffCont (UPair (UEffLabel l) (UPair p r)) ks =
-    return . UApp (UVal r) $ UTopLevelEffect l p
+    return $ UApp (UVal r) (UTopLevelEffect l p) ks
 initialEffCont v _ = throwError $ CPSError $ "Incorrect value " ++ show v ++ " in effect continuation"
 
 initialContStack :: [Cont]
@@ -58,7 +58,7 @@ cpsVal e ks = case e of
         v1 <- cpsVal e1 ks
         v2 <- cpsVal e2 ks
         return $ UBinOp op v1 v2
-    VLambda x _ body -> ULambda x <$> cps body ks
+    VLambda x _ body -> return $ ULambda x (\ks -> cps body ks)
     VFix g x body -> URec g x <$> cps body ks
     VRecordRow row -> undefined -- todo: records are constructed using ExtendRow
     VExtendRow l v row -> notSupportedErr
@@ -71,22 +71,13 @@ cps e ks = case e of
         let k@(Pure kf):ks' = ks
         f <- cpsVal vF ks
         arg <- cpsVal vArg ks
-        let app = UApp (UVal f) (UVal arg)
-        freshX <- freshVar' "appArg"
-        resume <- kf (UVar freshX) ks'
-        return $ ULet freshX app resume
+        return $ UApp (UVal f) (UVal arg) ks
     ELet x varComp comp -> do
         let k:ks' = ks
         let cont varVal ks'' = do
             body <- cps comp (k:ks'')
             return $ ULet x (UVal varVal) body
         cps varComp (Pure cont:ks')
-    -- todo: This ELet fails on Simulate exceptions test
-    -- ELet x varComp comp -> do
-    --     let k:ks' = ks
-    --     body <- cps comp ks
-    --     varVal <- cps varComp ks
-    --     return $ ULet x varVal body
     ESplit l x y row comp -> do
         v <- cpsVal row ks
         c <- cps comp ks
@@ -129,8 +120,8 @@ cpsOp l v ks = do
     let Pure kf:h:ks' = ks
     let hf = unfoldCont h
     x <- freshVar' "rArg"
-    pureComp <- kf (UVar x) (h:ks')
-    let resumption = ULambda x pureComp
+    let resF = \ks -> kf (UVar x) (h:ks)
+    let resumption = ULambda x resF
     let pair cv = UPair (UEffLabel l) (UPair cv resumption)
     cv <- cpsVal v ks
     hf (pair cv) ks'
@@ -158,8 +149,8 @@ forward y p r ks = do
     let k'@(Pure kf'):h':ks' = ks
     let hf' = unfoldCont h'
     x <- freshVar' "rArg"
-    pureComp <- kf' (UVar x) (h':ks')
-    let resumption = ULambda x pureComp
+    let resF = \ks'' -> kf' (UVar x) (h':ks'')
+    let resumption = ULambda x resF
     let pair = UPair (UEffLabel y) (UPair p resumption)
     hf' pair ks'
 

@@ -37,7 +37,7 @@ data UValue
     | UNum Integer
     | UStr String
     | UBool Bool
-    | ULambda Var UComp
+    | ULambda Var ([Cont] -> CPSMonad UComp)
     | UUnit
     | UPair UValue UValue
     | ULabel Label
@@ -46,18 +46,18 @@ data UValue
     | UBinOp BinaryOp UValue UValue
     | UFst UValue
     | USnd UValue
-    deriving (Eq)
+    -- deriving (Eq)
 
 data UComp
     = UVal UValue
-    | UApp UComp UComp
+    | UApp UComp UComp [Cont]
     | USplit Label Var Var UValue UComp
     | UCase UValue Label UComp Var UComp
     | UIf UValue UComp UComp
     | ULet Var UComp UComp
     | UAbsurd UValue
     | UTopLevelEffect EffLabel UValue
-    deriving (Eq)
+    -- deriving (Eq)
 
 parens :: String -> String
 parens s = "(" ++ s ++ ")"
@@ -72,13 +72,13 @@ instance Show UValue where
     show (UEffLabel (EffL l)) = parens $ "Eff: " ++ l
     show (UEffLabel (CoeffL l)) = parens $ "Coeff: " ++ l
     show (UVar x) = x
-    show (ULambda x c) = parens $ x ++ " -> " ++ show c
+    show (ULambda x _) = parens $ x ++ " -> comp"
     show (UFst v) = "fst " ++ show v
     show (USnd v) = "snd " ++ show v
 
 instance Show UComp where
     show (UVal v) = show v
-    show (UApp f arg) = parens $ show f ++ " " ++ show arg
+    show (UApp f arg _) = parens $ show f ++ " " ++ show arg
     show (USplit l x y v c) = undefined
     -- show (UCase v l x c y c') = "case " ++ show v ++ " { " ++ show l ++ " " ++ show x ++ "->" ++ show c ++ "; " ++ show y ++ " " ++ show c'
     show (UIf v c c') = "if " ++ show v ++ " then " ++ show c ++ " else " ++ show c'

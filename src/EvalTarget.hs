@@ -67,11 +67,12 @@ eval env c = case c of
          eval env (UVal pair) >>= \(DPair lv rv) ->
         let extEnv = Map.insert y rv (Map.insert x lv env) in
         eval extEnv comp
-    UApp fnComp argValue -> do
+    UApp fnComp argValue ks -> do
         fnVal <- eval env fnComp
         argDValue <- eval env argValue
+        liftIO $ print $ "UApp env: " ++ show env
         case fnVal of
-            DLambda fun -> fun [argDValue]
+            DLambda fun -> fun env [argDValue] ks
             e -> throwError $ EvalError $ "Application of non-lambda term " ++ show e ++ " in " ++ show c
     UIf e tC fC ->
         eval env (UVal e) >>= \(DNum n) ->
@@ -106,8 +107,16 @@ eval env c = case c of
     UVal (USnd e) -> eval env (UVal e) >>= \case
         DPair _ v2 -> return v2
         v -> throwError $ EvalError $ "Second projection on expression that is not a pair: " ++ show v
-    UVal (ULambda x c) -> return $ DLambda funcRecord
-        where funcRecord [xVal] = let env' = extendEnv env x xVal in eval env' c
+    UVal (ULambda x f) -> return $ DLambda funcRecord
+        where funcRecord env'' [xVal] ks =
+                let env' = extendEnv env x xVal in
+                f ks >>= eval env'
+                -- case Map.lookup "s" env'' of
+                --     Just r -> resume (extendEnv env "s" r)
+                --     -- Just r -> resume env
+                --     Nothing -> resume env
+                --     where resume env =
+                            -- liftIO $ print $ "funcRecord env: " ++ show env'
     UVal (ULabel l) -> return $ DLabel l
     UVal (UEffLabel (EffL l)) -> return $ DLabel l
     UVal (UEffLabel (CoeffL l)) -> return $ DLabel l
