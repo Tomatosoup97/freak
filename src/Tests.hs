@@ -25,6 +25,9 @@ main :: IO ()
 main = hspec $ do
 
   describe "Freak" $ do
+
+    -- Lambda calculus with binary operators and strings
+
     it "Basic arithmetic" $ do
       evalProgram "return 1" `shouldBeT` (Right (DNum 1))
       evalProgram "return 2 + 3" `shouldBeT` (Right (DNum 5))
@@ -51,10 +54,6 @@ main = hspec $ do
     it "Variable with prim" $ do
       evalProgram "let x' <- return 1 in return x'" `shouldBeT` (Right (DNum 1))
 
-    it "Absurd" $ do
-      evalProgram "absurd 42" `shouldBeT` (Left (absurdErr (UNum 42)))
-      evalProgram "let x <- absurd 17 in return 42" `shouldBeT` (Left (absurdErr (UNum 17)))
-
     it "Let expression" $ do
       evalProgram "let x <- return 3 in return x + 2" `shouldBeT` (Right (DNum 5))
 
@@ -69,6 +68,65 @@ main = hspec $ do
 
     it "Static scope" $ do
       testFromFile "programs/staticScope.fk" (Right (DNum 3))
+
+    it "Let lambda" $ do
+      evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBeT` (Right (DNum 43))
+
+    it "Let lambda -- more verbose" $ do
+      evalProgram "let f <- return (\\x : int -> return x + 1) in let y <- f 1 in return y + 2" `shouldBeT` (Right (DNum 4))
+
+    it "Higher order function" $ do
+      testFromFile "programs/higherOrder.fk" (Right (DNum 5))
+
+    it "Application" $ do
+      evalProgram "(\\x : int -> return x + 1) 1" `shouldBeT` (Right (DNum 2))
+
+    it "Let application -- forget result" $ do
+      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return 3" `shouldBeT` (Right (DNum 3))
+
+    it "Let application -- use result" $ do
+      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return x + 1" `shouldBeT` (Right (DNum 3))
+
+    it "Let lambda forget function result" $ do
+      evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBeT` (Right (DNum 1))
+
+    it "Let lambda forget function result - more verbose" $ do
+      testFromFile "programs/letLambda.fk" (Right (DNum 1))
+
+    it "Reuse function" $ do
+      testFromFile "programs/reuseFunc.fk" (Right (DNum 3))
+
+    it "Lambda application" $ do
+      evalProgram "(\\x : int -> return x + 1) 42" `shouldBeT` (Right (DNum 43))
+
+    -- Rel ops
+
+    it "Relational operators" $ do
+      evalProgram "return 1 >= 1" `shouldBeT` (Right (DNum 1))
+      evalProgram "return 1 > 1" `shouldBeT` (Right (DNum 0))
+      evalProgram "return 42 >= 17" `shouldBeT` (Right (DNum 1))
+      evalProgram "return 42 <= 17" `shouldBeT` (Right (DNum 0))
+      evalProgram "return 2 == 2" `shouldBeT` (Right (DNum 1))
+      evalProgram "return 2 != 2" `shouldBeT` (Right (DNum 0))
+      evalProgram "return 2 < 3" `shouldBeT` (Right (DNum 1))
+
+    -- Absurd
+
+    it "Absurd" $ do
+      evalProgram "absurd 42" `shouldBeT` (Left (absurdErr (UNum 42)))
+      evalProgram "let x <- absurd 17 in return 42" `shouldBeT` (Left (absurdErr (UNum 17)))
+
+    -- Branching
+
+    it "Branching" $ do
+      evalProgram "if 2 >= 3 then return 1 else return 0" `shouldBeT` (Right (DNum 0))
+
+    it "If statement" $ do
+      evalProgram "if 1 then return 1 else return 0" `shouldBeT` (Right (DNum 1))
+      evalProgram "if 42 then return 1 else return 0" `shouldBeT` (Right (DNum 1))
+      evalProgram "if 0 then return 1 else return 0" `shouldBeT` (Right (DNum 0))
+
+    -- Pairs
 
     it "Pair" $ do
       evalProgram ("return (1, 2)") `shouldBeT` (Right (DPair (DNum 1) (DNum 2)))
@@ -91,45 +149,6 @@ main = hspec $ do
     it "Nested pair" $ do
       evalProgram ("return ((1, 2), 3)") `shouldBeT` (Right (DPair (DPair (DNum 1) (DNum 2)) (DNum 3)))
 
-    it "Let lambda" $ do
-      evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBeT` (Right (DNum 43))
-
-    it "Higher order function" $ do
-      testFromFile "programs/higherOrder.fk" (Right (DNum 5))
-
-    it "Application" $ do
-      evalProgram "(\\x : int -> return x + 1) 1" `shouldBeT` (Right (DNum 2))
-
-    it "Let application" $ do
-      evalProgram "let x <- (\\x : int -> return x + 1) 1 in return 3" `shouldBeT` (Right (DNum 3))
-      -- evalProgram "let x <- (\\x : int -> return x + 1) 1 in return x + 1" `shouldBeT` (Right (DNum 3))
-
-    it "Let lambda forget function result" $ do
-      evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBeT` (Right (DNum 1))
-
-    it "Let lambda forget function result - more verbose" $ do
-      testFromFile "programs/letLambda.fk" (Right (DNum 1))
-
-    it "If statement" $ do
-      evalProgram "if 1 then return 1 else return 0" `shouldBeT` (Right (DNum 1))
-      evalProgram "if 42 then return 1 else return 0" `shouldBeT` (Right (DNum 1))
-      evalProgram "if 0 then return 1 else return 0" `shouldBeT` (Right (DNum 0))
-
-    it "Lambda application" $ do
-      evalProgram "(\\x : int -> return x + 1) 42" `shouldBeT` (Right (DNum 43))
-
-    it "Relational operators" $ do
-      evalProgram "return 1 >= 1" `shouldBeT` (Right (DNum 1))
-      evalProgram "return 1 > 1" `shouldBeT` (Right (DNum 0))
-      evalProgram "return 42 >= 17" `shouldBeT` (Right (DNum 1))
-      evalProgram "return 42 <= 17" `shouldBeT` (Right (DNum 0))
-      evalProgram "return 2 == 2" `shouldBeT` (Right (DNum 1))
-      evalProgram "return 2 != 2" `shouldBeT` (Right (DNum 0))
-      evalProgram "return 2 < 3" `shouldBeT` (Right (DNum 1))
-
-    it "Branching" $ do
-      evalProgram "if 2 >= 3 then return 1 else return 0" `shouldBeT` (Right (DNum 0))
-
     -- Algebraic effects and handlers tests
 
     it "Trivial handler" $ do
@@ -147,8 +166,8 @@ main = hspec $ do
     it "Compose let with do" $ do
       evalProgram "handle let x <- do Id 1 in return 3 with {Id p r -> r p | return x -> return x }" `shouldBeT` (Right (DNum 3))
 
-    -- it "Addition in pure computation" $ do
-    --   testFromFile "programs/additionPure.fk" (Right (DNum 2))
+    it "Addition in pure computation" $ do
+      testFromFile "programs/additionPure.fk" (Right (DNum 2))
 
     it "Increment effect handler" $ do
       testFromFile "programs/increment.fk" (Right (DNum 18))
@@ -181,15 +200,15 @@ main = hspec $ do
     it "Sum of possible choices" $ do
       testFromFile "programs/choicesSum.fk" (Right (DNum 35))
 
-    it "Min of possible choices" $ do
-      testFromFile "programs/choicesMin.fk" (Right (DNum 5))
+    -- it "Min of possible choices" $ do
+    --   testFromFile "programs/choicesMin.fk" (Right (DNum 5))
 
-    it "List of possible choices" $ do
-      let result = DPair (DPair (DNum 10) (DNum 5)) (DPair (DNum 20) (DNum 15))
-      testFromFile "programs/choicesList.fk" (Right result)
+    -- it "List of possible choices" $ do
+    --   let result = DPair (DPair (DNum 10) (DNum 5)) (DPair (DNum 20) (DNum 15))
+    --   testFromFile "programs/choicesList.fk" (Right result)
 
-    -- it "Let handler" $ do
-    --   testFromFile "programs/letHandler.fk" (Right (DNum 14))
+    it "Let handler" $ do
+      testFromFile "programs/letHandler.fk" (Right (DNum 14))
 
     -- TODO: Support named, reusable handlers
     -- it "Lambda handler" $ do
@@ -198,11 +217,14 @@ main = hspec $ do
     it "Nested handlers" $ do
       testFromFile "programs/nestedHandlers.fk" (Right (DNum 4))
 
-    -- it "Complex nested handlers" $ do
-    --   testFromFile "programs/complexNestedHandlers.fk" (Right (DNum 15))
+    it "Complex nested handlers" $ do
+      testFromFile "programs/complexNestedHandlers.fk" (Right (DNum 15))
 
     it "File handling" $ do
       testFromFile "programs/io/writeToFile.fk" (Right (DStr "one-two-three"))
+
+    it "State monad" $ do
+      testFromFile "programs/state.fk" (Right (DNum 3))
 
     -- Coalgebraic effects
 
