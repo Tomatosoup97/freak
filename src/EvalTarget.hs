@@ -3,14 +3,11 @@ module Eval where
 
 import qualified Data.Map as Map
 import Control.Monad.Except
+import Control.Monad.State
 import AST
 import TargetAST
 import DValue
 import Types
-
-type FuncRecord = [DValue] -> ExceptT Error IO DValue
-
-type Env = Map.Map Var DValue
 
 extendEnv :: Env -> Var -> DValue -> Env
 extendEnv env x v = Map.insert x v env
@@ -41,24 +38,24 @@ handleEffect :: EffLabel -> DValue -> EvalMonad DValue
 handleEffect (EffL l) v
     -- TODO: Write down in latex this functionality
     | l == "Print" = do
-        (lift . print) v
+        (liftIO . print) v
         return DUnit
     | l == "ReadLine" = do
-        input <- lift getLine
+        input <- liftIO getLine
         return $ DStr input
     | l == "ReadFile" = case v of
         (DStr filename) -> do
-            contents <- lift $ readFile filename
+            contents <- liftIO $ readFile filename
             return $ DStr contents
         _ -> throwError $ EvalError $ l ++ " effect accepts a single filename string"
     | l == "WriteFile" = case v of
         (DPair (DStr filename) (DStr contents)) -> do
-            lift $ writeFile filename contents
+            liftIO $ writeFile filename contents
             return DUnit
         _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
     | l == "AppendFile" = case v of
         (DPair (DStr filename) (DStr contents)) -> do
-            lift $ appendFile filename contents
+            liftIO $ appendFile filename contents
             return DUnit
         _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
     | otherwise = throwError $ absurdErr (DPair (DLabel l) v)
@@ -120,4 +117,4 @@ eval env c = case c of
 
 
 runEval :: UComp -> EvalResMonad DValue
-runEval c = runExceptT (eval Map.empty c)
+runEval c = evalStateT (runExceptT (eval Map.empty c)) 0

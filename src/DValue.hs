@@ -6,7 +6,9 @@ import AST
 import TargetAST
 import Types
 
-type FuncRecord = [DValue] -> ExceptT Error IO DValue
+type Env = Map.Map Var DValue
+
+type FuncRecord = [DValue] -> EvalMonad DValue
 
 data DValue
     = DNum Integer

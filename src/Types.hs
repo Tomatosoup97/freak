@@ -1,9 +1,10 @@
 module Types where
 
 import Control.Monad.Except
+import Control.Monad.Trans.State.Lazy
 
 -- TODO: Reconsider name
-type EvalMonad a = ExceptT Error IO a
+type EvalMonad a = ExceptT Error (StateT Int IO) a
 
 type EvalResMonad a = IO (Either Error a)
 
