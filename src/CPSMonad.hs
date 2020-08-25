@@ -1,4 +1,4 @@
-module CommonCPS where
+module CPSMonad where
 
 import Control.Monad.Except
 import Control.Monad.Trans.State.Lazy

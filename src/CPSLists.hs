@@ -3,38 +3,10 @@ module CPS where
 import qualified Data.Map as Map
 import Control.Monad.Except
 import Control.Monad.State
-import CommonCPS
+import CPSMonad
 import AST
 import TargetAST
 import Types
-
-type ContF = UValue -> [Cont] -> CPSMonad UComp
-
-data EffT = EffT | CoeffT
-
-data Cont = Pure ContF
-          | Eff ContF
-          | Coeff ContF
-
-getEffCons :: EffT -> (ContF -> Cont)
-getEffCons EffT = Eff
-getEffCons CoeffT = Coeff
-
-unfoldCont :: Cont -> ContF
-unfoldCont (Pure c) = c
-unfoldCont (Eff c) = c
-unfoldCont (Coeff c) = c
-
-instance Show Cont where
-    show (Pure f) = "Pure"
-    show (Eff f) = "Eff"
-    show (Coeff f) = "Coeff"
-
-instance Eq Cont where
-    Pure _ == Pure _ = True
-    Eff _ == Eff _ = True
-    Coeff _ == Coeff _ = True
-    _ == _ = False
 
 showCont :: Cont -> CPSMonad ()
 showCont k = case k of

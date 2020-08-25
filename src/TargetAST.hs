@@ -2,7 +2,35 @@ module TargetAST where
 
 import Types
 import AST
+import CPSMonad
 
+type ContF = UValue -> [Cont] -> CPSMonad UComp
+
+data Cont = Pure ContF
+          | Eff ContF
+          | Coeff ContF
+
+instance Show Cont where
+    show (Pure f) = "Pure"
+    show (Eff f) = "Eff"
+    show (Coeff f) = "Coeff"
+
+instance Eq Cont where
+    Pure _ == Pure _ = True
+    Eff _ == Eff _ = True
+    Coeff _ == Coeff _ = True
+    _ == _ = False
+
+data EffT = EffT | CoeffT
+
+getEffCons :: EffT -> (ContF -> Cont)
+getEffCons EffT = Eff
+getEffCons CoeffT = Coeff
+
+unfoldCont :: Cont -> ContF
+unfoldCont (Pure c) = c
+unfoldCont (Eff c) = c
+unfoldCont (Coeff c) = c
 
 data UValue
     = UVar Var
