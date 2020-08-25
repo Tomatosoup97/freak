@@ -8,7 +8,7 @@ import qualified Data.Map as Map
 import Control.Monad.Trans.Class
 import Freak
 import Eval
-import CommonEval
+import DValue
 import Types
 import TargetAST
 
