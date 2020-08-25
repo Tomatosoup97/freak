@@ -8,10 +8,11 @@ then
 fi
 
 
+echo "Compiling..."
+make > /dev/null
 echo "Program:"
 cat $PROGRAM
 echo "\nParser:"
-make > /dev/null
 freak -p $PROGRAM
 echo "\nCPS:"
 freak -c $PROGRAM
