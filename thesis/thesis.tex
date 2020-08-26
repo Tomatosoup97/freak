@@ -921,10 +921,10 @@ means that we are not going to discard the execution of cohandler.
 
 \begin{verbatim}
     cohandle Automata using 0 at
-        let _ <- observe NFA a in
-        let _ <- observe NFA b in
-        let _ <- observe NFA b in
-        observe NFA a
+        let _ <- observe NFA "a" in
+        let _ <- observe NFA "b" in
+        let _ <- observe NFA "b" in
+        observe NFA "a"
     through {
         NFA p r ->
             let state <- return fst p in
