@@ -94,7 +94,7 @@ cps e ks = case e of
         return $ UIf cond tC fC
     EReturn v -> case ks of
         Pure kf:ks' -> cpsVal v ks' >>= \v -> kf v ks'
-        [Eff _] -> cpsVal v ks >>= \v -> initialPureCont v ks
+        _ -> throwError $ CPSError $ "Illdefined stack of continuations when handling  " ++ show v
     EAbsurd v -> do
         v <- cpsVal v ks
         return $ UAbsurd v
