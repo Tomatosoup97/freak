@@ -363,3 +363,11 @@ parseString' str =
   case parseString str of
     Left e  -> error $ show e
     Right r -> r
+
+
+parseFromFile :: String -> IO (Comp)
+parseFromFile filename = do
+    code <- readFile filename
+    case parseString code of
+        Right r -> return r
+        Left e  -> print e >> fail "Parse error"

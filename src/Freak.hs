@@ -37,7 +37,5 @@ cpsFromFile filename = readFile filename >>= cpsProgram >>= \case
 
 parseFile :: String -> Bool -> IO ()
 parseFile filename quiet = do
-    code <- readFile filename
-    case parseString code of
-        Right r -> if quiet then return () else print $ transform r
-        Left e  -> print e >> fail "Parse error"
+    comp <- parseFromFile filename
+    if quiet then return () else print comp
