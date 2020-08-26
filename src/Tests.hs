@@ -126,6 +126,9 @@ main = hspec $ do
       evalProgram "if 42 then return 1 else return 0" `shouldBeT` (Right (DNum 1))
       evalProgram "if 0 then return 1 else return 0" `shouldBeT` (Right (DNum 0))
 
+    it "Strings comparison" $ do
+      testFromFile "programs/stringsCompare.fk" (Right (DNum 1))
+
     -- Pairs
 
     it "Pair" $ do

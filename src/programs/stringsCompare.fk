@@ -1,0 +1,4 @@
+let x <- return "test" in
+if x == "t" then return 0
+else if x == "test" then return 1
+else return 2

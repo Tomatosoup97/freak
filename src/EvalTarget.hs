@@ -70,7 +70,6 @@ eval env c = case c of
     UApp fnComp argValue ks -> do
         fnVal <- eval env fnComp
         argDValue <- eval env argValue
-        liftIO $ print $ "UApp env: " ++ show env
         case fnVal of
             DLambda fun -> fun env [argDValue] ks
             e -> throwError $ EvalError $ "Application of non-lambda term " ++ show e ++ " in " ++ show c
@@ -91,9 +90,11 @@ eval env c = case c of
     UAbsurd v -> throwError $ absurdErr v
     -- Values
     UVal (UBinOp op e1 e2) -> do
-        eval env (UVal e1) >>= \(DNum n1) ->
-            eval env (UVal e2) >>= \(DNum n2) ->
-            return $ DNum $ convOp op (n1, n2)
+        eval env (UVal e1) >>= \case
+            (DNum n1) -> eval env (UVal e2) >>= \(DNum n2) -> return $ DNum $ convOp op (n1, n2)
+            (DStr s1) -> eval env (UVal e2) >>= \(DStr s2) -> case op of
+                BEq -> return $ DNum $ boolToInt $ s1 == s2
+                BNe -> return $ DNum $ boolToInt $ s1 /= s2
     UVal (UVar x) -> case Map.lookup x env of
         Just v -> return v
         Nothing -> throwError $ unboundVarErr x
