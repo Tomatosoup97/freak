@@ -23,8 +23,8 @@ instance Show DValue where
     show (DStr s) = show s
     show (DLambda _) = "lambda"
     show  DUnit = "()"
-    show (DPair l r) = parens $ show l ++ ", " ++ show r
-    show (DLabel l) = parens $ "L: " ++ show l
+    show (DPair l r) = inParens $ show l ++ ", " ++ show r
+    show (DLabel l) = inParens $ "L: " ++ show l
 
 instance Eq DValue where
     DNum n == DNum n' = n == n'

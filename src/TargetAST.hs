@@ -59,29 +59,26 @@ data UComp
     | UTopLevelEffect EffLabel UValue
     -- deriving (Eq)
 
-parens :: String -> String
-parens s = "(" ++ s ++ ")"
-
 instance Show UValue where
-    show (UBinOp op vL vR) = parens $ show vL ++ show op ++ show vR
+    show (UBinOp op vL vR) = inParens $ show vL ++ show op ++ show vR
     show (UNum n) = show n
     show (UStr s) = s
     show  UUnit = "()"
-    show (UPair l r) = parens $ show l ++ ", " ++ show r
-    show (ULabel l) = parens $ "L: " ++ l
-    show (UEffLabel (EffL l)) = parens $ "Eff: " ++ l
-    show (UEffLabel (CoeffL l)) = parens $ "Coeff: " ++ l
+    show (UPair l r) = inParens $ show l ++ ", " ++ show r
+    show (ULabel l) = inParens $ "L: " ++ l
+    show (UEffLabel (EffL l)) = inParens $ "Eff: " ++ l
+    show (UEffLabel (CoeffL l)) = inParens $ "Coeff: " ++ l
     show (UVar x) = x
-    show (ULambda x _) = parens $ x ++ " -> comp"
+    show (ULambda x _) = inParens $ x ++ " -> comp"
     show (UFst v) = "fst " ++ show v
     show (USnd v) = "snd " ++ show v
 
 instance Show UComp where
     show (UVal v) = show v
-    show (UApp f arg _) = parens $ show f ++ " " ++ show arg
+    show (UApp f arg _) = inParens $ show f ++ " " ++ show arg
     show (USplit l x y v c) = undefined
     -- show (UCase v l x c y c') = "case " ++ show v ++ " { " ++ show l ++ " " ++ show x ++ "->" ++ show c ++ "; " ++ show y ++ " " ++ show c'
     show (UIf v c c') = "if " ++ show v ++ " then " ++ show c ++ " else " ++ show c'
     show (UAbsurd v) = "absurd " ++ show v
-    show (ULet x xComp comp) = parens $ "let " ++ x ++ " = " ++ show xComp ++ " in " ++ show comp
+    show (ULet x xComp comp) = inParens $ "let " ++ x ++ " = " ++ show xComp ++ " in " ++ show comp
     show (UTopLevelEffect l p) = show l ++ show p
