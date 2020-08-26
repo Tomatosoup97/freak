@@ -58,7 +58,7 @@ cpsVal e ks = case e of
         v1 <- cpsVal e1 ks
         v2 <- cpsVal e2 ks
         return $ UBinOp op v1 v2
-    VLambda x _ body -> return $ ULambda x (\ks -> cps body ks)
+    VLambda x _ body -> return $ ULambda x (cps body)
     VFix g x body -> URec g x <$> cps body ks
     VRecordRow row -> undefined -- todo: records are constructed using ExtendRow
     VExtendRow l v row -> notSupportedErr
@@ -103,8 +103,8 @@ cps e ks = case e of
     EHandle body handler ->
         cpsHandle body handler EffT ks
     -- Coalgebraic effects
-    ECohandle body handler ->
-        cpsHandle body handler CoeffT ks
+    ECohandle body handler       -> cpsHandle body handler CoeffT ks
+    ECohandleIR _ _ body handler -> cpsHandle body handler CoeffT ks
     ECoop l v -> cpsOp l v ks
 
 
