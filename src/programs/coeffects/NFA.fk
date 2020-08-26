@@ -1,0 +1,46 @@
+cohandle Automata using 0 at
+    let a <- observe NFA "a" in
+    let b <- observe NFA "b" in
+    let c <- observe NFA "b" in
+    let d <- observe NFA "a" in
+    return ((a, b), (c, d))
+through {
+    NFA p r ->
+        let accepting <- return 1 in
+        let notAccepting <- return 0 in
+        let state <- return fst p in
+        let letter <- return snd p in
+
+        if state == 0 then
+            if letter == "a" then r (1, notAccepting)
+            else r (0, notAccepting)
+        else if state == 1 then
+            if letter == "b" then r (2, notAccepting)
+            else if letter == "a" then r (1, notAccepting)
+            else r (0, notAccepting)
+        else if state == 2 then
+            if letter == "b" then r (3, notAccepting)
+            else if letter == "a" then r (1, notAccepting)
+            else r (0, notAccepting)
+        else if state == 3 then
+            if letter == "a" then r (4, accepting)
+            else r (0, notAccepting)
+        else if state == 4 then
+            if letter == "a" then r (1, notAccepting)
+            else r (0, notAccepting)
+        else r (0, notAccepting)
+        |
+    return x -> return x
+}
+-- States
+-- 0 == ""
+-- 1 == "a"
+-- 2 == "ab"
+-- 3 == "abb"
+-- 4 == "abba"
+
+-- Transitions
+-- 0 -a-> 1 -b-> 2 -b-> 3 -a-> 4
+-- 1 -a-> 1
+-- 2 -a-> 1
+-- 4 -a-> 1

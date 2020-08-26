@@ -1,0 +1,12 @@
+cohandle CounterMachine using 0 at
+    let _ <- observe Inc () in
+    let _ <- observe Inc () in
+    let _ <- observe Inc () in
+    let _ <- observe Dec () in
+    observe Coalg ()
+through {
+    Inc p r -> let x <- return fst p in r (x+1 , ()) |
+    Dec p r -> let x <- return fst p in r (x-1 , ()) |
+    Coalg p r -> r (fst p, fst p) |
+    return x -> return x
+}

@@ -263,6 +263,12 @@ main = hspec $ do
     it "[Coalg] State monad full case" $ do
       testFromFile "programs/coeffects/state.fk" (Right (DNum 3))
 
+    it "[Coalg] NFA" $ do
+      testFromFile "programs/coeffects/NFA.fk" (Right (DPair (DPair (DNum 0) (DNum 0)) (DPair (DNum 0) (DNum 1))))
+
+    it "[Coalg] Counter machine" $ do
+      testFromFile "programs/coeffects/counterCoalg.fk" (Right (DNum 2))
+
     -- Both effects
 
     it "[Both] Effect should not escape cohandler" $ do
