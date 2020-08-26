@@ -2,17 +2,16 @@ module Transform where
 
 import AST
 import Types
+import Parser
 import qualified Data.Map as Map
 
 type AlgSignMap = Map.Map EffLabel AlgTheoryName
 
 getCoalgebra :: AlgTheoryName -> Comp -> Comp
-getCoalgebra algT = (ELet algT . EReturn . VVar) algT
--- getCoalgebra algT = ELet algT (EOp (algT ++ "Get") VUnit)
+getCoalgebra algT = ELet algT (ECoop (CoeffL (algT ++ "Get")) VUnit)
 
 putCoalgebra :: AlgTheoryName -> Value -> Comp -> Comp
-putCoalgebra algT = ELet algT . EReturn
--- putCoalgebra algT = ELet algT . EOp (algT ++ "Put")
+putCoalgebra algT = ELet algT . ECoop (CoeffL (algT ++ "Put"))
 
 coopTransV :: AlgSignMap -> Value -> Value
 coopTransV m v = case v of
@@ -41,18 +40,24 @@ coopTrans m c = case c of
         Just algT ->
             let algTRes = algT ++ "Res" in
             let coop = ECoop l (VPair (VVar algT) (coopTransV m v)) in
+            let bindConf = ELet algT (EReturn (VFst (VVar algTRes))) in
             let bindResult = ELet algTRes coop in
             let contComp = EReturn (VSnd (VVar algTRes)) in
-            (getCoalgebra algT . bindResult . putCoalgebra algT (VVar algT)) contComp
+            -- actual code execution is from left to right:
+            (getCoalgebra algT . bindResult . bindConf . putCoalgebra algT (VVar algT)) contComp
         Nothing -> ECoop l (coopTransV m v)
     ECohandleIR algTheoryName initV c h ->
-        let algTVar = "#" ++ algTheoryName in
+        let algTVar = "_" ++ algTheoryName in
         let sign = hopsL h in
         let m' = foldl (\m s -> Map.insert s algTVar m) m sign in
-        -- TODO: Add handling for #AlgTheoryPut and #AlgTheoryGet effects
         let h' = coopTransHandler m' h in
-        let cohandle = (`ECohandle` h') in
-        (cohandle . putCoalgebra algTVar initV . coopTrans m') c
+        -- TODO: Read and parse from lib/coalgHandler.fk
+        let stateMonadHandler = (HOps (AlgOp (CoeffL (algTVar ++ "Put")) "s'" "r" (EReturn (VLambda "s" TInt (ELet "g" (EApp (VVar "r") VUnit) (EApp (VVar "g") (VVar "s'")))))) (HOps (AlgOp (CoeffL (algTVar ++ "Get")) "_" "r" (EReturn (VLambda "s" TInt (ELet "g" (EApp (VVar "r") (VVar "s")) (EApp (VVar "g") (VVar "s")))))) (HRet "x" (EReturn (VLambda "s" TInt (EReturn (VVar "x"))))))) in
+        let runner = leftJoinHandlers stateMonadHandler h' in
+        let cohandle = (\c -> ECohandleIR algTheoryName initV c runner) in
+        let coalgComp = (cohandle . coopTrans m') c in
+        let runCoalgVar = algTVar ++ "Run" in
+        ELet runCoalgVar coalgComp (EApp (VVar runCoalgVar) initV)
 
 transform :: Comp -> Comp
 transform = coopTrans Map.empty

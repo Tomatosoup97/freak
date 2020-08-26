@@ -1,0 +1,5 @@
+{
+    Put s' r -> return (\s:int -> let g <- r () in g s') |
+    Get _ r -> return (\s:int -> let g <- r s in g s) |
+    return x -> return (\s:int -> return x)
+}

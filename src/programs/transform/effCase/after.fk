@@ -1,0 +1,18 @@
+let _AlgTRun <- cohandle AlgT using 0 at
+    let y <- let _AlgT <- observe _AlgTGet () in
+        let _AlgTRes <- observe Put (_AlgT, 1) in
+        let _AlgT <- return fst _AlgTRes in
+        let _AlgT <- observe _AlgTPut _AlgT in
+        return snd _AlgTRes in
+    return y
+through {
+    Get p r -> r (fst p, fst p) |
+    Put p r -> r (snd p, snd p) |
+    _AlgTPut s' r -> return (\s:int ->
+        let g <- r () in g s'
+    ) |
+    _AlgTGet _ r -> return (\s:int ->
+        let g <- r s in g s
+    ) |
+    return x -> return (\s:int -> return x)
+} in _AlgTRun 0

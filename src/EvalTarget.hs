@@ -109,15 +109,13 @@ eval env c = case c of
         DPair _ v2 -> return v2
         v -> throwError $ EvalError $ "Second projection on expression that is not a pair: " ++ show v
     UVal (ULambda x f) -> return $ DLambda funcRecord
-        where funcRecord env'' [xVal] ks =
-                let env' = extendEnv env x xVal in
-                f ks >>= eval env'
-                -- case Map.lookup "s" env'' of
-                --     Just r -> resume (extendEnv env "s" r)
-                --     -- Just r -> resume env
-                --     Nothing -> resume env
-                --     where resume env =
-                            -- liftIO $ print $ "funcRecord env: " ++ show env'
+        where funcRecord env'' [xVal] ks = do
+                case Map.lookup "s" env'' of
+                    Just r -> resume (extendEnv env "s" r)
+                    Nothing -> resume env
+                    where resume env =
+                            let env' = extendEnv env x xVal in
+                            f ks >>= eval env'
     UVal (ULabel l) -> return $ DLabel l
     UVal (UEffLabel (EffL l)) -> return $ DLabel l
     UVal (UEffLabel (CoeffL l)) -> return $ DLabel l

@@ -1,0 +1,7 @@
+let _AlgTRun <- cohandle AlgT using 0 at
+    return 1
+through {
+    _AlgTPut s' r -> return (\s:int -> let g <- r () in g s') |
+    _AlgTGet _ r -> return (\s:int -> let g <- r s in g s) |
+    return x -> return (\s:int -> return x)
+} in _AlgTRun 0

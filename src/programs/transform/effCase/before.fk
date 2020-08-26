@@ -1,0 +1,8 @@
+cohandle AlgT using 0 at
+    let y <- observe Put 1 in
+    return y
+through {
+    Get p r -> r (fst p, fst p) |
+    Put p r -> r (snd p, snd p) |
+    return x -> return x
+}

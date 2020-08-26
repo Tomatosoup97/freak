@@ -365,7 +365,7 @@ parseString' str =
     Right r -> r
 
 
-parseFromFile :: String -> IO (Comp)
+parseFromFile :: String -> IO Comp
 parseFromFile filename = do
     code <- readFile filename
     case parseString code of

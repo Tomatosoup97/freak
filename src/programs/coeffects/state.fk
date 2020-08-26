@@ -1,0 +1,11 @@
+cohandle AlgT using 1 at
+    let x <- observe Get () in
+    let _ <- observe Put x + 1 in
+    let x <- observe Get () in
+    let _ <- observe Put x + 1 in
+    observe Get ()
+through {
+    Get p r -> r (fst p, fst p) |
+    Put p r -> r (snd p, snd p) |
+    return x -> return x
+}

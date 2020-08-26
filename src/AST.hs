@@ -136,3 +136,8 @@ hop _ (HRet _ _) = Nothing
 hop l (HOps op@(AlgOp l' _ _ _) h)
     | l == l' = return op
     | otherwise = hop l h
+
+leftJoinHandlers :: Handler -> Handler -> Handler
+leftJoinHandlers hL = aux
+    where aux (HOps op h) = HOps op (aux h)
+          aux (HRet _ _) = hL

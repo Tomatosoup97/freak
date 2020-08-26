@@ -1,0 +1,5 @@
+cohandle AlgT using 0 at
+    return 1
+through {
+    return x -> return x
+}
