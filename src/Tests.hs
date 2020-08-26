@@ -207,8 +207,8 @@ main = hspec $ do
       evalProgram "do Nothing 42" `shouldBeT` (Left (absurdErr (DPair (DLabel "Nothing") (DNum 42))))
 
     it "Print effect" $ do
-      evalProgram "do Print \"print\"" `shouldBeT` (Right DUnit)
-      evalProgram "let x <- do Print \"print\" in return 1" `shouldBeT` (Right (DNum 1))
+      evalProgram "observe Print \"print\"" `shouldBeT` (Right DUnit)
+      evalProgram "let x <- observe Print \"print\" in return 1" `shouldBeT` (Right (DNum 1))
       testFromFile "programs/io/printToConsole.fk" (Right DUnit)
 
     it "Drop resumption result" $ do

@@ -1,4 +1,4 @@
-let x <- do WriteFile ("/tmp/freak-test", "one-") in
-let x <- do AppendFile ("/tmp/freak-test", "two-") in
-let x <- do AppendFile ("/tmp/freak-test", "three") in
-do ReadFile "/tmp/freak-test"
+let x <- observe WriteFile ("/tmp/freak-test", "one-") in
+let x <- observe AppendFile ("/tmp/freak-test", "two-") in
+let x <- observe AppendFile ("/tmp/freak-test", "three") in
+observe ReadFile "/tmp/freak-test"

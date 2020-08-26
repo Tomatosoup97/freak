@@ -1,4 +1,4 @@
-let x <- do Print "one" in
-let x <- do Print "two" in
-let x <- do Print "three" in
+let x <- observe Print "one" in
+let x <- observe Print "two" in
+let x <- observe Print "three" in
 return ()

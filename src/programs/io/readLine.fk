@@ -1,4 +1,4 @@
-let x <- do Print "Input text to print: " in
-let x <- do ReadLine () in
-let y <- do Print x in
+let x <- observe Print "Input text to print: " in
+let x <- observe ReadLine () in
+let y <- observe Print x in
 return y

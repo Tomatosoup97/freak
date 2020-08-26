@@ -35,7 +35,7 @@ convOp BNe = boolToInt . uncurry (/=)
 
 
 handleEffect :: EffLabel -> DValue -> EvalMonad DValue
-handleEffect (EffL l) v
+handleEffect (CoeffL l) v
     -- TODO: Write down in latex this functionality
     | l == "Print" = do
         (liftIO . print) v
@@ -59,6 +59,7 @@ handleEffect (EffL l) v
             return DUnit
         _ -> throwError $ EvalError $ l ++ " effect accepts a pair of (filename, contents) strings"
     | otherwise = throwError $ absurdErr (DPair (DLabel l) v)
+handleEffect (EffL l) v = throwError $ absurdErr (DPair (DLabel l) v)
 
 
 eval :: Env -> UComp -> EvalMonad DValue
