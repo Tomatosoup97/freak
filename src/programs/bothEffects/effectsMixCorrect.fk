@@ -6,6 +6,6 @@ cohandle IO using () at
         return x -> return x
     }
 through {
-    Read filename r -> r "contents" |
+    Read args r -> r (fst args, "contents") |
     return x -> return x
 }

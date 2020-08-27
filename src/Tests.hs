@@ -38,6 +38,10 @@ main = hspec $ do
       transCohandler <- parseFromFile "programs/transform/effCase/after.fk"
       transform cohandler `shouldBe` transCohandler
 
+    it "Should not transform coeffect without theory" $ do
+      let (Right cohandler) = parseString "observe Coeffect ()"
+      transform cohandler `shouldBe` cohandler
+
   describe "Freak" $ do
 
     -- Lambda calculus with binary operators and strings
