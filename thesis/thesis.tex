@@ -524,7 +524,7 @@ effects and also propagate new ones.
     We have now derived a dual concept to algebraic effects and handlers, which
     in the literature are also called comodels and runners~\cite{runners-uustalu, runners-in-action}.
     As we have seen, comodels turned into state-passing (co)operations, which
-    in programming langauges, may be a way to model interaction with external
+    in programming languages, may be a way to model interaction with external
     resources, where based on current configuration and some parameter, we
     obtain new configuration along with it's result.
 
@@ -676,7 +676,8 @@ effects and also propagate new ones.
 
     Practical part that is closest to topic of the thesis, is work done by
     Danel Ahman and Andrej Bauer~\cite{runners-in-action}, as well as their
-    implementation of a $\lambda_{coop}$ language~\cite{coop}, which is a
+    implementation of a $\lambda_{coop}$ language~\cite{coop} and
+    $\mathVar{haskell-coop}$~\cite{haskell-coop} library, which is a
     calculus with runners of coalgebraic effects that ensures linear usage of
     resources as well as execution of code handling finalisation.
 
@@ -727,7 +728,7 @@ state monad}~\cite{linear-usage-of-state}.
 \noindent
 TODO should this section be further extended?
 
-\section{Data-Flow Analysis}
+\section{Data-Flow Analysis}\label{sec:data-flow}
 
 Robust resource management could be also achieved by developing a static
 analysis for checking whether resumption is called only once and that
@@ -767,7 +768,7 @@ tail recursive.
 Despite of the above means, algebraic effects that occur in the source code may
 drop the resumption and thus finalization code is not going to be executed.
 We address this issue by not allowing effects to escape the cohandler, which
-means that we are not going to discard the execution of cohandler.
+means that we are not going to allow to discard the execution of cohandler.
 
 
 \chapter{(Co)Effectful Programming}\label{chapter:co-effectful-programming}
@@ -934,21 +935,24 @@ means that we are not going to discard the execution of cohandler.
     }
 \end{verbatim}
 
+Full and working example with implementation of automata can be found under
+\verb!programs/coeffects/NFA.fk! in Freak repository~\cite{freak}.
+
 \section{Usage guide}
 
-    % Outdated
     As of this day, two implementations are available, one based on the curried
     translation from Appel~\cite{appel-continuations}, and the second one based
     directly on the uncurried translation with continuations as explicit
     stacks~\cite{handlers-cps-journal}. More details can be found in
     Section~\ref{chapter:implementation}. All commands are available within the
-    \verb!src! directory.
+    \verb!src! directory. Please note, however, that Apple-based version is no
+    longer supported, and is left as a reference.
 
     \subsection{Build and install}
 
     \begin{itemize}
         \item Install dependencies: \verb!make install!
-        \item Select implementation: \verb!make link-lists! (default) vs \verb!make link-appel!
+        \item Select implementation: \verb!make link-lists! (recommended) vs \verb!make link-appel!
         \item Compile: \verb!make build!
         \item Link to PATH:~\verb!sudo make link!
         \item Remove artifacts: \verb!make clean!
@@ -966,7 +970,8 @@ means that we are not going to discard the execution of cohandler.
     \begin{itemize}
         \item Run tests: \verb!make tests!
         \item Run code linter: \verb!make lint!
-        \item Compile, run linter and tests: \verb!make check!
+        \item Validate Freak code from \verb!programs! dir: \verb!make lint!
+        \item Run all above commands: \verb!make check!
     \end{itemize}
 
 \chapter{Calculus of Freak language}\label{chapter:calculus-of-freak-language}
@@ -1014,7 +1019,7 @@ means that we are not going to discard the execution of cohandler.
 
 \section{Dynamics}
 
-    Semantic of Freak is heavily based on Links langauge~\cite{handlers-cps-journal},
+    Semantic of Freak is heavily based on Links language~\cite{handlers-cps-journal},
     for which the source language's dynamics have been described extensively by
     providing small-step operational semantics, continuation passing style
     transformation~\cite{handlers-cps} as well as abstract
@@ -1040,9 +1045,58 @@ means that we are not going to discard the execution of cohandler.
     $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
     $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
 
-    \subsection{Cohandlers}
+    \subsection{Cohandlers}\label{subsec:calc-cohandlers}
 
-    TODO cohandlers
+    Semantics for cohandlers is brought from denotational one that we have
+    introduced in Section~\ref{sec:duality}, meaning, we denote cooperations
+    as state passing transitions in a code, represented similarly as algebraic
+    effects, through (co)free (co)models of algebraic theories along with their
+    morphisms. Let's put the following cooperation:
+
+    \begin{center}
+        $ {\llbracket op \rrbracket}^W : {|C|} \times {P} \rightarrow  {|C|} \times {X} $
+    \end{center}
+
+    Operationally, we embed transitions between coeffectull computations
+    in a standard state monad $ S_{C}X \triangleq (C \Rightarrow X \times C) $.
+    We achieve this by transforming AST of the source code, such that
+    configurations are passed among cooperations. For a given coalgebraic theory
+    $T$, handler of the state monad in Freak looks as follows:
+
+\vbox{\begin{verbatim}
+{
+    TPut s' r -> return (\s -> let g <- r () in g s') |
+    TGet _ r -> return (\s -> let g <- r s in g s) |
+    return x -> return (\s -> return x)
+}
+\end{verbatim}
+}
+
+    \noindent
+    Having that defined, we expand computation
+
+\begin{verbatim}
+    observe Coeffect p
+\end{verbatim}
+
+    \noindent
+    into the following one (modulo $\mathVar{alpha-conversion}$):
+
+\vbox{\begin{verbatim}
+    let Tconf <- observe TGet () in
+    let Tcoresult <- observe Coeffect (Tconf, p) in
+    let TnewConf <- return fst Tcoresult in
+    let Tres <- return snd Tcoresult in
+    let _ <- observe TPut TnewConf in
+    return Tres
+\end{verbatim}
+}
+
+    \noindent
+    where before executing a coeffect, we obtain current configuration,
+    pass it to coeffect, put new config and then return the actual result.
+    This is done behind the scenes and user does not know about state
+    passing.
 
 \chapter{Implementation}\label{chapter:implementation}
 
@@ -1060,6 +1114,9 @@ means that we are not going to discard the execution of cohandler.
     The language's AST is defined without surprises, just as syntax is:
 
 \begin{verbatim}
+    data EffLabel = EffL String
+                  | CoeffL String
+
     data Value
         = VVar Var
         | VNum Integer
@@ -1083,17 +1140,30 @@ means that we are not going to discard the execution of cohandler.
         | EAbsurd Value
         | EIf Value Comp Comp
         -- Algebraic effects
-        | EOp Label Value
+        | EOp EffLabel Value
         | EHandle Comp Handler
         -- Coalgebraic effects
-        | ECoop Label Value
+        | ECoop EffLabel Value
         | ECohandle Comp Handler
+        -- Intermediate representation for a cohandler
+        | ECohandleIR AlgTheoryName Value Comp Handler
+
+    data Handler
+        = HRet Var Comp
+        | HOps AlgebraicOp Handler
+
+    data AlgebraicOp = AlgOp EffLabel Var Var Comp
 \end{verbatim}
 
     \noindent
-    Similarly for the target calculus data structure. However, as one may notice,
-    for convenience the \textbf{let} translation is homomorphic, as opposed to be
-    to lambda abstracted with immediate application:
+    Where under \verb!Value! in \verb!ECohandleIR! we store initial
+    configuration of a coalgebra, and under \verb!AlgTheoryName! name of the
+    theory over which we operate. We use \verb!EffLabel! structure to
+    syntactically distinguish between effects and coeffects in the code.
+
+    Data structures for the calculus are also driven by syntax. However, as one
+    may notice, for convenience the \textbf{let} translation is homomorphic,
+    as opposed to be to lambda abstracted with immediate application:
 
 \begin{verbatim}
     data UValue
@@ -1101,32 +1171,39 @@ means that we are not going to discard the execution of cohandler.
         | UNum Integer
         | UStr String
         | UBool Bool
-        | ULambda Var UComp
+        | ULambda Var ([Cont] -> CPSMonad UComp)
         | UUnit
         | UPair UValue UValue
         | ULabel Label
+        | UEffLabel EffLabel
         | URec Var Var UComp
         | UBinOp BinaryOp UValue UValue
 
     data UComp
         = UVal UValue
-        | UApp UComp UComp
+        | UApp UComp UComp [Cont]
         | USplit Label Var Var UValue UComp
         | UCase UValue Label UComp Var UComp
         | UIf UValue UComp UComp
         | ULet Var UComp UComp
         | UAbsurd UValue
-        | UTopLevelEffect Label UValue
+        | UTopLevelEffect EffLabel UValue
 \end{verbatim}
 
     \noindent
+    Careful reader may notice the correspondence between \verb!UApp! having
+    a stack of continuations, and \verb!ULambda! being a
+    \verb![Cont] -> CPSMonad UComp! function, which follows directly from
+    translation proposed by Lindley et al\.~\cite{handlers-cps-journal}.
+
     The final answer, common to both evaluations, is represented as a \verb!DValue!,
-    where the meaning of the coproduct is as one would expect:
+    where the meaning of the coproduct is as one would expect. At this point,
+    we no longer treat effect labels as a special case.
 
 \begin{verbatim}
     type Label = String
-
-    type FuncRecord = [DValue] -> Either Error DValue
+    type EvalMonad a = ExceptT Error (StateT Int IO) a
+    type FuncRecord = [DValue] -> [Cont] -> EvalMonad DValue
 
     data DValue
         = DNum Integer
@@ -1137,7 +1214,6 @@ means that we are not going to discard the execution of cohandler.
         | DLabel Label
 \end{verbatim}
 
-    \noindent
     Evaluation of target calculus is typical to call-by-value with syntactic
     distinction between values and computations. For more details, refer
     to~\cite{handlers-cps-journal}. That being said, there is one part
@@ -1147,7 +1223,7 @@ means that we are not going to discard the execution of cohandler.
     for doing IO\@. For that reason, we define default handling for a few effects
     for printing to console and handling files, where semantic is just as one
     would expect from naming. We abuse haskell's notation to define types for
-    algebraic effects living in Freak langauge:
+    algebraic effects living in Freak language:
 
 \begin{verbatim}
     type Filename = String
@@ -1231,8 +1307,8 @@ means that we are not going to discard the execution of cohandler.
     initialPureCont v ks = (return . UVal) v
 
     initialEffCont :: ContF
-    initialEffCont (UPair (ULabel effLabel) (UPair p r)) ks =
-        return . UApp (UVal r) $ UTopLevelEffect effLabel p
+    initialEffCont (UPair (UEffLabel l) (UPair p r)) ks =
+        return $ UApp (UVal r) (UTopLevelEffect l p) k
 
     initialContStack :: [Cont]
     initialContStack = [Pure initialPureCont, Eff initialEffCont]
@@ -1246,13 +1322,16 @@ means that we are not going to discard the execution of cohandler.
     split into a few functions:
 
 \begin{verbatim}
-cps     :: Comp    -> [Cont] -> CPSMonad UComp
-cpsVal  :: Value   -> [Cont] -> CPSMonad UValue
-cpsOp   :: Label -> Value -> [Cont] -> CPSMonad UComp
-cpsHRet :: Handler -> Cont
-cpsHOps :: (ContF -> Cont) -> Handler -> Cont
-forward :: Label   -> UValue -> UValue -> [Cont] -> CPSMonad UComp
-runCPS  :: Comp -> EvalResMonad UComp
+data EffT = EffT | CoeffT
+type EvalResMonad a = IO (Either Error a)
+
+cps     :: Comp     -> [Cont]  -> CPSMonad UComp
+cpsVal  :: Value    -> [Cont]  -> CPSMonad UValue
+cpsOp   :: EffLabel -> Value   -> [Cont] -> CPSMonad UComp
+cpsHRet :: Handler  -> Cont
+cpsHOps :: EffT     -> Handler -> Cont
+forward :: EffLabel -> UValue  -> UValue -> [Cont] -> CPSMonad UComp
+runCPS  :: Comp     -> EvalResMonad UComp
 \end{verbatim}
 
     \noindent
@@ -1261,11 +1340,10 @@ runCPS  :: Comp -> EvalResMonad UComp
     \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
     based on a given handler. \verb!forward! is responsible for forwarding the
     computation to the outer handler, and the last one for running the
-    translation, where evaluation result is represented by\\
-    \verb!type EvalResMonad a = IO (Either Error a)!. This results in an
+    translation. This results in an
     implementation that finally supports nested handlers, which can be seen by
     running tests. Links language~\cite{handlers-cps-journal} also supports
-    shallow handlers~\cite{shallow-handlers}, whereas our langauge implements
+    shallow handlers~\cite{shallow-handlers}, whereas our language implements
     only deep ones.
 
     \section{Cohandlers}
@@ -1309,6 +1387,7 @@ runCPS  :: Comp -> EvalResMonad UComp
     TargetAST.hs    - AST for the target calculus
     Tests.hs        - Tests module
     Types.hs        - Common types definition
+    Transform.hs    - Cohandlers transformation described in Calculus chapter
     programs/       - Exemplary programs covered in tests
 
     CPSAppel.hs     - [deprecated] Appel-based CPS translation
@@ -1318,7 +1397,19 @@ runCPS  :: Comp -> EvalResMonad UComp
 \chapter{Conclusion}\label{chapter:conclusion}
 \section{Summary}
 
-    TODO What was achieved, what was described, what needs to be done or researched.
+    We have showed derivation of cooperations, based on previous work, as well
+    as presented a calculus combining algebraic effects with their dual notion.
+    This resulted in a programming language which allows user to seemlessly
+    operate on resources based on solid mathematical foundations. It can seen now,
+    that (co)algebraic effects are an abstract concept that captures plenty of
+    patterns in everyday programming, which already had ad-hoc and more
+    restricted implementations in many existing languages, through constructs
+    such as \verb!try, except, finally!, or by more low-level mechanisms
+    such as handling interrupts in operating systems.
+
+    This relatively new concept in theory of progamming languages yet needs to
+    be researched, and we propose in the next section a few directions into
+    which Freak language could go.
 
 \section{Future work}
 
@@ -1328,24 +1419,31 @@ runCPS  :: Comp -> EvalResMonad UComp
     small-step operational semantics~\cite{handlers-cps} and an abstract
     machine~\cite{liberating-effects}. Implementing another way of evaluation
     could serve as a way to empirically assert correctness, as opposed to formally.
-    Abstract machine would need to be extended to incorporate coeffects.
+    Coeffects are living in a syntactic world, which are then translated to
+    algebraic effects, thus we may not need to extend the abstract machine to
+    accomodate them.
 
-    \subsection{Type inference and row polymorphism}
+    \subsection{Static analysis}
 
     The type system as of this day is not implemented, as the focus has been put
     on CPS transformation and dynamics of the calculus with effects and coeffects.
     Further work is required here, especially considering the fact that a huge
     advantage of algebraic effects is that they are explicitly defined in the
-    type of a computation.
+    type of a computation. We have been considering row polymorphism as the
+    tool of choice.
+
+    Another part could involve statics through data-flow analysis, which we
+    have already mentioned in Section~\ref{sec:data-flow}.
 
     \subsection{Multiple instances of algebraic effects}
 
-    The Freak language is limited to a single instance of an effect. We would
-    need to support cases where many instances of the algebraic effects, with
-    the same handler code, could be instantiated. The current state of the
-    art introduces a concept of resources and instances, as in Eff~\cite{programming-in-eff},
-    or instance variables, as in Helium~\cite{binders-labels}. Another part is
-    to research on how this area combines with coalgebraic part.
+    Languages with algebraic effects tend to have an mechanism, in which one
+    can instantiate multiple versions of the effects under the same handler
+    code. The current state of the art introduces a concept of resources and
+    instances, as in Eff~\cite{programming-in-eff}, or instance variables, as
+    in Helium~\cite{binders-labels}. Work in this area could involve diving
+    into how this concept is related to coalgebras, and whether to implement
+    that in Freak.
 
     \subsection{Selective CPS}
 
@@ -1357,15 +1455,18 @@ runCPS  :: Comp -> EvalResMonad UComp
     \subsection{Exceptions and signals}
 
     Exceptions are a trivial example of algebraic effect where the resumption is
-    discarded, and as described in \S 4.5~\cite{handlers-cps}, they can be modeled
-    as a separate construct to improve performance.
+    discarded, and as described in \S 4.5~\cite{handlers-cps} they can be
+    modeled as a separate construct. On the one hand, it may lead to
+    performance improvements, on the other, we could use this notion to ensure
+    that finalisation code for coeffects is executed even in the case of a
+    failure, as described in~\cite{runners-in-action}.
 
     \subsection{Shallow handlers}
 
     Shallow and deep handlers while being able to simulate each other up to
     administrative reductions, have a very different meaning from a theoretical point
     of view. Implementing them as defined by Lindley et al.~\cite{shallow-handlers}
-    could be another way of enhancing Freak.
+    could be another way of enhancing the language.
 
 
 %%%%% BIBLIOGRAPHY
