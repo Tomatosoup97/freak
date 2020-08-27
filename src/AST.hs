@@ -93,7 +93,7 @@ instance Show Comp where
     show (EAbsurd v) = "absurd " ++ show v
     show (EIf v c c') = "if " ++ show v ++ " then " ++ show c ++ " else " ++ show c'
     show (EOp l v) = "do " ++ show l ++ " " ++ show v
-    show (EHandle c h) = "handle " ++ show c ++ "with { " ++ show h ++ " }"
+    show (EHandle c h) = "handle\n" ++ show c ++ "\nwith {\n" ++ show h ++ "\n}"
     show (ECoop l v) = "observe " ++ show l ++ " " ++ show v
     show (ECohandle c h) = "cohandle " ++ show c ++ "through { " ++ show h ++ " }"
     show (ECohandleIR algT initV c h) = "cohandle " ++ algT ++ " using " ++ show initV ++ " at\n" ++ show c ++ "\nthrough { \n" ++ show h ++ "\n}"
