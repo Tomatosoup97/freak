@@ -5,41 +5,41 @@ return 1
 
 initialCont = λ x . return x
 
-[[ let f <- return (λ x . return 1) in N ]] [initialCont] -def-let->
-    (λ (k :: ks) . [[ return (λ x . return 1) ]]) ((λ f.λ ks. [[ N ]] (k :: ks)) :: ks) [initialCont] -beta-reduction->
-    [[ return (λ x . return 1) ]] ((λ f.λ ks. [[ N ]] (initialCont :: ks)) :: []) -simplify-cont-stack->
-    [[ return (λ x . return 1) ]] [λ f.λ ks. [[ N ]] (initialCont :: ks)] -def-return->
-    (λ (k :: ks) . k [[ λ x . return 1 ]] ks) [λ f.λ ks. [[ N ]] (initialCont :: ks)] -beta-reduction->
-    (λ f.λ ks. [[ N ]] (initialCont :: ks))  [[ λ x . return 1 ]] [] -beta-reduction->
+[[ let f <- return (λ x . return 1) in N ]] [initialCont]                                               -def-let->
+    (λ (k :: ks) . [[ return (λ x . return 1) ]]) ((λ f.λ ks. [[ N ]] (k :: ks)) :: ks) [initialCont]   -beta-reduction->
+    [[ return (λ x . return 1) ]] ((λ f.λ ks. [[ N ]] (initialCont :: ks)) :: [])                       -simplify-cont-stack->
+    [[ return (λ x . return 1) ]] [λ f.λ ks. [[ N ]] (initialCont :: ks)]                               -def-return->
+    (λ (k :: ks) . k [[ λ x . return 1 ]] ks) [λ f.λ ks. [[ N ]] (initialCont :: ks)]                   -beta-reduction->
+    (λ f.λ ks. [[ N ]] (initialCont :: ks))  [[ λ x . return 1 ]] []                                    -beta-reduction->
     [[ N ]] {[[ λ f . return 1 ]]/f} [initialCont]  # {V/x} is a notation for substitution here
 
     # we can't really reduct [[ λ x . return 1 ]], as it's missing cont stack
     # to evaluate. It cannot be same as to [[ N ]], as in this case:
-        [[ λ x . return 1 ]] [] -def->
+        [[ λ x . return 1 ]] [] -def-->
         (λ (k :: ks) . k (λ x . [[ return 1 ]]) ks) [] # matching [] with k::ks!
 
     # let's put  N =def= let y <- f 1 in M, then
 
-    [[ N ]] {[[ λ x . return 1 ]]/f} [initialCont] -def-lambda->
-    [[ N ]] {λ x . [[ return 1 ]] /f} [initialCont] -def-return->
-    [[ N ]] {λ x . (λ (k :: ks).k 1 ks) / f} [initialCont] -def-N->
-    [[ let y <- f 1 in M ]] {λ x . (λ (k :: ks).k 1 ks) / f} [initialCont] -subst->
-    [[ let y <- (λ x . (λ (k :: ks).k 1 ks)) 1 in M ]] [initialCont] -def-let->
-    (λ (k :: ks).[[ (λ x . (λ (k :: ks).k 1 ks)) 1 ]] ((λ y.λ ks. [[ M ]] (k :: ks)) :: ks)) [initialCont] -beta-red->
-    [[ (λ x . (λ (k :: ks).k 1 ks)) 1 ]] ((λ y.λ ks. [[ M ]] (initialCont :: ks)) :: []) -simplify-cont-stack->
-    [[ (λ x . (λ (k :: ks).k 1 ks)) 1 ]] [λ y.λ ks. [[ M ]] (initialCont :: ks)] -def-app->
-    ([[ (λ x . (λ (k :: ks).k 1 ks)) ]] [[ 1 ]]) [λ y.λ ks. [[ M ]] (initialCont :: ks)] -def-[[]]->
-    ((λ x . (λ (k :: ks).k 1 ks)) 1) [λ y.λ ks. [[ M ]] (initialCont :: ks)] -beta->
-    (λ (k :: ks).k 1 ks) [λ y.λ ks. [[ M ]] (initialCont :: ks)] -beta->
-    (λ y.λ ks. [[ M ]] (initialCont :: ks)) 1 [] -beta->
+    [[ N ]] {[[ λ x . return 1 ]]/f} [initialCont]                                                          -def-lambda->
+    [[ N ]] {λ x . [[ return 1 ]] /f} [initialCont]                                                         -def-return->
+    [[ N ]] {λ x . (λ (k :: ks).k 1 ks) / f} [initialCont]                                                  -def-N->
+    [[ let y <- f 1 in M ]] {λ x . (λ (k :: ks).k 1 ks) / f} [initialCont]                                  -subst->
+    [[ let y <- (λ x . (λ (k :: ks).k 1 ks)) 1 in M ]] [initialCont]                                        -def-let->
+    (λ (k :: ks).[[ (λ x . (λ (k :: ks).k 1 ks)) 1 ]] ((λ y.λ ks. [[ M ]] (k :: ks)) :: ks)) [initialCont]  -beta-red->
+    [[ (λ x . (λ (k :: ks).k 1 ks)) 1 ]] ((λ y.λ ks. [[ M ]] (initialCont :: ks)) :: [])                    -simplify-cont-stack->
+    [[ (λ x . (λ (k :: ks).k 1 ks)) 1 ]] [λ y.λ ks. [[ M ]] (initialCont :: ks)]                            -def-app->
+    ([[ (λ x . (λ (k :: ks).k 1 ks)) ]] [[ 1 ]]) [λ y.λ ks. [[ M ]] (initialCont :: ks)]                    -def-[[]]->
+    ((λ x . (λ (k :: ks).k 1 ks)) 1) [λ y.λ ks. [[ M ]] (initialCont :: ks)]                                -beta->
+    (λ (k :: ks).k 1 ks) [λ y.λ ks. [[ M ]] (initialCont :: ks)]                                            -beta->
+    (λ y.λ ks. [[ M ]] (initialCont :: ks)) 1 []                                                            -beta->
     [[ M ]]{1/y} [initialCont]
 
     # put M =def= return 1
 
-    [[ M ]]{1/y} [initialCont] -def-M->
-    [[ return 1 ]]{1/y} [initialCont] -subst->
-    [[ return 1 ]] [initialCont] -def-return->
-    (λ (k :: ks).k [[1]] ks) [initialCont] -beta->
-    initialCont [[1]] [] -[[]]->
-    initialCont 1 [] -def-initial-cont->
+    [[ M ]]{1/y} [initialCont]              -def-M->
+    [[ return 1 ]]{1/y} [initialCont]       -subst->
+    [[ return 1 ]] [initialCont]            -def-return->
+    (λ (k :: ks).k [[1]] ks) [initialCont]  -beta->
+    initialCont [[1]] []                    -[[]]->
+    initialCont 1 []                        -def-initial-cont->
     1
