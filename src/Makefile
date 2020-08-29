@@ -35,7 +35,7 @@ test:
 	runhaskell Tests.hs
 
 validate_programs: build
-	find programs -name "*.fk" | xargs -I % sh -c "echo %; freak -pq %"
+	find programs -name "*.fk" | xargs -I % sh -c "echo %; freak -v %"
 
 check: build lint validate_programs test
 

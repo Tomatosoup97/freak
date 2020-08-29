@@ -974,7 +974,19 @@ Full and working example with implementation of automata can be found under
     \end{itemize}
 
     After compiling and linking program to PATH, one may evaluate program as
-    follows: \verb!freak programs/choicesList.fk! The actual code is described in Section~\ref{sec:choice-example}
+    follows: \verb!freak programs/choicesList.fk! The actual code is described
+    in Section~\ref{sec:choice-example}:
+
+\begin{verbatim}
+Usage: freak [options] [filename]
+Options:
+                       Evaluate program
+   -c, --cps           CPS-translate program
+   -h, --help          Print this message and exit
+   -p, --parse         Parse program
+   -ds, --desugar      Parse and run AST transformations
+   -v, --validate      Run available static analysis
+\end{verbatim}
 
     \subsection{Running tests}
 

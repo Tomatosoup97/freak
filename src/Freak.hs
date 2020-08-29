@@ -28,14 +28,18 @@ runProgram s = evalProgram s >>= \case
     Right v -> print v
 
 runFromFile :: String -> IO ()
-runFromFile filename = readFile filename >>= runProgram
+runFromFile = readFile >=> runProgram
 
 cpsFromFile :: String -> IO ()
-cpsFromFile filename = readFile filename >>= cpsProgram >>= \case
+cpsFromFile f = readFile f >>= cpsProgram >>= \case
     Right cps -> print cps
     Left err -> print err >> fail "CPS translation error"
 
-parseFile :: String -> Bool -> IO ()
-parseFile filename quiet = do
-    comp <- parseFromFile filename
-    if quiet then return () else print comp
+parseFile :: String -> IO ()
+parseFile = parseFromFile >=> print
+
+parseDesugarFile :: String -> IO ()
+parseDesugarFile = parseFromFile >=> (print . transform)
+
+validateFile :: String -> IO ()
+validateFile = readFile >=> cpsProgram >=> (\_ -> return ())
