@@ -72,9 +72,9 @@
 
 In this thesis we discuss issues arising from combining algebraic effects
 and handlers with resource management, and present a solution through coalgebraic
-means along with presentation of experimental programming language Freak, which
-is a language with (co)algebraic effects and (co)handlers, where implementation
-is based on Continuation Passing Style translation.
+means along with presentation of Freak, experimental programming language with
+(co)algebraic effects and (co)handlers. Implementation is based on Continuation
+Passing Style translation.
 
 \section{Problem Statement}\label{sec:problem-statement}
 
@@ -83,7 +83,7 @@ attention~\cite{effects-bibliography} in recent years, both from the theoretical
 and practical side.
 
 They give the developer necessary tools for declarative programming with
-computational effects on a high level of abstraction, by defining
+computational effects, on a high level of abstraction, by defining
 effects as an API\@ in the code. At the same time, algebraic effects preserve
 a lot of flexibility and have a strong theoretical foundations.
 
@@ -128,13 +128,13 @@ would like to address with coalgebraic effects.
 
 
 In the following chapter we provide a background about effects, define algebraic
-effects in the categorical setting as well as point out dual coalgebraic effects
+effects in the categorical setting, as well as point out dual coalgebraic effects
 and cohandlers, finishing with showing related work in this area.
 Chapter~\ref{chapter:potential-solutions} describes possible ways to approach
 the issue of excessive generality, Chapter~\ref{chapter:co-effectful-programming}
-shows the Freak language by examples along with a usage guide, and then
-Chapter~\ref{chapter:calculus-of-freak-language} describes the language's syntax,
-operational semantics and CPS translation. In the next one,
+shows the Freak language through examples along with a usage guide, and then
+Chapter~\ref{chapter:calculus-of-freak-language} describes more formally the
+language's syntax, operational semantics and CPS translation. In the next one,
 Chapter~\ref{chapter:implementation}, implementation details are revealed.
 We conclude in Chapter~\ref{chapter:conclusion} by stating what the possible
 augmentations are, which are intended to be made in the future.
@@ -195,7 +195,7 @@ together to form a new monad, and for this purpose, monad
 transformers~\cite{monad-transformers} arose in Haskell. Most of the common
 languages avoid this by not expressing computational effects in the type system,
 and instead one may think about functions as being implicitly embed in a Kleisli
-Category over a functor T~\cite{kleisli-ncatlab}, where T is a hidden signature
+Category over a functor $T$~\cite{kleisli-ncatlab}, where $T$ is a hidden signature
 over all possible side effects that occur in our program.
 
 \noindent
@@ -232,9 +232,8 @@ some of the issues, we end up in functions that need to carry representants
 of the interfaces, and pass them in every subcall that they make.
 
 That being said, it's only one particular issue that algebraic effects address.
-Their handlers may also drop the resumption or invoke it more than
-once. There are many other great sources for getting familiarized with
-effects from practical side~\cite{handlers-tutorial, programming-in-eff, koka-tutorial},
+There are many other great sources for getting familiarized with effects from
+practical side~\cite{handlers-tutorial, programming-in-eff, koka-tutorial},
 so we will omit further explanations. More examples can be found in
 Chapter~\ref{chapter:co-effectful-programming}.
 
@@ -258,6 +257,36 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     \end{definition}
     % == end Signature ==
 
+    % == begin Free algebra ==
+    \begin{definition}
+
+    $\mathVar{Free}$ $\mathVar{F-algebra}$ on an object $A$ (of generators) in $\mathcal{C}$ is meant an algebra
+
+    \begin{center}
+
+    $ \varphi_{A} : F A^{\#} \longrightarrow A $
+
+    \end{center}
+
+    \noindent
+    together with an universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $.
+    Universality means that for every algebra $ \beta : F B \longrightarrow B $
+    and every morphism $ f : A \longrightarrow B $ in $ \mathcal{C}$, there
+    exists a unique homomorphism $ \overline{f} : A^{\#} \longrightarrow B $
+    extending f, i.e.\ a unique morphism of $ \mathcal{C}$ for which the diagram
+    below commutes:
+
+    \begin{center}
+    \begin{tikzcd}[row sep=huge, column sep=large]
+    F A^{\#} \arrow[d, "F \overline{f}"] \arrow[r, "\varphi_{A}"] & A^{\#} \arrow[d, "\overline{f}"] & A \arrow[l, "\eta_{A}"'] \arrow[ld, "f"] \\
+    F B \arrow[r, "\beta"']                                       & B                                &
+    \end{tikzcd}
+    \end{center}
+
+    \end{definition}
+    % == end Free algebra ==
+
+
     % == begin Sigma-terms ==
     \begin{definition}
     Collection of $\mathVar{\Sigma-terms}$ is a free algebra with a generator $X$
@@ -270,7 +299,7 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     % == begin Sigma-equation ==
     \begin{definition}
 
-        A $ \mathVar{\Sigma-Equation} $ is an object X and a pair of
+        A $ \mathVar{\Sigma-Equation} $ is an object $X$ and a pair of
         $\mathVar{\Sigma-terms}$ $l, r \in Tree_{\Sigma}(X)$, written as
 
         \begin{center}
@@ -314,7 +343,7 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     % == begin Model ==
     \begin{definition}
 
-    A \textit{model M} of an algebraic theory T is an interpretation of the
+    A \textit{model M} of an algebraic theory $T$ is an interpretation of the
     signature ${\Sigma_{T}}$ which validates all the equations $\mathcal{E_{T}}$.
     That is, for every equation $X \mid l = r$ the following diagram commutes:
 
@@ -330,9 +359,9 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     % == begin homomophism ==
     \begin{definition}
 
-    Let L, M be models of a theory T. $ \mathVar{T-homomorphism}$
+    Let $L$, $M$ be models of a theory $T$. $ \mathVar{T-homomorphism}$
     $\varphi : L \rightarrow M$ is a map such that, for every operation symbol
-    $op_{i}$ in T the following diagram commutes:
+    $op_{i}$ in $T$ the following diagram commutes:
 
     \begin{center}
     \begin{tikzcd}
@@ -348,35 +377,6 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     \end{definition}
     % == end homomophism ==
 
-
-    % == begin Free algebra ==
-    \begin{definition}
-
-    Free F-algebra on an object A (of generators) in $\mathcal{C}$ is meant an algebra
-
-    \begin{center}
-
-    $ \varphi_{A} : F A^{\#} \longrightarrow A $
-
-    \end{center}
-
-    \noindent
-    together with an universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $.
-    Universality means that for every algebra $ \beta : F B \longrightarrow B $
-    and every morphism $ f : A \longrightarrow B $ in $ \mathcal{C}$, there
-    exists a unique homomorphism $ \overline{f} : A^{\#} \longrightarrow B $
-    extending f, i.e.\ a unique morphism of $ \mathcal{C}$ for which the diagram
-    below commutes:
-
-    \begin{center}
-    \begin{tikzcd}[row sep=huge, column sep=large]
-    F A^{\#} \arrow[d, "F \overline{f}"] \arrow[r, "\varphi_{A}"] & A^{\#} \arrow[d, "\overline{f}"] & A \arrow[l, "\eta_{A}"'] \arrow[ld, "f"] \\
-    F B \arrow[r, "\beta"']                                       & B                                &
-    \end{tikzcd}
-    \end{center}
-
-    \end{definition}
-    % == end Free algebra ==
 
     \begin{definition} \textit{Free model} is just a model that is free algebra.
     \end{definition}
@@ -446,7 +446,7 @@ effects and also propagate new ones.
     \subsection{Comodels}
 
     \begin{definition}
-        Comodel in $\mathcal{C}$ is just a Model in $ \mathcal{C}^{op} $.
+        $\mathVar{Comodel}$ in $\mathcal{C}$ is just a Model in $ \mathcal{C}^{op} $.
     \end{definition}
 
     We could end by stating this definition of comodels~\cite{comodels}, and
@@ -478,9 +478,8 @@ effects and also propagate new ones.
         {$\displaystyle {\llbracket op \rrbracket}_M : \prod_{a \in A}{|I|} \rightarrow \prod_{p \in P}{|I|} $}
     \end{center}
 
-    % TODO: textbf Set^op
     \noindent
-    We want now to embed this morphism in $Set^{op}$. Every arrow in opposite
+    We want now to embed this morphism in $\mathbf{Set^{op}}$. Every arrow in opposite
     category is reverted, thus, products become coproducts and our morphism
     is reverted:
 
@@ -523,23 +522,42 @@ effects and also propagate new ones.
 
     We have now derived a dual concept to algebraic effects and handlers, which
     in the literature are also called comodels and runners~\cite{runners-uustalu, runners-in-action}.
-    As we have seen, comodels turned into state-passing (co)operations, which
-    in programming languages, may be a way to model interaction with external
-    resources, where based on current configuration and some parameter, we
+    As we have seen, comodels turned into state-passing (co)operations.
+    In programming languages, they may be a way to model interaction with external
+    resources, where based on current configuration and a parameter, we
     obtain new configuration along with it's result.
 
     \subsection{Coinductive Reasoning}\label{subsec:coinduction}
 
-    Induction is a way of constructing new structures. Recursion is a way of
-    folding inductively defined structure in a terminating way. Recursive
+    \begin{definition}
+        \textit{Initial algebra} is an initial object in \textbf{Alg}, the category of algebras
+        and homomorphisms.
+    \end{definition}
+
+    \begin{lemma}
+        Free algebra over an initial object is initial algebra. Dually,
+        cofree coalgebra over a final object is final coalgebra.
+    \end{lemma}
+    \begin{proof}
+        Follows immediately after putting initial object as generator in the
+        diagram for free algebra.
+    \end{proof}
+
+    Due to close connections presented above of initial algebras and free
+    algebras, from which algebraic effects are arising, we could not spare
+    a few words a about induction and coinduction, where the latter may give
+    us more intuition about coalgebraic effects.
+
+    \textit{Induction} is a way of constructing new structures. \textit{Recursion} is
+    a way of folding inductively defined structure in a terminating way. Recursive
     functions (not to be confused with recursive computability class), should
     shrink the argument in each call, meaning that it eventually ends up
     terminating in a base case.
 
-    Coinduction is literally a dual notion to induction. We \textit{observe} possibly
-    infinite structures, by doing deconstruction. Corecursion, is a way
-    of productively defining new, possibly enlarged structures. Due to infinity,
-    the evaluation should be lazy, whereas in induction it may be eager.
+    \textit{Coinduction} is literally a dual notion to induction. We \textit{observe}
+    possibly infinite structures, by doing deconstruction. \textit{Corecursion}
+    is a way of productively defining new, possibly enlarged structures. Due to
+    infinity, the evaluation should be lazy, whereas in induction it may be eager.
 
     Here is a table that summarizes difference between these two methods of reasoning:
 
@@ -724,9 +742,6 @@ in languages that already support linear type system, such as Rust~\cite{rust}.
 In fact, there is a bijective translation between language with algebraic effects
 and calculus with linear type theory, and \textit{every monad embeds in a linear
 state monad}~\cite{linear-usage-of-state}.
-
-\noindent
-TODO should this section be further extended?
 
 \section{Data-Flow Analysis}\label{sec:data-flow}
 
@@ -1045,10 +1060,10 @@ Full and working example with implementation of automata can be found under
     $nat \; n \approx nat \; n' \rightsquigarrow 1  \quad \quad $    \; if $ n \approx n' $ \\
     $nat \; n \approx nat \; n' \rightsquigarrow 0  \quad \quad $    \; if $ n \not\approx n' $
 
-    \subsection{Cohandlers}\label{subsec:calc-cohandlers}
+    \subsection{Cooperations}\label{subsec:calc-cohandlers}
 
-    Semantics for cohandlers is brought from denotational one that we have
-    introduced in Section~\ref{sec:duality}, meaning, we denote cooperations
+    Semantics for cooperations is brought from denotational one that we have
+    introduced in Section~\ref{sec:duality}, meaning, we denote them
     as state passing transitions in a code, represented similarly as algebraic
     effects, through (co)free (co)models of algebraic theories along with their
     morphisms. Let's put the following cooperation:
@@ -1057,7 +1072,7 @@ Full and working example with implementation of automata can be found under
         $ {\llbracket op \rrbracket}^W : {|C|} \times {P} \rightarrow  {|C|} \times {X} $
     \end{center}
 
-    Operationally, we embed transitions between coeffectull computations
+    Operationally, we embed transitions between coeffectful computations
     in a standard state monad $ S_{C}X \triangleq (C \Rightarrow X \times C) $.
     We achieve this by transforming AST of the source code, such that
     configurations are passed among cooperations. For a given coalgebraic theory
@@ -1080,13 +1095,11 @@ Full and working example with implementation of automata can be found under
 \end{verbatim}
 
     \noindent
-    into the following one (modulo $\mathVar{alpha-conversion}$):
+    into the following one (modulo $\mathVar{\alpha-conversion}$):
 
 \vbox{\begin{verbatim}
     let Tconf <- observe TGet () in
-    let Tcoresult <- observe Coeffect (Tconf, p) in
-    let TnewConf <- return fst Tcoresult in
-    let Tres <- return snd Tcoresult in
+    let (TnewConf, Tres) <- observe Coeffect (Tconf, p) in
     let _ <- observe TPut TnewConf in
     return Tres
 \end{verbatim}
@@ -1096,7 +1109,19 @@ Full and working example with implementation of automata can be found under
     where before executing a coeffect, we obtain current configuration,
     pass it to coeffect, put new config and then return the actual result.
     This is done behind the scenes and user does not know about state
-    passing.
+    passing. Note that for readability we have done pattern matching on pairs,
+    while currently in Freak it needs to be deconstructed using projections.
+
+    \subsection{Cohandlers}
+
+    Cohandlers needs to be aware of configuration passing, therefore,
+    every cohandler accepts $ C \times P $ as a parameter where $C$ is current
+    configuration and $P$ parameter passed to coeffect. In a similar way,
+    value passed to resumption also needs to be a pair $ C \times X $ of new
+    configuration and value returned down to computation.
+
+    For a full currently implemented example of transformation, one may take a
+    look at \verb!programs/transform/effCase! directory in source code.
 
 \chapter{Implementation}\label{chapter:implementation}
 
@@ -1353,7 +1378,10 @@ runCPS  :: Comp     -> EvalResMonad UComp
 
     \subsection{State passing}
 
-    TODO Describe the transformation here.
+    State passing is defined as it was described in
+    Subsection~\ref{subsec:calc-cohandlers}.
+    From implementation standpoint, transformation is done by manipulating
+    AST of the language to inject constructs handling state management.
 
     \subsection{Linear usage}
 
@@ -1377,17 +1405,17 @@ runCPS  :: Comp     -> EvalResMonad UComp
 
 \begin{verbatim}
     AST.hs          - AST data structures
-    CommonCPS.hs    - Common functions for CPS translation
-    CommonEval.hs   - Common functions for evaluation
     CPSLists.hs     - Uncurried CPS translation
+    CPSMonad.hs     - Definition of CPSMonad
+    DValue.hs       - Evaluation result data structures
     EvalTarget.hs   - Evaluation of the target calculus
     Freak.hs        - API for the language
     Main.hs         - Main module running evaluator on given filename
     Parser.hs       - Parser and lexer
     TargetAST.hs    - AST for the target calculus
     Tests.hs        - Tests module
-    Types.hs        - Common types definition
     Transform.hs    - Cohandlers transformation described in Calculus chapter
+    Types.hs        - Common types definition
     programs/       - Exemplary programs covered in tests
 
     CPSAppel.hs     - [deprecated] Appel-based CPS translation
@@ -1405,11 +1433,11 @@ runCPS  :: Comp     -> EvalResMonad UComp
     patterns in everyday programming, which already had ad-hoc and more
     restricted implementations in many existing languages, through constructs
     such as \verb!try, except, finally!, or by more low-level mechanisms
-    such as handling interrupts in operating systems.
+    like handling interrupts in operating systems.
 
-    This relatively new concept in theory of progamming languages yet needs to
+    This relatively new concept in theory of programming languages yet needs to
     be researched, and we propose in the next section a few directions into
-    which Freak language could go.
+    which Freak could go.
 
 \section{Future work}
 
