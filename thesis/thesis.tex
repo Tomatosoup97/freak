@@ -203,7 +203,7 @@ TODO Reconsider reference to ncatlab on Kleisli Cat, often it's not the best res
 
 Not only we would like to bring back effects to our type
 system~\cite{type-and-effect}, but also do it in a way that is composable. This
-is where algebraic effects comes to the rescue. From theoretical point of view,
+is where algebraic effects come to the rescue. From theoretical point of view,
 we need to develop equational theory about our effects to assert correctness of
 our language as well as to have the right hammer to reason about our programs.
 From practical side, we need to have the way of taming computational effects
@@ -410,7 +410,7 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
 
         \noindent
         $F_{T}$ is an endofunctor, therefore it sends $X$ into an object in $\mathcal{C}$.
-        From any object we have a unique map sending an object into model,
+        From any object we have a unique map sending an object into a model,
         which is $\eta_{F_{T} (X)}$. From free property of our model we get
         a unique map $\mu{}$ such that the diagram commutes, therefore we have
         a monad $(F_{T}, \eta{}, \mu{})$.
@@ -434,7 +434,7 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
 
 Concluding from the theory that we have built, algebraic effects are just free
 models over computation trees, where the signature is the set of effects, and
-equational theory is definining rules of rewriting expressions with effects.
+equational theory is defining rules of rewriting expressions with effects.
 The latter is usually irrelevant from implementation perspective, but may be
 important for reasoning about programs.
 
@@ -496,14 +496,14 @@ effects and also propagate new ones.
     \end{lemma}
     \begin{proof}
         We can think about $\mathVar{B-ary}$ coproducts (tagged unions) over the same set
-        such that we have $B$ replicas of $A$ and we select which replica do we want
+        such that we have $B$ replicas of $A$ and we select which replica we want
         to pick. Putting it this way, it immediately follows that it's the same,
         up to isomorphism, as a cartesian product over indexes from $B$ and
         corresponding $A$ sets. For a more detailed and generalized results,
         see~\cite{tensors}.
     \end{proof}
 
-    Model turns into comodel~\cite{comodels}, which we shall also call \textit{world}.
+    Model turns into a comodel~\cite{comodels}, which we shall also call \textit{world}.
     Putting this together with the above lemma, we obtain the following map:
 
     \begin{center}
@@ -525,7 +525,7 @@ effects and also propagate new ones.
     As we have seen, comodels turned into state-passing (co)operations.
     In programming languages, they may be a way to model interaction with external
     resources, where based on current configuration and a parameter, we
-    obtain new configuration along with it's result.
+    obtain a new configuration along with it's result.
 
     \subsection{Coinductive Reasoning}\label{subsec:coinduction}
 
@@ -641,7 +641,7 @@ effects and also propagate new ones.
     \noindent
     which means that $ \Downarrow{} $ is the \textit{smallest} predicate
     \textit{closed forward} under the above rules. Relation can be inductively
-    built from empty set and then in a fixed-point manner we can add more terms.
+    built from an empty set and then in a fixed-point manner we can add more terms.
     Let's now see a relation $ \Uparrow{} \subseteq \Lambda^{0}$ of
     \textit{divergent} terms, which is coinductively defined as follows:
 
@@ -684,11 +684,11 @@ effects and also propagate new ones.
     handlers that are sending value are one-shot and tail-recursive.
 
     As can be seen in the J. Yallop repository~\cite{effects-bibliography}, algebraic
-    effects and handlers are now trending branch in the programming languages theory.
+    effects and handlers are now a trending branch in programming languages theory.
 
     \subsection{Coalgebraic Effects}
 
-    From theoretical side, research on comodels and it's relation to state
+    From theoretical side, research on comodels and its relation to state
     dates to papers by John Power et.\ al.~\cite{comodels, tensors}, and on
     the runners of comodels to T. Uustalu~\cite{runners-uustalu}.
 
@@ -703,7 +703,7 @@ effects and also propagate new ones.
 
 It can be seen, that issues lie with the fact, that interacting with coalgebras
 may lead to change of their internal state system. Examples include change of
-state in NFA, taking next element in an infinite stream or a closing file.
+state in NFA, taking the next element in an infinite stream or a closing file.
 Finalization must occur after initialization, thus we conclude that resumption
 should be called at least once. However, modifying state twice the same way can
 also lead to unwanted behaviour, as it was seen in
@@ -750,7 +750,7 @@ analysis for checking whether resumption is called only once and that
 configuration is properly passed.
 
 Data-flow analysis may be the right tool for detecting such anomalies, however,
-further work in this area is reserved for future.
+further work in this area is reserved for the future.
 
 \section{Cohandlers as Separate Constructs}\label{sec:cohandlers-solution}
 
@@ -763,7 +763,7 @@ semantic. We divide the solution into three parts, discussed below.
 
 \subsection{State passing}
 
-State passing can be done by embeding given coalgebraic theory in a state monad
+State passing can be done by embedding given coalgebraic theory in a state monad
 over configurations, which in simpler words means, that for a set of coeffects
 that we handle, we are going to store current configuration in a state.
 Configuration is retrieved before performing a coeffect, and new configuration
@@ -924,7 +924,7 @@ means that we are not going to allow to discard the execution of cohandler.
 \end{verbatim}
 
     In the above code, we initialize the coalgebra carrier with filename that
-    we want to handle, we open file, write to it once and then close it. Notice
+    we want to handle, we open a file, write to it once and then close it. Notice
     that file handle is not present in the user code, but only accessible in
     the runner of FileIO as a first element of a pair.
 
@@ -933,7 +933,7 @@ means that we are not going to allow to discard the execution of cohandler.
     This example shows how one can implement NFA using coeffects. We abstract
     over internal state of the automata, and based on letters from the alphabet,
     we change automata configuration and return whether word is accepted or not.
-    The code below returns whether given NFA accepts word "abba".
+    The code below returns whether a given NFA accepts the word "abba".
 
 \begin{verbatim}
     cohandle Automata using 0 at
@@ -1108,7 +1108,7 @@ Full and working example with implementation of automata can be found under
     \noindent
     where before executing a coeffect, we obtain current configuration,
     pass it to coeffect, put new config and then return the actual result.
-    This is done behind the scenes and user does not know about state
+    This is done behind the scenes and the user does not know about state
     passing. Note that for readability we have done pattern matching on pairs,
     while currently in Freak it needs to be deconstructed using projections.
 
@@ -1361,7 +1361,7 @@ runCPS  :: Comp     -> EvalResMonad UComp
 
     \noindent
     Where the first two are implementing cps for computations and values.
-    \verb!cpsOp! is doing translation for an (co)effect that occured in program,
+    \verb!cpsOp! is doing translation for an (co)effect that occurred in program,
     \verb!cpsHRet! and \verb!cpsHOps! are yielding pure and effectful continuations,
     based on a given handler. \verb!forward! is responsible for forwarding the
     computation to the outer handler, and the last one for running the
@@ -1427,7 +1427,7 @@ runCPS  :: Comp     -> EvalResMonad UComp
 
     We have showed derivation of cooperations, based on previous work, as well
     as presented a calculus combining algebraic effects with their dual notion.
-    This resulted in a programming language which allows user to seemlessly
+    This resulted in a programming language which allows user to seamlessly
     operate on resources based on solid mathematical foundations. It can seen now,
     that (co)algebraic effects are an abstract concept that captures plenty of
     patterns in everyday programming, which already had ad-hoc and more
@@ -1449,7 +1449,7 @@ runCPS  :: Comp     -> EvalResMonad UComp
     could serve as a way to empirically assert correctness, as opposed to formally.
     Coeffects are living in a syntactic world, which are then translated to
     algebraic effects, thus we may not need to extend the abstract machine to
-    accomodate them.
+    accommodate them.
 
     \subsection{Static analysis}
 
