@@ -3,6 +3,7 @@ module TargetAST where
 import Types
 import AST
 import CPSMonad
+import Control.Monad
 
 type ContF = UValue -> [Cont] -> CPSMonad UComp
 
@@ -46,17 +47,17 @@ data UValue
     | UBinOp BinaryOp UValue UValue
     | UFst UValue
     | USnd UValue
+    | UTopLevelEffect EffLabel UValue
     -- deriving (Eq)
 
 data UComp
     = UVal UValue
-    | UApp UComp UComp [Cont]
+    | UApp UComp UValue [Cont]
     | USplit Label Var Var UValue UComp
     | UCase UValue Label UComp Var UComp
     | UIf UValue UComp UComp
-    | ULet Var UComp UComp
+    | ULet Var UValue UComp
     | UAbsurd UValue
-    | UTopLevelEffect EffLabel UValue
     -- deriving (Eq)
 
 instance Show UValue where
@@ -69,9 +70,10 @@ instance Show UValue where
     show (UEffLabel (EffL l)) = inParens $ "Eff: " ++ l
     show (UEffLabel (CoeffL l)) = inParens $ "Coeff: " ++ l
     show (UVar x) = x
-    show (ULambda x _) = inParens $ x ++ " -> comp"
+    show (ULambda x f) = inParens $ x ++ " -> comp"
     show (UFst v) = "fst " ++ show v
     show (USnd v) = "snd " ++ show v
+    show (UTopLevelEffect l p) = show l ++ show p
 
 instance Show UComp where
     show (UVal v) = show v
@@ -80,5 +82,37 @@ instance Show UComp where
     -- show (UCase v l x c y c') = "case " ++ show v ++ " { " ++ show l ++ " " ++ show x ++ "->" ++ show c ++ "; " ++ show y ++ " " ++ show c'
     show (UIf v c c') = "if " ++ show v ++ " then " ++ show c ++ " else " ++ show c'
     show (UAbsurd v) = "absurd " ++ show v
-    show (ULet x xComp comp) = inParens $ "let " ++ x ++ " = " ++ show xComp ++ " in " ++ show comp
-    show (UTopLevelEffect l p) = show l ++ show p
+    show (ULet x varVal comp) = inParens $ "let " ++ x ++ " = " ++ show varVal ++ " in\n" ++ show comp
+
+
+substV :: Var -> UValue -> UValue -> UValue
+substV xS vS vT = case vT of
+    UVar x -> if x == xS then vS else vT
+    UNum _ -> vT
+    UStr _ -> vT
+    UBool _ -> vT
+    ULambda x f ->
+        if x == xS then ULambda x f
+        else            ULambda x f'
+        where f' = f >=> (return . subst xS vS)
+    UUnit -> vT
+    UPair vL vR -> UPair (_substV vL) (_substV vR)
+    ULabel _ -> vT
+    UEffLabel _ -> vT
+    UBinOp op vL vR -> UBinOp op (_substV vL) (_substV vR)
+    UFst v -> UFst (_substV v)
+    USnd v -> USnd (_substV v)
+    UTopLevelEffect l v -> UTopLevelEffect l (_substV v)
+    where _substV = substV xS vS
+
+subst :: Var -> UValue -> UComp -> UComp
+subst xS vS cT = case cT of
+    UVal v -> UVal (_substV v)
+    UApp c1 v2 ks -> UApp (_subst c1) (_substV v2) ks
+    UIf condV cT cF -> UIf (_substV condV) (_subst cT) (_subst cF)
+    ULet x v c ->
+        if x == xS then ULet x (_substV v) c
+        else            ULet x (_substV v) (_subst c)
+    UAbsurd v -> UAbsurd (_substV v)
+    where _subst = subst xS vS
+          _substV = substV xS vS

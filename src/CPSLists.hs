@@ -71,12 +71,12 @@ cps e ks = case e of
         let k@(Pure kf):ks' = ks
         f <- cpsVal vF ks
         arg <- cpsVal vArg ks
-        return $ UApp (UVal f) (UVal arg) ks
+        return $ UApp (UVal f) arg ks
     ELet x varComp comp -> do
         let k:ks' = ks
         let cont varVal ks'' = do
             body <- cps comp (k:ks'')
-            return $ ULet x (UVal varVal) body
+            return $ ULet x varVal body
         cps varComp (Pure cont:ks')
     ESplit l x y row comp -> do
         v <- cpsVal row ks
@@ -119,18 +119,18 @@ cpsOp :: EffLabel -> Value -> [Cont] -> CPSMonad UComp
 cpsOp l v ks = do
     let Pure kf:h:ks' = ks
     let hf = unfoldCont h
-    x <- freshVar' "rArg"
-    let resF = \ks -> kf (UVar x) (h:ks)
+    x <- freshVar' "rArgOp"
+    let resF ks = kf (UVar x) (h:ks)
     let resumption = ULambda x resF
-    let pair cv = UPair (UEffLabel l) (UPair cv resumption)
     cv <- cpsVal v ks
-    hf (pair cv) ks'
+    let pair = UPair (UEffLabel l) (UPair cv resumption)
+    hf pair ks'
 
 
 cpsHRet :: Handler -> Cont
 cpsHRet (HRet xVar comp) = Pure (\x (_:ks') -> do
     convComp <- cps comp ks'
-    return $ ULet xVar (UVal x) convComp)
+    return $ ULet xVar x convComp)
 
 
 cpsHOps :: EffT -> Handler -> Cont
@@ -140,7 +140,7 @@ cpsHOps effT ops = getEffCons effT (\(UPair (UEffLabel l) (UPair p r)) ks ->
         _ -> case hop l ops of
             Just (AlgOp _ pvar rvar comp) -> do
                 contComp <- cps comp ks
-                return $ ULet pvar (UVal p) (ULet rvar (UVal r) contComp)
+                return $ ULet pvar p (ULet rvar r contComp)
             Nothing -> forward l p r ks)
 
 
@@ -149,7 +149,7 @@ forward y p r ks = do
     let k'@(Pure kf'):h':ks' = ks
     let hf' = unfoldCont h'
     x <- freshVar' "rArg"
-    let resF = \ks'' -> kf' (UVar x) (h':ks'')
+    let resF ks'' = kf' (UVar x) (h':ks'')
     let resumption = ULambda x resF
     let pair = UPair (UEffLabel y) (UPair p resumption)
     hf' pair ks'
