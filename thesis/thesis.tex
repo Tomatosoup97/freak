@@ -195,10 +195,8 @@ together to form a new monad, and for this purpose, monad
 transformers~\cite{monad-transformers} arose in Haskell. Most of the common
 languages avoid this by not expressing computational effects in the type system,
 and instead one may think about functions as being implicitly embed in a Kleisli
-Category over a functor $T$~\cite{kleisli-ncatlab}, where $T$ is a hidden signature
+Category over a functor $T$~\cite{kleisli}, where $T$ is a hidden signature
 over all possible side effects that occur in our program.
-
-% TODO Reconsider reference to ncatlab on Kleisli Cat, often it's not the best resource
 
 Not only we would like to bring back effects to our type
 system~\cite{type-and-effect}, but also do it in a way that is composable. This
@@ -595,12 +593,8 @@ effects and also propagate new ones.
     From categorical standpoint, coinduction is formed over a final coalgebra,
     where corecursion is the mediator between any coalgebra into a final one,
     and coinductive proof principle corresponds to the uniqueness of the mediator.
-    Recall from Chapter~\ref{chapter:background} that coalgebraic effects arises from cofree coalgebra.
-
-    % TODO Not sure which paper to cite here for a deeper dive into the upper
-    % topic. Book \textit{Initial Algebras, Terminal Coalgebras, and the Theory of Fixed Points of Functors}
-    % by Adámek, Milius and S. Moss from which I have studied is no longer available
-    % on the internet, as it was a draft under construction.
+    Recall from Chapter~\ref{chapter:background} that coalgebraic effects arises
+    from cofree coalgebra. For more information about coalgebras, see~\cite{jacobs-2016}.
 
     Reader that focuses on pragmatism may pose a question, why do we even want
     to reason about infinite structures? They never appear in practice! In fact,
