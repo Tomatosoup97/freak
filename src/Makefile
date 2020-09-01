@@ -22,7 +22,6 @@ link-lambda: link-clean
 	ln -s CPSLambda.hs CPS.hs
 
 clean:
-	rm -f freak
 	rm -f Tests
 	rm -f tests
 	find . -name "*.hi" -type f -delete
