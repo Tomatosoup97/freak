@@ -85,7 +85,7 @@ main = hspec $ do
       evalProgram "let x <- return 3 in let x <- return 2 in return x" `shouldBeT` (Right (DNum 2))
 
     it "Static scope" $ do
-      testFromFile "programs/staticScope.fk" (Right (DNum 3))
+      testFromFile "programs/pure/staticScope.fk" (Right (DNum 3))
 
     it "Let lambda" $ do
       evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBeT` (Right (DNum 43))
@@ -109,10 +109,10 @@ main = hspec $ do
       evalProgram "let x <- (\\x : int -> return x) 42 in return 1" `shouldBeT` (Right (DNum 1))
 
     it "Let lambda forget function result - more verbose" $ do
-      testFromFile "programs/letLambda.fk" (Right (DNum 1))
+      testFromFile "programs/pure/letLambda.fk" (Right (DNum 1))
 
     -- it "Reuse function" $ do
-    --   testFromFile "programs/reuseFunc.fk" (Right (DNum 3))
+    --   testFromFile "programs/pure/reuseFunc.fk" (Right (DNum 3))
 
     it "Lambda application" $ do
       evalProgram "(\\x : int -> return x + 1) 42" `shouldBeT` (Right (DNum 43))
@@ -145,7 +145,7 @@ main = hspec $ do
       evalProgram "if 0 then return 1 else return 0" `shouldBeT` (Right (DNum 0))
 
     it "Strings comparison" $ do
-      testFromFile "programs/stringsCompare.fk" (Right (DNum 1))
+      testFromFile "programs/pure/stringsCompare.fk" (Right (DNum 1))
 
     -- Pairs
 
