@@ -68,7 +68,7 @@ eval env c = case c of
         fnVal <- eval env fnComp
         argDValue <- eval env (UVal argValue)
         case fnVal of
-            DLambda fun -> fun env [argDValue] ks
+            DLambda fun -> fun env argDValue ks
             e -> throwError $ EvalError $ "Application of non-lambda term " ++ show e ++ " in " ++ show c
     UIf e tC fC ->
         eval env (UVal e) >>= \(DNum n) ->
@@ -99,7 +99,7 @@ eval env c = case c of
         DPair _ v2 -> return v2
         v -> throwError $ EvalError $ "Second projection on expression that is not a pair: " ++ show v
     UVal (ULambda x f) -> return $ DLambda funcRecord
-        where funcRecord env'' [xVal] ks =
+        where funcRecord env'' xVal ks =
                 case Map.lookup "s" env'' of
                     Just r -> resume (extendEnv env "s" r)
                     Nothing -> resume env

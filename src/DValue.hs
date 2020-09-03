@@ -8,7 +8,7 @@ import Types
 
 type Env = Map.Map Var DValue
 
-type FuncRecord = Env -> [DValue] -> [Cont] -> EvalMonad DValue
+type FuncRecord = Env -> DValue -> [Cont] -> EvalMonad DValue
 
 data DValue
     = DNum Integer
