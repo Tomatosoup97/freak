@@ -72,7 +72,7 @@
 
 In this thesis we discuss issues arising from combining algebraic effects
 and handlers with resource management, and present a solution through coalgebraic
-means along with presentation of Freak, experimental programming language with
+means along with presentation of Freak, an experimental programming language with
 (co)algebraic effects and (co)handlers. Implementation is based on Continuation
 Passing Style translation.
 
@@ -85,7 +85,7 @@ and practical side.
 They give the developer necessary tools for declarative programming with
 computational effects on a high level of abstraction, by defining
 effects as an API\@ in the code. At the same time, algebraic effects preserve
-a lot of flexibility and have a strong theoretical foundations.
+a lot of flexibility and have strong theoretical foundations.
 
 In fact, that very flexibility can be troublesome. Allowing developer for too
 much freedom may lead to undesired behaviour and incorrect programs.
@@ -115,7 +115,7 @@ consider the following example:
 \end{verbatim}
 }
 
-In the above code we open file, and based on nondeterministic choice, we write
+In the code above we open a file, and based on nondeterministic choice, we write
 to the file, and then close it. This piece of code looks harmless, however, as
 we invoke resumption for the second time, we are attempting to write to the
 closed file, and then close it once again. In fact, dropping resumption is also
@@ -149,18 +149,19 @@ cannot be done through algorithmic means, which we can almost directly translate
 to being computable by our machines. Through next years we have developed
 mainstream languages that are used almost everywhere, with great success.
 
-Under these circumstances one may pose a question, why do we still bother with
-development of languages theory, since so much has been done already. Is there
+Under these circumstances one may pose a question, why we still bother with
+development of the theory of programming languages, since so much has been
+done already. Is there
 anything that drives us towards further research? Indeed, one active branch
-revolves around equational theory to assess equality of two programs, which we
-know that in the general setting is undecidable. Proof methods may include
+revolves around equational reasoning to establish equality of two programs, which we
+know is undecidable in general. Proof methods may include
 extensional, contextual or logical equality. However, there is no doubt that
 these formal ways of reasoning about programs, while being crucial for assessing
 correctness, do not bring direct benefits for everyday use cases, as they are
 rarely accessible by a common developer.
 
-Other branch of languages theory, that we shall investigate in this thesis,
-is about taming complexity of programs. Various methods of static analysis has
+Other branch of languages theory that we shall investigate in this thesis
+is about taming complexity of programs. Various methods of static analysis have
 been developed, most notably, type systems. Thanks to strong
 and static type systems along with their implementations, we have solid tools to
 work efficiently on functions that are pure. That being said, we claim that the
@@ -168,14 +169,14 @@ core complexity of programs comes from side effects, or more generally, computat
 effects, which we cannot avoid in writing anything useful.
 
 We need to have a good way for handling computational effects. One of the ways
-to model them, can be done through monads~\cite{monads-wadler, moggi}. However,
+to model them can be done through monads~\cite{monads-wadler, moggi}. However,
 they were found to be, to say the least, cumbersome to work with when the number
 of different effects increase. It is perhaps not a coincidence that many
-functional programming languages do not have them, because of the non-composable
-nature of them, or at least not composable in their implementations.
+functional programming languages do not have them, because of their non-composable
+nature.
 
 \noindent
-Let's put the following functions
+For example, consider the following functions
 
 \begin{center}
 
@@ -188,15 +189,15 @@ Let's put the following functions
 \noindent
 where $m$, $m'$ are monads. Functions $f$, $g$ can be composed using standard
 composition, for $f'$, $g'$ we can use Kleisli composition operator from monad $m$.
-What in case of adding one more effect, $f''$ and $g''$?
+How about the case of adding one more effect, $f''$ and $g''$?
 
-It turns out, that it becomes complex and unpleasant to combine two functors
+It turns out that it may become complex and unpleasant to combine two monads
 together to form a new monad, and for this purpose, monad
-transformers~\cite{monad-transformers} arose in Haskell. Most of the common
+transformers~\cite{monad-transformers} arose in Haskell. Most of the usual
 languages avoid this by not expressing computational effects in the type system,
-and instead one may think about functions as being implicitly embed in a Kleisli
-Category over a functor $T$~\cite{kleisli}, where $T$ is a hidden signature
-over all possible side effects that occur in our program.
+and instead one may think about functions as being implicitly embedded in a Kleisli
+Category of a functor $T$~\cite{kleisli}, where $T$ is a hidden signature
+of all possible side effects that may occur in our program.
 
 Not only we would like to bring back effects to our type
 system~\cite{type-and-effect}, but also do it in a way that is composable. This
@@ -209,9 +210,9 @@ readers a notion of algebraic effects.
 
 \section{Algebraic Effects}
 
-Algebraic effects can be thought of as an public interface for computational effects.
-Declarative approach allow us to write programs in which the actual semantic of
-source code is dependent on handler that defines the meaning of a subset of effects.
+Algebraic effects can be thought of as a public interface for computational effects.
+Declarative approach allows us to write programs in which the actual semantics of
+source code depends on a handler that defines the meaning of a subset of effects.
 
 This is really an incredible feature from practical point of view, as we may substitute
 logic depending on the execution environment. As an example, fetching for resources
@@ -223,13 +224,13 @@ arose. One can mention interfaces from object-oriented programming, which are al
 a way to describe the API of a certain component. In order to abstract from
 implementation details, we pass an object around which represents a certain
 interface. While this is certainly better than having no abstractions at all,
-we need to pass this interface into every function that is going to use it.
+we need to pass this interface to every function that is going to use it.
 This practice is called dependency injection, and while it sounds like it solves
 some of the issues, we end up in functions that need to carry representants
 of the interfaces, and pass them in every subcall that they make.
 
 That being said, it's only one particular issue that algebraic effects address.
-There are many other great sources for getting familiarized with effects from
+There are many other great sources for getting familiarized with effects from the
 practical side~\cite{handlers-tutorial, programming-in-eff, koka-tutorial},
 so we will omit further explanations. More examples can be found in
 Chapter~\ref{chapter:co-effectful-programming}.
@@ -239,7 +240,7 @@ Chapter~\ref{chapter:co-effectful-programming}.
 Algebraic effects can be described via operational means, however,
 for the purpose of presenting the duality between algebra and coalgebra,
 we allow ourselves to wander a bit deeper into category theory and describe
-effects from denotational point of view~\cite{bauer-what-is-algebraic}.
+effects from the denotational point of view~\cite{bauer-what-is-algebraic}.
 
     \subsection{Algebraic Theories}
 
@@ -257,16 +258,17 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     % == begin Free algebra ==
     \begin{definition}
 
-    $\mathVar{Free}$ $\mathVar{F-algebra}$ on an object $A$ (of generators) in $\mathcal{C}$ is meant an algebra
+    For an endofunctor $F$, a $\mathVar{Free}$ $\mathVar{F-algebra}$ on an
+    object $A$ (of generators) in $\mathcal{C}$ is an algebra
 
     \begin{center}
 
-    $ \varphi_{A} : F A^{\#} \longrightarrow A $
+    $ \varphi_{A} : F A^{\#} \longrightarrow A^{\#} $
 
     \end{center}
 
     \noindent
-    together with an universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $.
+    together with a universal arrow $ \eta_{A} : A \longrightarrow A^{\#} $.
     Universality means that for every algebra $ \beta : F B \longrightarrow B $
     and every morphism $ f : A \longrightarrow B $ in $ \mathcal{C}$, there
     exists a unique homomorphism $ \overline{f} : A^{\#} \longrightarrow B $
@@ -286,7 +288,7 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
 
     % == begin Sigma-terms ==
     \begin{definition}
-    Collection of $\mathVar{\Sigma-terms}$ is a free algebra with a generator $X$
+    A collection of $\mathVar{\Sigma-terms}$ is a free algebra with a generator $X$
     for a functor $ \mu H_{\Sigma} $ that maps objects into trees over a given
     signature $ \Sigma $ and morphisms into folds over trees.
 
@@ -331,7 +333,7 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     \noindent
     Interpretation may be naturally extended to $\mathVar{\Sigma-terms}$, such
     that a given $\mathVar{\Sigma-term}$ $X \mid t$ is interpreted by a map
-    which sends variables into projections from environment and terms into
+    which sends variables to projections from environment and terms to
     map composition over each subterm.
 
     \end{definition}
@@ -356,9 +358,9 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     % == begin homomophism ==
     \begin{definition}
 
-    Let $L$, $M$ be models of a theory $T$. $ \mathVar{T-homomorphism}$
-    $\varphi : L \rightarrow M$ is a map, such that, for every operation symbol
-    $op_{i}$ in $T$ the following diagram commutes:
+    Let $L$, $M$ be models of a theory $T$. A $\mathVar{T-homomorphism}$
+    $\varphi : L \rightarrow M$ is a map, such that for every operation symbol
+    $op_{i}$ in $T$, the following diagram commutes:
 
     \begin{center}
     \begin{tikzcd}
@@ -375,7 +377,7 @@ effects from denotational point of view~\cite{bauer-what-is-algebraic}.
     % == end homomophism ==
 
 
-    \begin{definition} \textit{Free model} is just a model that is free algebra.
+    \begin{definition} A \textit{Free model} is just a model that is a free algebra.
     \end{definition}
 
     \begin{lemma}{Free models form monads}
@@ -924,6 +926,23 @@ means that we are not going to allow to discard the execution of cohandler.
     we want to handle, we open a file, write to it once and then close it. Notice
     that file handle is not present in the user code, but only accessible in
     the runner of \textit{FileIO} as a first element of a pair.
+
+% \vbox{\begin{verbatim}
+%     handle
+%         let fh <- observe Open "praise.txt" in
+%         let c <- do Choice () in
+%         let text <- if c then return "Guy Fieri" else return "is cool" in
+%         let _ <- observe Write (fh, text) in
+%         observe Close fh
+%     with {
+%         Choose _ r ->
+%             let t <- r 1 in
+%             let f <- r 0 in
+%             return (t, f) |
+%         return x -> return x
+%     }
+% \end{verbatim}
+% }
 
     \subsection{Nondeterministic Finite Automata}
 
