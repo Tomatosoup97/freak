@@ -1411,9 +1411,12 @@ runCPS  :: Comp     -> EvalResMonad UComp
 
 %     TODO it's not implemented yet. Be more clear what's happening here
 
-    Linear usages of resumptions is asserted by analyzing parsed AST tree,
-    where in every leaf there must be a return statement. It's value is then
-    passed into continuation of a cohandler.
+
+    The idea is that linear usages of resumptions can be easily asserted by
+    analyzing parsed AST tree, where in every leaf there must be a return
+    statement. It's value then can be passed into continuation of a cohandler.
+    That being said, it is not implemented as of the day of submitting the
+    thesis.
 
     \subsection{Combining effects with coeffects}
 
