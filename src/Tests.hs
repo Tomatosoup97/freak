@@ -84,9 +84,6 @@ main = hspec $ do
     it "Variable hiding" $ do
       evalProgram "let x <- return 3 in let x <- return 2 in return x" `shouldBeT` (Right (DNum 2))
 
-    it "Static scope" $ do
-      testFromFile "programs/pure/staticScope.fk" (Right (DNum 3))
-
     it "Let lambda" $ do
       evalProgram "let f <- return (\\x : int -> return x + 1) in f 42" `shouldBeT` (Right (DNum 43))
 
@@ -169,6 +166,17 @@ main = hspec $ do
 
     it "Nested pair" $ do
       evalProgram ("return ((1, 2), 3)") `shouldBeT` (Right (DPair (DPair (DNum 1) (DNum 2)) (DNum 3)))
+
+    -- Scope
+
+    it "Static scope" $ do
+      testFromFile "programs/pure/staticScope.fk" (Right (DNum 3))
+
+    -- it "Function should not leak scope" $ do
+    --   evalProgram "let y <- (\\x : int -> return x) 1 in return x" `shouldBeT` (Left (unboundVarErr "x"))
+
+    -- it "Pure continuations should not leak scope" $ do
+    --   evalProgram "handle let y <- return 0 in return 1 with { return x -> return y }" `shouldBeT` (Right (DNum 1))
 
     -- Algebraic effects and handlers tests
 
