@@ -66,17 +66,16 @@ eval :: Env -> UComp -> EvalMonad DValue
 eval env c = case c of
     UApp fnComp argValue ks -> do
         fnVal <- eval env fnComp
-        argDValue <- eval env (UVal argValue)
         case fnVal of
-            DLambda fun -> fun env argDValue ks
+            DLambda fun -> fun env argValue ks
             e -> throwError $ EvalError $ "Application of non-lambda term " ++ show e ++ " in " ++ show c
     UIf e tC fC ->
         eval env (UVal e) >>= \(DNum n) ->
         eval env (if n > 0 then tC else fC)
     ULet x varVal c -> do
-        varDVal <- eval env (UVal varVal)
-        let env' = extendEnv env x varDVal
-        eval env' c
+        let varVal' = substV x varVal varVal
+        let c' = subst x varVal' c
+        eval env c'
     UAbsurd v -> throwError $ absurdErr v
     -- Values
     UVal (UBinOp op e1 e2) -> do
@@ -85,9 +84,7 @@ eval env c = case c of
             (DStr s1) -> eval env (UVal e2) >>= \(DStr s2) -> case op of
                 BEq -> return $ DNum $ boolToInt $ s1 == s2
                 BNe -> return $ DNum $ boolToInt $ s1 /= s2
-    UVal (UVar x) -> case Map.lookup x env of
-        Just v -> return v
-        Nothing -> throwError $ unboundVarErr x
+    UVal (UVar x) -> throwError $ unboundVarErr x
     UVal (UPair e1 e2) -> do
         v1 <- eval env (UVal e1)
         v2 <- eval env (UVal e2)
@@ -99,14 +96,7 @@ eval env c = case c of
         DPair _ v2 -> return v2
         v -> throwError $ EvalError $ "Second projection on expression that is not a pair: " ++ show v
     UVal (ULambda x f) -> return $ DLambda funcRecord
-        where funcRecord env'' xVal ks =
-                case Map.lookup "s" env'' of
-                    Just r -> resume (extendEnv env "s" r)
-                    Nothing -> resume env
-                    where resume env =
-                            let env' = extendEnv env x xVal in
-                            f ks >>= eval env'
-
+        where funcRecord _ xVal = f >=> (eval env . subst x xVal)
     UVal (ULabel l) -> return $ DLabel l
     UVal (UEffLabel (EffL l)) -> return $ DLabel l
     UVal (UEffLabel (CoeffL l)) -> return $ DLabel l
@@ -117,4 +107,4 @@ eval env c = case c of
 
 
 runEval :: UComp -> EvalResMonad DValue
-runEval c = evalStateT (runExceptT (eval Map.empty c)) 0
+runEval c = evalStateT (runExceptT (eval undefined c)) 0

@@ -108,8 +108,8 @@ main = hspec $ do
     it "Let lambda forget function result - more verbose" $ do
       testFromFile "programs/pure/letLambda.fk" (Right (DNum 1))
 
-    -- it "Reuse function" $ do
-    --   testFromFile "programs/pure/reuseFunc.fk" (Right (DNum 3))
+    it "Reuse function" $ do
+      testFromFile "programs/pure/reuseFunc.fk" (Right (DNum 3))
 
     it "Lambda application" $ do
       evalProgram "(\\x : int -> return x + 1) 42" `shouldBeT` (Right (DNum 43))
