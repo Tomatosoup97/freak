@@ -21,6 +21,12 @@ data Error
     | ParseError String
     deriving (Eq, Show)
 
+unboundVarErr :: String -> Error
+unboundVarErr x = EvalError $ "Unbound variable " ++ x
+
+absurdErr :: Show a => a -> Error
+absurdErr x = EvalError $ "Absurd; divergent term: " ++ show x
+
 data ValueType
     = TInt
     | TBool

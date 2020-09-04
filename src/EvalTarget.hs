@@ -12,12 +12,6 @@ import Types
 extendEnv :: Env -> Var -> DValue -> Env
 extendEnv env x v = Map.insert x v env
 
-unboundVarErr :: String -> Error
-unboundVarErr x = EvalError $ "Unbound variable " ++ x
-
-absurdErr :: Show a => a -> Error
-absurdErr x = EvalError $ "Absurd; divergent term: " ++ show x
-
 boolToInt :: Bool -> Integer
 boolToInt b = if b then 1 else 0
 

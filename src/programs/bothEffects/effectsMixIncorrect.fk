@@ -6,6 +6,6 @@ handle
         return x -> return x
     }
 with {
-    Choice p r -> return True |
+    Choice p r -> return 1 |
     return x -> return x
 }

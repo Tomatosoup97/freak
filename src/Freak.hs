@@ -14,7 +14,9 @@ import Transform
 
 cpsProgram :: String -> EvalResMonad UComp
 cpsProgram s = case parseString s of
-    Right ast -> runCPS $ transform ast
+    Right ast -> case alphaConvert ast of
+        Right ast' -> runCPS $ transform ast'
+        Left err -> return $ Left err
     Left err -> return $ Left err
 
 evalProgram :: String -> EvalResMonad DValue

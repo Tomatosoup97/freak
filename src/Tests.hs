@@ -172,11 +172,11 @@ main = hspec $ do
     it "Static scope" $ do
       testFromFile "programs/pure/staticScope.fk" (Right (DNum 3))
 
-    -- it "Function should not leak scope" $ do
-    --   evalProgram "let y <- (\\x : int -> return x) 1 in return x" `shouldBeT` (Left (unboundVarErr "x"))
+    it "Function should not leak scope" $ do
+      evalProgram "let y <- (\\x : int -> return x) 1 in return x" `shouldBeT` (Left (unboundVarErr "x"))
 
-    -- it "Pure continuations should not leak scope" $ do
-    --   evalProgram "handle let y <- return 0 in return 1 with { return x -> return y }" `shouldBeT` (Right (DNum 1))
+    it "Pure continuations should not leak scope" $ do
+      evalProgram "handle let y <- return 0 in return 1 with { return x -> return y }" `shouldBeT` (Left (unboundVarErr "y"))
 
     -- Algebraic effects and handlers tests
 
