@@ -19,7 +19,12 @@ coopTransV m v = case v of
     VFix g x c -> VFix g x (coopTrans m c)
     VPair v1 v2 -> VPair (coopTransV m v1) (coopTransV m v2)
     VBinOp op v1 v2 -> VBinOp op (coopTransV m v1) (coopTransV m v2)
-    v -> v
+    VVar _ -> v
+    VNum _ -> v
+    VStr _ -> v
+    VUnit -> v
+    VFst v -> VFst (coopTransV m v)
+    VSnd v -> VSnd (coopTransV m v)
 
 coopTransHandler :: AlgSignMap -> Handler -> Handler
 coopTransHandler m (HRet v c) = HRet v (coopTrans m c)
