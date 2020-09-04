@@ -5,22 +5,6 @@ build:
 link:
 	ln -fs $(shell pwd)/freak /usr/local/bin/freak
 
-link-clean: clean
-	rm -f Eval.hs
-	rm -f CPS.hs
-
-link-appel: link-clean
-	ln -s EvalCPS.hs Eval.hs
-	ln -s CPSAppel.hs CPS.hs
-
-link-lists: link-clean
-	ln -s EvalTarget.hs Eval.hs
-	ln -s CPSLists.hs CPS.hs
-
-link-lambda: link-clean
-	ln -s EvalTarget.hs Eval.hs
-	ln -s CPSLambda.hs CPS.hs
-
 clean:
 	rm -f Tests
 	rm -f tests
