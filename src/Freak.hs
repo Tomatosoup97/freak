@@ -4,6 +4,7 @@ module Freak where
 import Control.Monad.Except
 import Parser
 import AST
+import AlphaConv
 import TargetAST
 import CPS
 import DValue
