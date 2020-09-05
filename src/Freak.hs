@@ -18,7 +18,7 @@ parseProgram :: String -> Either Error Comp
 parseProgram = parseString
             >=> staticAnalyze
             >=> alphaConvert
-            >=> return . transform
+            >=> transform
 
 cpsProgram :: String -> EvalResMonad UComp
 cpsProgram s = case parseProgram s of

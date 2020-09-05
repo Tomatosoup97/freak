@@ -31,21 +31,25 @@ main = hspec $ do
     it "Should inject state monad into cohandlers" $ do
       cohandler <- parseFromFile "programs/transform/pureCase/before.fk"
       transCohandler <- parseFromFile "programs/transform/pureCase/after.fk"
-      transform cohandler `shouldBe` transCohandler
+      let (Right transformed) = transform cohandler
+      transformed `shouldBe` transCohandler
 
     it "Should implement state passing across transitions" $ do
       cohandler <- parseFromFile "programs/transform/effCase/before.fk"
       transCohandler <- parseFromFile "programs/transform/effCase/after.fk"
-      transform cohandler `shouldBe` transCohandler
+      let (Right transformed) = transform cohandler
+      transformed `shouldBe` transCohandler
 
     it "Finally should be desugared" $ do
       before <- parseFromFile "programs/transform/finally/before.fk"
       after <- parseFromFile "programs/transform/finally/after.fk"
-      transform before `shouldBe` after
+      let (Right transformed) = transform before
+      transformed `shouldBe` after
 
     it "Should not transform coeffect without theory" $ do
       let (Right cohandler) = parseString "observe Coeffect ()"
-      transform cohandler `shouldBe` cohandler
+      let (Right transformed) = transform cohandler
+      transformed `shouldBe` cohandler
 
   describe "Freak" $ do
 

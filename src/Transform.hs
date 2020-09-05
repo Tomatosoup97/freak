@@ -1,8 +1,16 @@
 module Transform where
 
+import Control.Monad
+import Types
 import AST
-import DesugarFinally
 import DesugarCoalg
+import MonadicTraverse
 
-transform :: Comp -> Comp
-transform = desugarCoalg . desugarFinally
+desugarFinally :: Comp -> Either Error Comp
+desugarFinally = astTraverser (AstF return gC return)
+    where gC (ECohandleIRFinally algT bC (FinallyC x fC) h) =
+            return $ ECohandleIR algT (ELet x bC fC) h
+          gC c = return c
+
+transform :: Comp -> Either Error Comp
+transform = desugarFinally >=> return . desugarCoalg
