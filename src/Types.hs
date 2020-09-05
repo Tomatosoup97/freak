@@ -19,6 +19,7 @@ data Error
     = EvalError String
     | CPSError String
     | ParseError String
+    | StaticAnalyzerError String
     deriving (Eq, Show)
 
 unboundVarErr :: String -> Error
@@ -26,6 +27,9 @@ unboundVarErr x = EvalError $ "Unbound variable " ++ x
 
 absurdErr :: Show a => a -> Error
 absurdErr x = EvalError $ "Absurd; divergent term: " ++ show x
+
+effectInFinallyErr :: Error
+effectInFinallyErr = StaticAnalyzerError "You can't use effects in finally clause!"
 
 data ValueType
     = TInt

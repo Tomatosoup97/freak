@@ -289,6 +289,9 @@ main = hspec $ do
     it "[Coalg] Finally should be executed even in case of cont drop" $ do
       testFromFile "programs/coeffects/finally.fk" (Right (DNum 2))
 
+    it "[Coalg] Finally should not contain effects" $ do
+      testFromFile "programs/coeffects/finallyEffectErr.fk" (Left effectInFinallyErr)
+
     -- Both effects
 
     it "[Both] Effect should not escape cohandler" $ do

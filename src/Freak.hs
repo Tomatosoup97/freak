@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts, LambdaCase #-}
 module Freak where
 
+import Control.Monad
 import Control.Monad.Except
 import Parser
 import AST
@@ -11,13 +12,17 @@ import DValue
 import Eval
 import Types
 import Transform
+import StaticAnalyzer
 
+parseProgram :: String -> Either Error Comp
+parseProgram = parseString
+            >=> staticAnalyze
+            >=> alphaConvert
+            >=> return . transform
 
 cpsProgram :: String -> EvalResMonad UComp
-cpsProgram s = case parseString s of
-    Right ast -> case alphaConvert ast of
-        Right ast' -> runCPS $ transform ast'
-        Left err -> return $ Left err
+cpsProgram s = case parseProgram s of
+    Right ast' -> runCPS ast'
     Left err -> return $ Left err
 
 evalProgram :: String -> EvalResMonad DValue

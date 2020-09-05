@@ -1,0 +1,14 @@
+cohandle AlgT using 0 at
+    return 1
+finally y
+    handle
+        let _ <- do Raise () in
+        observe CloseFile ()
+    with {
+        Raise p r -> return 1 |
+        return x -> return x
+    }
+through {
+    CloseFile p r -> r p |
+    return x -> return x
+}
