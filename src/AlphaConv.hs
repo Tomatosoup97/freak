@@ -52,6 +52,12 @@ _alphaConvH vmap (HOps (AlgOp l p r c) h) = do
     c' <- _alphaConv vmap' c
     HOps (AlgOp l p' r' c') <$> _alphaConvH vmap h
 
+_alphaConvFC :: VarMap -> FinallyClause -> ExceptT Error (State Int) FinallyClause
+_alphaConvFC vmap (FinallyC x fC) = do
+    x' <- freshAlphaVar x
+    let vmap' = Map.insert x x' vmap
+    FinallyC x' <$> _alphaConv vmap' fC
+
 _alphaConv :: VarMap -> Comp -> ExceptT Error (State Int) Comp
 _alphaConv vmap c = case c of
     EVal v -> EVal <$> alphaV v
@@ -84,6 +90,11 @@ _alphaConv vmap c = case c of
         v' <- alphaV v
         c' <- alpha c
         ECohandleIR (AlgTC algT v') c' <$> alphaH h
+    ECohandleIRFinally (AlgTC algT v) c fC h -> do
+        v' <- alphaV v
+        c' <- alpha c
+        fC' <- _alphaConvFC vmap fC
+        ECohandleIRFinally (AlgTC algT v') c' fC' <$> alphaH h
     where alpha = _alphaConv vmap
           alphaV = _alphaConvV vmap
           alphaH = _alphaConvH vmap

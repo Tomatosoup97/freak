@@ -83,6 +83,8 @@ data Comp
     | ECohandle Comp Handler
     -- Intermediate representation for a cohandler
     | ECohandleIR AlgTClause Comp Handler
+    -- TODO: document finally feature
+    | ECohandleIRFinally AlgTClause Comp FinallyClause Handler
     deriving (Eq)
 
 instance Show Comp where
@@ -97,12 +99,20 @@ instance Show Comp where
     show (ECoop l v) = "observe " ++ show l ++ " " ++ show v
     show (ECohandle c h) = "cohandle " ++ show c ++ "through { " ++ show h ++ " }"
     show (ECohandleIR algT c h) = "cohandle " ++ show algT ++ " at\n" ++ show c ++ "\nthrough { \n" ++ show h ++ "\n}"
+    show (ECohandleIRFinally algT c fc h) =
+        "cohandle " ++ show algT ++ " at\n" ++ show c ++ "\n" ++ show fc ++ "\nthrough { \n" ++ show h ++ "\n}"
 
 data AlgTClause = AlgTC AlgTheoryName Value
     deriving (Eq)
 
 instance Show AlgTClause where
     show (AlgTC algT initV) = algT ++ " using " ++ show initV
+
+data FinallyClause = FinallyC Var Comp
+    deriving (Eq)
+
+instance Show FinallyClause where
+    show (FinallyC x c) = "finally " ++ x ++ "\n" ++ show c
 
 data Handler
     = HRet Var Comp

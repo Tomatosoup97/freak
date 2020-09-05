@@ -38,6 +38,11 @@ main = hspec $ do
       transCohandler <- parseFromFile "programs/transform/effCase/after.fk"
       transform cohandler `shouldBe` transCohandler
 
+    it "Finally should be desugared" $ do
+      before <- parseFromFile "programs/transform/finally/before.fk"
+      after <- parseFromFile "programs/transform/finally/after.fk"
+      transform before `shouldBe` after
+
     it "Should not transform coeffect without theory" $ do
       let (Right cohandler) = parseString "observe Coeffect ()"
       transform cohandler `shouldBe` cohandler
@@ -280,6 +285,9 @@ main = hspec $ do
 
     it "[Coalg] Counter machine" $ do
       testFromFile "programs/coeffects/counterCoalg.fk" (Right (DNum 2))
+
+    it "[Coalg] Finally should be executed even in case of cont drop" $ do
+      testFromFile "programs/coeffects/finally.fk" (Right (DNum 2))
 
     -- Both effects
 

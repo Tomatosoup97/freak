@@ -177,14 +177,33 @@ handleComp = do
 cohandleComp :: Parser Comp
 cohandleComp = do
     reserved "cohandle"
+    algT <- algTClause
+    reserved "at"
+    bC <- computation
+    cohandleWithFinally algT bC <|> cohandleWithoutFinally algT bC
+
+cohandleWithFinally :: AlgTClause -> Comp -> Parser Comp
+cohandleWithFinally algT bC = do
+    finallyC <- finallyClause
+    reserved "through"
+    ECohandleIRFinally algT bC finallyC <$> handler CoeffL
+
+cohandleWithoutFinally :: AlgTClause -> Comp -> Parser Comp
+cohandleWithoutFinally algT bC = do
+    reserved "through"
+    ECohandleIR algT bC <$> handler CoeffL
+
+algTClause :: Parser AlgTClause
+algTClause = do
     algTheoryName <- identifier
     reserved "using"
-    v <- value
-    reserved "at"
-    c <- computation
-    reserved "through"
-    ECohandleIR (AlgTC algTheoryName v) c <$> handler CoeffL
+    AlgTC algTheoryName <$> value
 
+finallyClause :: Parser FinallyClause
+finallyClause = do
+    reserved "finally"
+    finallyVar <- identifier
+    FinallyC finallyVar <$> computation
 
 handler :: (Label -> EffLabel) -> Parser Handler
 handler labelCons = do

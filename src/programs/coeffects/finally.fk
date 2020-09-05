@@ -1,0 +1,13 @@
+cohandle AlgT using 0 at
+    handle
+        do Drop ()
+    with {
+        Drop p r -> return 1 |
+        return x -> return x
+    }
+finally y
+    return 2
+through {
+    Coeffect p r -> r p |
+    return x -> return x
+}
