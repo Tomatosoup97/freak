@@ -1,4 +1,4 @@
-module Transform where
+module Desugar where
 
 import Control.Monad
 import Types
@@ -12,5 +12,5 @@ desugarFinally = astTraverser (AstF return gC return)
             return $ ECohandleIR algT (ELet x bC fC) h
           gC c = return c
 
-transform :: Comp -> Either Error Comp
-transform = desugarFinally >=> return . desugarCoalg
+desugar :: Comp -> Either Error Comp
+desugar = desugarFinally >=> return . desugarCoalg

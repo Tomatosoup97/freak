@@ -11,14 +11,14 @@ import CPS
 import DValue
 import Eval
 import Types
-import Transform
+import Desugar
 import StaticAnalyzer
 
 parseProgram :: String -> Either Error Comp
 parseProgram = parseString
             >=> staticAnalyze
             >=> alphaConvert
-            >=> transform
+            >=> desugar
 
 cpsProgram :: String -> EvalResMonad UComp
 cpsProgram s = case parseProgram s of
@@ -47,7 +47,7 @@ parseFile :: String -> IO ()
 parseFile = parseFromFile >=> print
 
 parseDesugarFile :: String -> IO ()
-parseDesugarFile = parseFromFile >=> (print . transform)
+parseDesugarFile = parseFromFile >=> (print . desugar)
 
 validateFile :: String -> IO ()
 validateFile = readFile >=> cpsProgram >=> (\_ -> return ())

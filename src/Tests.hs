@@ -12,7 +12,7 @@ import DValue
 import Types
 import TargetAST
 import Parser
-import Transform
+import Desugar
 
 shouldBeT m b = do
     r <- m
@@ -26,30 +26,30 @@ testFromFile filename expected = do
 main :: IO ()
 main = hspec $ do
 
-  describe "AST Transform" $ do
+  describe "AST Desugar" $ do
 
     it "Should inject state monad into cohandlers" $ do
-      cohandler <- parseFromFile "programs/transform/pureCase/before.fk"
-      transCohandler <- parseFromFile "programs/transform/pureCase/after.fk"
-      let (Right transformed) = transform cohandler
-      transformed `shouldBe` transCohandler
+      cohandler <- parseFromFile "programs/desugar/pureCase/before.fk"
+      transCohandler <- parseFromFile "programs/desugar/pureCase/after.fk"
+      let (Right desugared) = desugar cohandler
+      desugared `shouldBe` transCohandler
 
     it "Should implement state passing across transitions" $ do
-      cohandler <- parseFromFile "programs/transform/effCase/before.fk"
-      transCohandler <- parseFromFile "programs/transform/effCase/after.fk"
-      let (Right transformed) = transform cohandler
-      transformed `shouldBe` transCohandler
+      cohandler <- parseFromFile "programs/desugar/effCase/before.fk"
+      transCohandler <- parseFromFile "programs/desugar/effCase/after.fk"
+      let (Right desugared) = desugar cohandler
+      desugared `shouldBe` transCohandler
 
     it "Finally should be desugared" $ do
-      before <- parseFromFile "programs/transform/finally/before.fk"
-      after <- parseFromFile "programs/transform/finally/after.fk"
-      let (Right transformed) = transform before
-      transformed `shouldBe` after
+      before <- parseFromFile "programs/desugar/finally/before.fk"
+      after <- parseFromFile "programs/desugar/finally/after.fk"
+      let (Right desugared) = desugar before
+      desugared `shouldBe` after
 
-    it "Should not transform coeffect without theory" $ do
+    it "Should not desugar coeffect without theory" $ do
       let (Right cohandler) = parseString "observe Coeffect ()"
-      let (Right transformed) = transform cohandler
-      transformed `shouldBe` cohandler
+      let (Right desugared) = desugar cohandler
+      desugared `shouldBe` cohandler
 
   describe "Freak" $ do
 
@@ -279,7 +279,7 @@ main = hspec $ do
       testFromFile "programs/coeffects/retrieveConf.fk" (Right DUnit)
 
     it "[Coalg] State monad simple case" $ do
-      testFromFile "programs/transform/effCase/before.fk" (Right (DNum 1))
+      testFromFile "programs/desugar/effCase/before.fk" (Right (DNum 1))
 
     it "[Coalg] State monad full case" $ do
       testFromFile "programs/coeffects/state.fk" (Right (DNum 3))
