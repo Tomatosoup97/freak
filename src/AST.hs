@@ -82,7 +82,7 @@ data Comp
     | ECoop EffLabel Value
     | ECohandle Comp Handler
     -- Intermediate representation for a cohandler
-    | ECohandleIR AlgTheoryName Value Comp Handler
+    | ECohandleIR AlgTClause Comp Handler
     deriving (Eq)
 
 instance Show Comp where
@@ -96,7 +96,13 @@ instance Show Comp where
     show (EHandle c h) = "handle\n" ++ show c ++ "\nwith {\n" ++ show h ++ "\n}"
     show (ECoop l v) = "observe " ++ show l ++ " " ++ show v
     show (ECohandle c h) = "cohandle " ++ show c ++ "through { " ++ show h ++ " }"
-    show (ECohandleIR algT initV c h) = "cohandle " ++ algT ++ " using " ++ show initV ++ " at\n" ++ show c ++ "\nthrough { \n" ++ show h ++ "\n}"
+    show (ECohandleIR algT c h) = "cohandle " ++ show algT ++ " at\n" ++ show c ++ "\nthrough { \n" ++ show h ++ "\n}"
+
+data AlgTClause = AlgTC AlgTheoryName Value
+    deriving (Eq)
+
+instance Show AlgTClause where
+    show (AlgTC algT initV) = algT ++ " using " ++ show initV
 
 data Handler
     = HRet Var Comp

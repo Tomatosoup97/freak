@@ -104,7 +104,7 @@ cps e ks = case e of
         cpsHandle body handler EffT ks
     -- Coalgebraic effects
     ECohandle body handler       -> cpsHandle body handler CoeffT ks
-    ECohandleIR _ _ body handler -> cpsHandle body handler CoeffT ks
+    ECohandleIR _ body handler -> cpsHandle body handler CoeffT ks
     ECoop l v -> cpsOp l v ks
 
 

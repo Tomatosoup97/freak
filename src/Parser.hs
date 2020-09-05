@@ -45,6 +45,7 @@ languageDef =
                                      , "at"
                                      , "fst"
                                      , "snd"
+                                     , "finally"
                                      ]
            , Token.reservedOpNames = [
                 "+", "*", "<-", "->", "\\", ":", "(", ")", "|",
@@ -182,7 +183,7 @@ cohandleComp = do
     reserved "at"
     c <- computation
     reserved "through"
-    ECohandleIR algTheoryName v c <$> handler CoeffL
+    ECohandleIR (AlgTC algTheoryName v) c <$> handler CoeffL
 
 
 handler :: (Label -> EffLabel) -> Parser Handler

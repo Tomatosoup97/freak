@@ -80,10 +80,10 @@ _alphaConv vmap c = case c of
     ECohandle c h -> do
         c' <- alpha c
         ECohandle c' <$> alphaH h
-    ECohandleIR algT v c h -> do
+    ECohandleIR (AlgTC algT v) c h -> do
         v' <- alphaV v
         c' <- alpha c
-        ECohandleIR algT v' c' <$> alphaH h
+        ECohandleIR (AlgTC algT v') c' <$> alphaH h
     where alpha = _alphaConv vmap
           alphaV = _alphaConvV vmap
           alphaH = _alphaConvH vmap

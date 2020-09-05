@@ -51,15 +51,15 @@ coopTrans m c = case c of
             -- actual code execution is from left to right:
             (getCoalgebra algT . bindResult . bindConf . putCoalgebra algT (VVar algT)) contComp
         Nothing -> ECoop l (coopTransV m v)
-    ECohandleIR algTheoryName initV c h ->
-        let algTVar = "_" ++ algTheoryName in
+    ECohandleIR (AlgTC algTName initV) c h ->
+        let algTVar = "_" ++ algTName in
         let sign = hopsL h in
         let m' = foldl (\m s -> Map.insert s algTVar m) m sign in
         let h' = coopTransHandler m' h in
         -- TODO: Read and parse from lib/coalgHandler.fk
         let stateMonadHandler = HOps (AlgOp (CoeffL (algTVar ++ "Put")) "s'" "r" (EReturn (VLambda "s" TInt (ELet "g" (EApp (VVar "r") VUnit) (EApp (VVar "g") (VVar "s'")))))) (HOps (AlgOp (CoeffL (algTVar ++ "Get")) "_" "r" (EReturn (VLambda "s" TInt (ELet "g" (EApp (VVar "r") (VVar "s")) (EApp (VVar "g") (VVar "s")))))) (HRet "x" (EReturn (VLambda "s" TInt (EReturn (VVar "x")))))) in
         let runner = leftJoinHandlers stateMonadHandler h' in
-        let cohandle = (\c -> ECohandleIR algTheoryName initV c runner) in
+        let cohandle = (\c -> ECohandleIR (AlgTC algTName initV) c runner) in
         let coalgComp = (cohandle . coopTrans m') c in
         let runCoalgVar = algTVar ++ "Run" in
         ELet runCoalgVar coalgComp (EApp (VVar runCoalgVar) initV)
