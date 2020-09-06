@@ -100,7 +100,7 @@ main = hspec $ do
       evalProgram "let f <- return (\\x : int -> return x + 1) in let y <- f 1 in return y + 2" `shouldBeT` (Right (DNum 4))
 
     it "Higher order function" $ do
-      testFromFile "programs/higherOrder.fk" (Right (DNum 5))
+      testFromFile "programs/pure/higherOrder.fk" (Right (DNum 5))
 
     it "Application" $ do
       evalProgram "(\\x : int -> return x + 1) 1" `shouldBeT` (Right (DNum 2))
