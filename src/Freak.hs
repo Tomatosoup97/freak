@@ -12,11 +12,11 @@ import DValue
 import Eval
 import Types
 import Desugar
-import StaticAnalyzer
+import EffectsRestricter
 
 parseProgram :: String -> Either Error Comp
 parseProgram = parseString
-            >=> staticAnalyze
+            >=> restrictEffects
             >=> alphaConvert
             >=> desugar
 

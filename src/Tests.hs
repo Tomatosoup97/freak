@@ -294,7 +294,10 @@ main = hspec $ do
       testFromFile "programs/coeffects/finally.fk" (Right (DNum 2))
 
     it "[Coalg] Finally should not contain effects" $ do
-      testFromFile "programs/coeffects/finallyEffectErr.fk" (Left effectInFinallyErr)
+      testFromFile "programs/coeffects/finallyEffectErr.fk" (Left invalidUseOfEffErr)
+
+    it "[Coalg] Cohandler should not contain effects" $ do
+      testFromFile "programs/coeffects/cohandlerEffectsErr.fk" (Left invalidUseOfEffErr)
 
     -- Both effects
 

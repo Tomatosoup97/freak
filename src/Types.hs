@@ -28,8 +28,9 @@ unboundVarErr x = EvalError $ "Unbound variable " ++ x
 absurdErr :: Show a => a -> Error
 absurdErr x = EvalError $ "Absurd; divergent term: " ++ show x
 
-effectInFinallyErr :: Error
-effectInFinallyErr = StaticAnalyzerError "You can't use effects in finally clause!"
+invalidUseOfEffErr :: Error
+invalidUseOfEffErr = StaticAnalyzerError "\
+    \You can't use effects in cohandler or finally clause!"
 
 data ValueType
     = TInt

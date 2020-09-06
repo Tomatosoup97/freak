@@ -1,0 +1,15 @@
+handle
+    cohandle AlgT using 0 at
+        observe Inc 17
+    finally y
+        return 1
+    through {
+        Inc p r ->
+            let x <- do Drop () in
+            r (fst p, x) |
+        return x -> return x
+    }
+with {
+    Drop p r -> return 42 |
+    return x -> return x
+}
