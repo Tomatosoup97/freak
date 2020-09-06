@@ -299,6 +299,9 @@ main = hspec $ do
     it "[Coalg] Cohandler should not contain effects" $ do
       testFromFile "programs/coeffects/cohandlerEffectsErr.fk" (Left invalidUseOfEffErr)
 
+    it "[Coalg] Linearity of resumptions -- basic case" $ do
+      testFromFile "programs/coeffects/linearityErr.fk" (Left linearContUsageErr)
+
     -- Both effects
 
     it "[Both] Effect should not escape cohandler" $ do

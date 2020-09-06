@@ -1,0 +1,9 @@
+cohandle NonDet using 42 at
+    observe Choice ()
+through {
+    Choice p r ->
+        let t <- r (fst p, 0) in
+        let f <- r (fst p, 1) in
+        return (\s:int -> return s) |
+    return x -> return x
+}

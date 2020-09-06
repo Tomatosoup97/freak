@@ -32,6 +32,10 @@ invalidUseOfEffErr :: Error
 invalidUseOfEffErr = StaticAnalyzerError "\
     \You can't use effects in cohandler or finally clause!"
 
+linearContUsageErr :: Error
+linearContUsageErr = StaticAnalyzerError "\
+    \Resumptions in cohandlers should be used linearly!"
+
 data ValueType
     = TInt
     | TBool

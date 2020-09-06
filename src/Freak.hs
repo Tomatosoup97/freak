@@ -13,12 +13,14 @@ import Eval
 import Types
 import Desugar
 import EffectsRestricter
+import Linearity
 
 parseProgram :: String -> Either Error Comp
 parseProgram = parseString
             >=> restrictEffects
             >=> alphaConvert
             >=> desugar
+            >=> analyzeContLinearity
 
 cpsProgram :: String -> EvalResMonad UComp
 cpsProgram s = case parseProgram s of
