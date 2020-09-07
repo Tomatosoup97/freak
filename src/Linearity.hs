@@ -33,12 +33,15 @@ linUsageV d v = case v of
     VFst v -> linUsageV d v
     VSnd v -> linUsageV d v
 
-linUsageH :: Carrier -> Handler -> Either Error Carrier
-linUsageH d (HRet v c) = linUsage d c
-linUsageH d (HOps (AlgOp l p r c) h) = do
+linUsageH :: Bool -> Carrier -> Handler -> Either Error Carrier
+linUsageH b d (HRet v c) = linUsage d c
+linUsageH b@False d (HOps (AlgOp l p r c) h) = do
+    d' <- linUsage d c
+    linUsageH b d' h
+linUsageH b@True d (HOps (AlgOp l p r c) h) = do
     let dNew = Map.insert r 0 d
     d' <- linUsage dNew c
-    linUsageH d' h
+    linUsageH b d' h
 
 linUsage :: Carrier -> Comp -> Either Error Carrier
 linUsage d c = case c of
@@ -64,13 +67,17 @@ linUsage d c = case c of
     EOp l v -> linUsageV d v
     EHandle c h -> do
         d' <- linUsage d c
-        if isCarrierValid d' then linUsageH d h
+        if isCarrierValid d' then linUsageH False d h
         else Left linearContUsageErr
     ECoop l v -> linUsageV d v
+    ECohandle bC h -> do
+        dC <- linUsage d bC
+        if isCarrierValid dC then linUsageH True d h
+        else Left linearContUsageErr
     ECohandleIR (AlgTC _ algTV) bC h -> do
         dAlgV <- linUsageV d algTV
         dC <- linUsage dAlgV bC
-        if isCarrierValid dC then linUsageH d h
+        if isCarrierValid dC then linUsageH True d h
         else Left linearContUsageErr
 
 analyzeContLinearity :: Comp -> Either Error Comp
